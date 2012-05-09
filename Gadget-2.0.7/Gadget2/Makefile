@@ -27,8 +27,8 @@ OPT   +=  -DWALLCLOCK
 
 
 #--------------------------------------- Single/Double Precision
-#OPT   +=  -DDOUBLEPRECISION      
-#OPT   +=  -DDOUBLEPRECISION_FFTW      
+OPT   +=  -DDOUBLEPRECISION      
+OPT   +=  -DDOUBLEPRECISION_FFTW      
 
 
 #--------------------------------------- Time integration options
@@ -97,9 +97,22 @@ MPICHLIB =  -lmpich
 #SYSTYPE="OPA-Cluster64"
 SYSTYPE="IoA"
 #SYSTYPE="IoA_FFTW"
+#SYSTYPE="Darwin"
 
 
 #--------------------------------------- Adjust settings for target computer
+
+ifeq ($(SYSTYPE),"Darwin")
+CC       =  mpicc -g -O2 -Wall -xSSE4.2
+OPTIMIZE =  
+GSL_INCL =  -I/usr/local/Cluster-Apps/gsl/1.9/include
+GSL_LIBS =  -L/usr/local/Cluster-Apps/gsl/1.9/lib
+FFTW_INCL=  -I/usr/local/Cluster-Apps.nehalem/fftw/intel/double/2.1.5/include
+FFTW_LIBS=  -L/usr/local/Cluster-Apps.nehalem/fftw/intel/double/2.1.5/lib
+MPICHLIB = 
+HDF5INCL =
+HDF5LIB  =
+endif
 
 ifeq ($(SYSTYPE),"IoA")
 #Requires modules, openmpi/gcc,gsl,gcc, NOFFTWINSTALLED option...
