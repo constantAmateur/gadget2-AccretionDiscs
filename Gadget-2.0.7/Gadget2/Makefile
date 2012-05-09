@@ -9,7 +9,7 @@
 
 
 #--------------------------------------- Basic operation mode of code
-OPT   +=  -DPERIODIC 
+#OPT   +=  -DPERIODIC 
 OPT   +=  -DUNEQUALSOFTENINGS
 
 
@@ -19,7 +19,7 @@ OPT   +=  -DWALLCLOCK
 
 
 #--------------------------------------- TreePM Options
-OPT   +=  -DPMGRID=128
+#OPT   +=  -DPMGRID=128
 #OPT   +=  -DPLACEHIGHRESREGION=3
 #OPT   +=  -DENLARGEREGION=1.2
 #OPT   +=  -DASMTH=1.25
@@ -40,8 +40,8 @@ OPT   +=  -DSYNCHRONIZATION
 
 
 #--------------------------------------- Output 
-OPT   +=  -DHAVE_HDF5  
-#OPT   +=  -DOUTPUTPOTENTIAL
+#OPT   +=  -DHAVE_HDF5  
+OPT   +=  -DOUTPUTPOTENTIAL
 #OPT   +=  -DOUTPUTACCELERATION
 #OPT   +=  -DOUTPUTCHANGEOFENTROPY
 #OPT   +=  -DOUTPUTTIMESTEP
@@ -57,11 +57,12 @@ OPT   +=  -DHAVE_HDF5
 #OPT   +=  -DTWODIMS
 #OPT   +=  -DSPH_BND_PARTICLES
 #OPT   +=  -DNOVISCOSITYLIMITER
-#OPT   +=  -DCOMPUTE_POTENTIAL_ENERGY
+OPT   +=  -DCOMPUTE_POTENTIAL_ENERGY
 #OPT   +=  -DLONGIDS
 #OPT   +=  -DISOTHERM_EQS
-#OPT   +=  -DADAPTIVE_GRAVSOFT_FORGAS
+OPT   +=  -DADAPTIVE_GRAVSOFT_FORGAS
 #OPT   +=  -DSELECTIVE_NO_GRAVITY=2+4+8+16
+OPT    += -DNOFFTWINSTALLED
 
 #--------------------------------------- Testing and Debugging options
 #OPT   +=  -DFORCETEST=0.1
@@ -86,7 +87,7 @@ MPICHLIB =  -lmpich
 
 #--------------------------------------- Select target computer
 
-SYSTYPE="MPA"
+#SYSTYPE="MPA"
 #SYSTYPE="Mako"
 #SYSTYPE="Regatta"
 #SYSTYPE="RZG_LinuxCluster"
@@ -94,9 +95,39 @@ SYSTYPE="MPA"
 #SYSTYPE="OpteronMPA"
 #SYSTYPE="OPA-Cluster32"
 #SYSTYPE="OPA-Cluster64"
+SYSTYPE="IoA"
+#SYSTYPE="IoA_FFTW"
 
 
 #--------------------------------------- Adjust settings for target computer
+
+ifeq ($(SYSTYPE),"IoA")
+#Requires modules, openmpi/gcc,gsl,gcc, NOFFTWINSTALLED option...
+CC =  mpicc
+OPTIMIZE =  -O3 -Wall
+GSL_INCL =  -I/opt/ioa/software/gsl/1.14/include
+GSL_LIBS =  -L/opt/ioa/software/gsl/1.14/lib 
+FFTW_INCL=  -I/opt/ioa/software/fftw/2.1.5_float/include 
+FFTW_LIBS=  -L/opt/ioa/software/fftw/2.1.5_float/lib 
+#MPICHLIB =  -L/opt/ioa/software/openmpi/1.4.2/sunstudio/ss12u1/lib
+#MPICHLIB =  -L/opt/ioa/software/openmpi/1.4.2/intel/11.1/lib
+MPICHLIB = -L/opt/ioa/software/openmpi/1.4.2/gcc/lib
+HDF5INCL =
+HDF5LIB  =
+endif
+ifeq ($(SYSTYPE),"IoA_FFTW")
+#Requires modules openmpi/intel, intel, gsl, gcc, fftw/2.1.5_float
+CC =  mpicc
+OPTIMIZE =  -O3 -Wall
+GSL_INCL =  -I/opt/ioa/software/gsl/1.14/include
+GSL_LIBS =  -L/opt/ioa/software/gsl/1.14/lib 
+FFTW_INCL=  -I/opt/ioa/software/fftw/2.1.5_float/include 
+FFTW_LIBS=  -L/opt/ioa/software/fftw/2.1.5_float/lib 
+MPICHLIB =  -L/opt/ioa/software/openmpi/1.4.2/intel/11.1/lib
+HDF5INCL =
+HDF5LIB  =
+endif
+
 
 ifeq ($(SYSTYPE),"MPA")
 CC       =  mpicc   
@@ -233,6 +264,10 @@ ifeq (DOUBLEPRECISION_FFTW,$(findstring DOUBLEPRECISION_FFTW,$(OPT)))
 else
   FFTW_LIB = $(FFTW_LIBS) -lsrfftw_mpi -lsfftw_mpi -lsrfftw -lsfftw
 endif
+endif
+
+ifeq (NOFFTWINSTALLED,$(findstring NOFFTWINSTALLED,$(OPT)))
+  FFTW_LIB =
 endif
 
 
