@@ -115,8 +115,18 @@ void init(void)
 	{
 	  SphP[i].VelPred[j] = P[i].Vel[j];
 	  SphP[i].HydroAccel[j] = 0;
+#ifdef ARTVISCTEST
+     SphP[i].OldArtViscAccel[j] = 0;
+#endif
+#ifdef INDIVIDUALAV
+     SphP[i].ArtViscAccel[j] = 0;
+#endif
 	}
 
+#ifdef INDIVIDUALAV
+      SphP[i].ArtVisc = 0;
+      SphP[i].DivVelNew = 0;
+#endif
       SphP[i].DtEntropy = 0;
 
       if(RestartFlag == 0)

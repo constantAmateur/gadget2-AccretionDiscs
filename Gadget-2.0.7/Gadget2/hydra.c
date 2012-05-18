@@ -61,7 +61,7 @@ void hydro_force(void)
   double timecomp = 0, timecommsumm = 0, timeimbalance = 0, sumimbalance;
 #ifdef INDIVIDUALAV
   double fac,Tinv[9],V[9],divv,tmp,trSSt,xi_i,dt,divdotv;
-  double alpha_loc,tau_i,A_i;
+  double alpha_loc,tau_i,A_i,R_i;
 #endif
   MPI_Status status;
 
@@ -286,7 +286,12 @@ void hydro_force(void)
 			  place = HydroDataIn[source].Index;
 
 			  for(k = 0; k < 3; k++)
+           {
 			    SphP[place].HydroAccel[k] += HydroDataPartialResult[source].Acc[k];
+#ifdef ARTVISCTEST
+             SphP[place].OldArtViscAccel[k] += HydroDataPartialResult[source].OldArtViscAccel[k];
+#endif
+           }
            for(k=0;k<9;k++)
            {
              SphP[place].MatrixD[k] += HydroDataPartialResult[source].MatrixD[k];
@@ -299,7 +304,7 @@ void hydro_force(void)
 			  if(SphP[place].MaxSignalVel < HydroDataPartialResult[source].MaxSignalVel)
 			    SphP[place].MaxSignalVel = HydroDataPartialResult[source].MaxSignalVel;
            if(SphP[place].SignalVel < HydroDataPartialResult[source].SignalVel)
-             SphP[place].SignalVel = HydroDataPartialResult[source].SignalVel
+             SphP[place].SignalVel = HydroDataPartialResult[source].SignalVel;
 			}
 		    }
 		}
@@ -359,8 +364,8 @@ void hydro_force(void)
    //Estimate divv as trace(V)
    divv=SphP[i].MatrixD[0]*Tinv[0]+SphP[i].MatrixD[1]*Tinv[3]+SphP[i].MatrixD[2]*Tinv[6]+SphP[i].MatrixD[3]*Tinv[1]+SphP[i].MatrixD[4]*Tinv[4]+SphP[i].MatrixD[5]*Tinv[7]+SphP[i].MatrixD[6]*Tinv[2]+SphP[i].MatrixD[7]*Tinv[5]+SphP[i].MatrixD[8]*Tinv[8];
    //Calculate the switch
-   tmp=1.0/NUMDIM;
-   R_i = R_i / SphP[i].Density;
+   tmp=1.0/NUMDIMS;
+   R_i = SphP[i].R_i / SphP[i].Density;
    trSSt = (V[0]-tmp*divv)*(V[0]-tmp*divv)+(V[4]-tmp*divv)*(V[4]-tmp*divv)+(V[8]-tmp*divv)*(V[8]-tmp*divv)+0.5*(V[1]+V[3])*(V[1]+V[3])+.5*(V[2]+V[6])*(V[2]+V[6])+.5*(V[5]+V[7])*(V[5]+V[7]);
    xi_i = pow(2.0*pow(1.0-R_i,4.0)*divv,2.0);
    xi_i = xi_i / (xi_i+trSSt);
@@ -377,18 +382,18 @@ void hydro_force(void)
      alpha_loc = 0.0;
    }
    //Not sure if it's OK to do the time integration here...
-   if(alpha_loc > alpha_i)
+   if(alpha_loc > SphP[i].ArtVisc)
    {
      SphP[i].ArtVisc = alpha_loc;
    }
    else
    {
      tau_i = SphP[i].Hsml / (2.0 * SphP[i].SignalVel * All.ArtViscDecayLength);
-     SphP[i].ArtVisc = alpha_loc - (alpha_loc - alpha_i) * exp( -1.0 *dt / tau_i);
+     SphP[i].ArtVisc = alpha_loc - (alpha_loc - SphP[i].ArtVisc) * exp( -1.0 *dt / tau_i);
    }
    //Now you can calculate the true dEntropy
    SphP[i].DtEntropy *= SphP[i].ArtVisc *SphP[i].DhsmlDensityFactor / SphP[i].Density / pow(SphP[i].Hsml,NUMDIMS+2);
-   SphP[i].DivVelNew=divv
+   SphP[i].DivVelNew=divv;
    SphP[i].DivDotVel=divdotv;
 #endif
 
@@ -432,15 +437,15 @@ void hydro_evaluate(int target, int mode)
   FLOAT mass, h_i, dhsmlDensityFactor, rho, pressure, f1, f2;
   double acc[3], dtEntropy, maxSignalVel,Di[9],Ti[9];
   double dx, dy, dz, dvx, dvy, dvz;
-  double h_i2, hinv, hinv4;
+  double h_i2, h_i5,hinv, hinv3,hinv4;
   double p_over_rho2_i, p_over_rho2_j, soundspeed_i, soundspeed_j;
-  double hfc, dwk_i, vdotr, vdotr2, visc, mu_ij, rho_ij, vsig;
+  double hfc, wk_i, dwk_i, vdotr, vdotr2, visc, mu_ij, rho_ij, vsig;
   double h_j, dwk_j, r, r2, u, hfc_visc;
 #ifdef ARTVISCTEST
   double oldArtVisc[3];
 #endif
 #ifdef INDIVIDUALAV
-  double artVisc[3],tmp,vsig_i,R_i,tmp,vsig_i,fac,mass_j;
+  double vsig_i,R_i,tmp,fac,mass_j;
 #endif
 
 #ifndef NOVISCOSITYLIMITER
@@ -478,9 +483,10 @@ void hydro_evaluate(int target, int mode)
 
 
   /* initialize variables before SPH loop is started */
-  acc[0] = acc[1] = acc[2] = dtEntropy = tot =f_i_top=f_i_bottom= 0;
+  acc[0] = acc[1] = acc[2] = dtEntropy = 0;
   Di[0]=Di[1]=Di[2]=Di[3]=Di[4]=Di[5]=Di[6]=Di[7]=Di[8]=Di[9]=0;
   Ti[0]=Ti[1]=Ti[2]=Ti[3]=Ti[4]=Ti[5]=Ti[6]=Ti[7]=Ti[8]=Ti[9]=0;
+  R_i=vsig_i=0.0;
   maxSignalVel = 0;
 
   p_over_rho2_i = pressure / (rho * rho) * dhsmlDensityFactor;
@@ -539,8 +545,10 @@ void hydro_evaluate(int target, int mode)
 		      hinv = 1.0 / h_i;
 #ifndef  TWODIMS
 		      hinv4 = hinv * hinv * hinv * hinv;
+            hinv3 = hinv * hinv * hinv;
 #else
 		      hinv4 = hinv * hinv * hinv / boxSize_Z;
+            hinv3 = hinv * hinv / boxSize_Z;
 #endif
 		      u = r * hinv;
 		      if(u < 0.5)
@@ -553,7 +561,7 @@ void hydro_evaluate(int target, int mode)
 		      else
             {
 #ifdef INDIVIDUALAV
-              wk_i = hinv3*(KERNEL_COEFF_5 * (1.0-u)*(1-0.u)*(1.0-u));
+              wk_i = hinv3*(KERNEL_COEFF_5 * (1.0-u)*(1.0-u)*(1.0-u));
 #endif
 			     dwk_i = hinv4 * KERNEL_COEFF_6 * (1.0 - u) * (1.0 - u);
             }
@@ -589,7 +597,7 @@ void hydro_evaluate(int target, int mode)
 		    maxSignalVel = soundspeed_i + soundspeed_j;
 
 #ifdef INDIVIDUALAV
-        mass_j=P[j].Mass
+        mass_j=P[j].Mass;
         //Artificial viscosity stuff..
         fac = h_i5*mass_j * dwk_i / r / SphP[j].Density;
         Di[0] += fac * (dvx*dx);
@@ -707,8 +715,11 @@ void hydro_evaluate(int target, int mode)
 #endif
       }
 #ifdef INDIVIDUALAV
-      SphP[target].MatrixD = Di;
-      SphP[target].MatrixT = Ti;
+      for(k=0; k<9; k++)
+      {
+        SphP[target].MatrixD[k] = Di[k];
+        SphP[target].MatrixT[k] = Ti[k];
+      }
       SphP[target].R_i = R_i;
       SphP[target].SignalVel = vsig_i;
 #endif
@@ -725,8 +736,11 @@ void hydro_evaluate(int target, int mode)
 #endif
       }
 #ifdef INDIVIDUALAV
-      HydroDataResult[target].MatrixD = Di;
-      HydroDataResult[target].MatrixT = Ti;
+      for(k=0; k<9; k++)
+      {
+        HydroDataResult[target].MatrixD[k] = Di[k];
+        HydroDataResult[target].MatrixT[k] = Ti[k];
+      }
       HydroDataResult[target].R_i = R_i;
       HydroDataResult[target].SignalVel = vsig_i;
 #endif
@@ -744,11 +758,8 @@ void hydro_visc_force(void)
   int i, j, k, n, ngrp, maxfill, source, ndone;
   int *nbuffer, *noffset, *nsend_local, *nsend, *numlist, *ndonelist;
   int level, sendTask, recvTask, nexport, place;
-  double soundspeed_i;
   double tstart, tend, sumt, sumcomm;
   double timecomp = 0, timecommsumm = 0, timeimbalance = 0, sumimbalance;
-  double fac,Tinv[9],V[9],divv,tmp,trSSt,xi_i,dt,divdotv;
-  double alpha_loc,tau_i,A_i;
   MPI_Status status;
 
 #ifdef PERIODIC
@@ -846,7 +857,6 @@ void hydro_visc_force(void)
 		    HydroDataIn[nexport].Density = SphP[i].Density;
           HydroDataIn[nexport].ArtVisc = SphP[i].ArtVisc;
 		    HydroDataIn[nexport].Pressure = SphP[i].Pressure;
-
 
 		    HydroDataIn[nexport].Index = i;
 		    HydroDataIn[nexport].Task = j;
@@ -1032,8 +1042,8 @@ void hydro_visc_force(void)
 void visc_evaluate(int target, int mode)
 {
   FLOAT *pos, *vel;
-  FLOAT h_i,f_i rho, alpha_i, pressure;
-  int startnode, numngb,n,j
+  FLOAT h_i,f_i, rho, alpha_i, pressure;
+  int startnode, numngb,n,j;
   double soundspeed_i,p_over_rho2_i,h_i2,dx,dy,dz,r2,r,h_j,dvx,dvy,dvz,vdotr;
   double p_over_rho2_j,soundspeed_j,hinv,hinv4,u,dwk_i,dwk_j,hinv_j,mu_ij,visc;
   double acc[3];
@@ -1111,7 +1121,7 @@ void visc_evaluate(int target, int mode)
           {
 		      p_over_rho2_j = SphP[j].Pressure / (SphP[j].Density * SphP[j].Density);
 		      soundspeed_j = sqrt(GAMMA * p_over_rho2_j * SphP[j].Density);
-            hinv=1.0/h.i;
+            hinv=1.0/h_i;
             hinv_j=1.0/h_j;
 
 		      if(r2 < h_i2)
@@ -1171,17 +1181,17 @@ void visc_evaluate(int target, int mode)
   /* Now collect the result at the right place */
   if(mode == 0)
   {
-    for(k = 0; k < 3; k++)
+    for(j = 0; j < 3; j++)
     {
-      SphP[target].ArtViscAccel[k] = acc[k];
-      SphP[target].HydroAccel[k] += acc[k];
+      SphP[target].ArtViscAccel[j] = acc[j];
+      SphP[target].HydroAccel[j] += acc[j];
     }
   }
   else
   {
-    for(k = 0; k < 3; k++)
+    for(j = 0; j < 3; j++)
     {
-	   HydroDataResult[target].Acc[k] = acc[k];
+	   HydroDataResult[target].Acc[j] = acc[j];
     }
   }
 }

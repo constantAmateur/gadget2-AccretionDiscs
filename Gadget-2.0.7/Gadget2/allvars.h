@@ -283,14 +283,10 @@ extern struct global_data_all_processes
   double DesNumNgb;             /*!< Desired number of SPH neighbours */
   double MaxNumNgbDeviation;    /*!< Maximum allowed deviation neighbour number */
 
-#ifdef ARTVISCTEST
   double ArtBulkViscConst;      /*!< Sets the parameter \f$\alpha\f$ of the artificial viscosity */
-#endif
-#ifdef INDIVIDUALAV
   double ArtViscDecayLength;    /* The l value which scales the decay time for per/particle art visc. */
   double ArtViscbparam;         /* The b parameter which determines the quadratic contribution to the art visc. */
   double AlphaMax;              /* The maximum value for the artificial viscosity alpha. */
-#endif
   double InitGasTemp;		/*!< may be used to set the temperature in the IC's */
   double MinGasTemp;		/*!< may be used to set a floor for the gas temperature */
   double MinEgySpec;            /*!< the minimum allowed temperature expressed as energy per unit mass */
@@ -558,7 +554,7 @@ extern struct sph_particle_data
   FLOAT ArtViscAccel[3]; /* Store the artificial viscosity acceleration contribution */
   FLOAT MatrixD[9];     /* The weighted outer product of v_ij with x_ij.  Needed to calculate ArtVisc */
   FLOAT MatrixT[9];     /* The weighted outer product of x_ij with x_ij.  Needed to calculate ArtVisc */
-  FLOAT R_i;            /* The R factors needed to calculate the viscosity switch. */
+  FLOAT R_i;            /* The R factors needed to calculate the viscosity switch. Does not include the factor of 1/rho*/
   FLOAT SignalVel;      /* The max signal velocity needs to be calculated slightly differently for this artificial viscosity estimator. */
 #endif
   FLOAT CurlVel;		/*!< local velocity curl */
@@ -771,6 +767,9 @@ extern struct hydrodata_in
   FLOAT Pressure;
   FLOAT F1;
   FLOAT DhsmlDensityFactor;
+#ifdef INDIVIDUALAV
+  FLOAT ArtVisc;
+#endif
   int   Timestep;
   int   Task;
   int   Index;
@@ -787,6 +786,9 @@ extern struct hydrodata_out
   FLOAT SignalVel;
   FLOAT DtEntropy;
   FLOAT MaxSignalVel;
+#ifdef ARTVISCTEST
+  FLOAT OldArtViscAccel[3];
+#endif
 }
  *HydroDataResult,              /*!< stores the locally computed SPH hydro results for imported particles */
  *HydroDataPartialResult;       /*!< imported partial SPH hydro-force results from other processors */

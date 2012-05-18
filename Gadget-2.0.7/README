@@ -22,3 +22,10 @@
   cross-referenced documentation of the source code, contained 
   in the `html/' subdirectory (open the `index.html' file).
   
+  NEW COMPILE FLAGS
+  INDIVIDUALAV = If set, the Cullen and Dehnen method is used to calculate the artificial viscosity.  If ARTVISCTEST is also set, both are calculated but the C & D method is used to actually evolve the particles.
+  ARTVISCTEST = Calculate the artificial viscosity using the original method.  If INDIVIDUALAV is also set, the artificial viscosity will be calculated with both methods, but the C & D method will be used to evolve the particles.
+  NEW PARAMETERS
+  ArtViscDecayLength = The 'l' variable in setting the decay time for the artificial viscosity.
+  ArtViscbparam = The 'b' parameter used to calculate Pi_ij.  Roughly equivalent to beta/alpha from the old method.
+  AlphaMax = The maximum allowed value of the artificial viscosity.

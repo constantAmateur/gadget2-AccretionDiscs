@@ -119,6 +119,8 @@ int    hydro_compare_key(const void *a, const void *b);
 void   hydro_evaluate(int target, int mode);
 void   hydro_force(void);
 double hydrokick_integ(double a, void *param);
+void   hydro_visc_force(void);
+void   visc_evaluate(int target, int mode);
 
 int    imax(int, int);
 int    imin(int, int);

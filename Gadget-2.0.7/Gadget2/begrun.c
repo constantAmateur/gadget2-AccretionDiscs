@@ -586,6 +586,18 @@ void read_parameter_file(char *fname)
       addr[nt] = &All.MinGasTemp;
       id[nt++] = DOUBLE;
 
+      strcpy(tag[nt], "ArtViscDecayLength");
+      addr[nt] = &All.ArtViscDecayLength;
+      id[nt++] = DOUBLE;
+
+      strcpy(tag[nt], "ArtViscbparam");
+      addr[nt] = &All.ArtViscbparam;
+      id[nt++] = DOUBLE;
+
+      strcpy(tag[nt], "AlphaMax");
+      addr[nt] = &All.AlphaMax;
+      id[nt++] = DOUBLE;
+
       if((fd = fopen(fname, "r")))
 	{
 	  sprintf(buf, "%s%s", fname, "-usedvalues");

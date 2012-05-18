@@ -471,7 +471,7 @@ void density_evaluate(int target, int mode)
   double h, h2, fac, hinv, hinv3, hinv4;
   double rho, divv, wk, dwk;
   double dx, dy, dz, r, r2, u, mass_j;
-  double dvx, dvy, dvz, rotv[3],Di[9];
+  double dvx, dvy, dvz, rotv[3];
   double weighted_numngb, dhsmlrho;
   FLOAT *pos, *vel;
 
@@ -498,7 +498,6 @@ void density_evaluate(int target, int mode)
   hinv4 = hinv3 * hinv;
 
   rho = divv = rotv[0] = rotv[1] = rotv[2] = 0;
-  Di[0]=Di[1]=Di[2]=Di[3]=Di[4]=Di[5]=Di[6]=Di[7]=Di[8]=Di[9]=0;
   weighted_numngb = 0;
   dhsmlrho = 0;
 
@@ -562,35 +561,13 @@ void density_evaluate(int target, int mode)
 	      if(r > 0)
 		{
 		  fac = mass_j * dwk / r;
-        newfac = mass_j * dwk /r; 
 
 		  dvx = vel[0] - SphP[j].VelPred[0];
 		  dvy = vel[1] - SphP[j].VelPred[1];
 		  dvz = vel[2] - SphP[j].VelPred[2];
 
 		  divv -= fac * (dx * dvx + dy * dvy + dz * dvz);
-        Di[0] += newfac * (dvx*dx);
-        Di[1] += newfac * (dvx*dy);
-        Di[2] += newfac * (dvx*dz);
-        Di[3] += newfac * (dvy*dx);
-        Di[4] += newfac * (dvy*dy);
-        Di[5] += newfac * (dvy*dz);
-        Di[6] += newfac * (dvz*dx);
-        Di[7] += newfac * (dvz*dy);
-        Di[8] += newfac * (dvz*dz);
-
-        Ti[0] += newfac * (dx*dx);
-        Ti[1] += newfac * (dx*dy);
-        Ti[2] += newfac * (dx*dz);
-        Ti[3] += newfac * (dy*dx);
-        Ti[4] += newfac * (dy*dy);
-        Ti[5] += newfac * (dy*dz);
-        Ti[6] += newfac * (dz*dx);
-        Ti[7] += newfac * (dz*dy);
-        Ti[8] += newfac * (dz*dz);
-
-
-
+  
 		  rotv[0] += fac * (dz * dvy - dy * dvz);
 		  rotv[1] += fac * (dx * dvz - dz * dvx);
 		  rotv[2] += fac * (dy * dvx - dx * dvy);
