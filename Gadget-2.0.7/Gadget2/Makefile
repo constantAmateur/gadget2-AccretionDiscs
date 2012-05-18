@@ -41,10 +41,10 @@ OPT   +=  -DSYNCHRONIZATION
 
 #--------------------------------------- Output 
 #OPT   +=  -DHAVE_HDF5  
-#OPT   +=  -DOUTPUTPOTENTIAL
-#OPT   +=  -DOUTPUTACCELERATION
-#OPT   +=  -DOUTPUTCHANGEOFENTROPY
-#OPT   +=  -DOUTPUTTIMESTEP
+OPT   +=  -DOUTPUTPOTENTIAL
+OPT   +=  -DOUTPUTACCELERATION
+OPT   +=  -DOUTPUTCHANGEOFENTROPY
+OPT   +=  -DOUTPUTTIMESTEP
 
 
 #--------------------------------------- Things for special behaviour
@@ -62,6 +62,7 @@ OPT   +=  -DCOMPUTE_POTENTIAL_ENERGY
 OPT   +=  -DISOTHERM_EQS
 OPT   +=  -DADAPTIVE_GRAVSOFT_FORGAS
 #OPT   +=  -DSELECTIVE_NO_GRAVITY=2+4+8+16
+OPT   +=  -DNOFFTWINSTALLED
 
 #--------------------------------------- Sink particle options
 OPT   +=  -DSINK_PARTICLES
