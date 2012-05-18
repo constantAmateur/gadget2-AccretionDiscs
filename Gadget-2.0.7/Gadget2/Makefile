@@ -262,6 +262,9 @@ else
 endif
 endif
 
+ifeq (NOFFTWINSTALLED,$(findstring NOFFTWINSTALLED,$(OPT)))
+  FFTW_LIB =
+endif
 
 ifeq (PMGRID,$(findstring PMGRID,$(OPT))) 
   LIBS = $(HDF5LIB) -g $(MPICHLIB) $(GSL_LIBS) -lgsl -lgslcblas -lm $(FFTW_LIB) 
