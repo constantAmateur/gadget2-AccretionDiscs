@@ -163,6 +163,7 @@ void find_next_sync_point_and_drift(void)
       min = P[n].Ti_endstep;
 
   MPI_Allreduce(&min, &min_glob, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
+  /* min will have the smallest timestep locally, min_glob, globally. */
 
   /* We check whether this is a full step where all particles are synchronized */
   flag = 1;

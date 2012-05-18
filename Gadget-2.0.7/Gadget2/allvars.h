@@ -283,7 +283,14 @@ extern struct global_data_all_processes
   double DesNumNgb;             /*!< Desired number of SPH neighbours */
   double MaxNumNgbDeviation;    /*!< Maximum allowed deviation neighbour number */
 
+#ifdef ARTVISCTEST
   double ArtBulkViscConst;      /*!< Sets the parameter \f$\alpha\f$ of the artificial viscosity */
+#endif
+#ifdef INDIVIDUALAV
+  double ArtViscDecayLength;    /* The l value which scales the decay time for per/particle art visc. */
+  double ArtViscbparam;         /* The b parameter which determines the quadratic contribution to the art visc. */
+  double AlphaMax;              /* The maximum value for the artificial viscosity alpha. */
+#endif
   double InitGasTemp;		/*!< may be used to set the temperature in the IC's */
   double MinGasTemp;		/*!< may be used to set a floor for the gas temperature */
   double MinEgySpec;            /*!< the minimum allowed temperature expressed as energy per unit mass */
@@ -494,7 +501,7 @@ extern struct particle_data
   FLOAT Vel[3];			/*!< particle velocity at its current time */
   FLOAT GravAccel[3];		/*!< particle acceleration due to gravity */
 #ifdef PMGRID
-  FLOAT GravPM[3];		/*!< particle acceleration due to long-range PM gravity force*/
+  FLOAT GravPM[3];		/*!< particle accelration due to long-range PM gravity force*/
 #endif
 #ifdef FORCETEST
   FLOAT GravAccelDirect[3];	/*!< particle acceleration when computed with direct summation */
@@ -539,8 +546,21 @@ extern struct sph_particle_data
   FLOAT Pressure;		/*!< current pressure */
   FLOAT DtEntropy;              /*!< rate of change of entropy */
   FLOAT HydroAccel[3];		/*!< acceleration due to hydrodynamical force */
+#ifdef ARTVISCTEST
+  FLOAT OldArtViscAccel[3]; /* Store the component of acceleration resulting from the old artificial viscosity estimator. */
+#endif
   FLOAT VelPred[3];		/*!< predicted SPH particle velocity at the current time */
-  FLOAT DivVel;			/*!< local velocity divergence */
+  FLOAT DivVel;			/*!< local velocity divergence the "standard way".  Still used to estimate factors for the artificial viscosity switch */
+#ifdef INDIVIDUALAV
+  FLOAT ArtVisc;              /* The local value of the artificial viscosity */
+  FLOAT DivVelNew;      /* The new estimate of velocity divergence. */
+  FLOAT DivDotVel;      /*!< local time derivative of velocity divergence */
+  FLOAT ArtViscAccel[3]; /* Store the artificial viscosity acceleration contribution */
+  FLOAT MatrixD[9];     /* The weighted outer product of v_ij with x_ij.  Needed to calculate ArtVisc */
+  FLOAT MatrixT[9];     /* The weighted outer product of x_ij with x_ij.  Needed to calculate ArtVisc */
+  FLOAT R_i;            /* The R factors needed to calculate the viscosity switch. */
+  FLOAT SignalVel;      /* The max signal velocity needs to be calculated slightly differently for this artificial viscosity estimator. */
+#endif
   FLOAT CurlVel;		/*!< local velocity curl */
   FLOAT Rot[3];		        /*!< local velocity curl */
   FLOAT DhsmlDensityFactor;     /*!< correction factor needed in the equation of motion of the conservative entropy formulation of SPH */
@@ -761,6 +781,10 @@ extern struct hydrodata_in
 extern struct hydrodata_out
 {
   FLOAT Acc[3];
+  FLOAT MatrixD[9];
+  FLOAT MatrixT[9];
+  FLOAT R_i;
+  FLOAT SignalVel;
   FLOAT DtEntropy;
   FLOAT MaxSignalVel;
 }

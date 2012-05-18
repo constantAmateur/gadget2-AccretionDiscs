@@ -63,9 +63,11 @@ OPT   +=  -DCOMPUTE_POTENTIAL_ENERGY
 OPT   +=  -DADAPTIVE_GRAVSOFT_FORGAS
 #OPT   +=  -DSELECTIVE_NO_GRAVITY=2+4+8+16
 OPT    += -DNOFFTWINSTALLED
+OPT   +=  -DINDIVIDUALAV
 
 #--------------------------------------- Testing and Debugging options
 #OPT   +=  -DFORCETEST=0.1
+OPT   +=  -DARTVISCTEST
 
 
 #--------------------------------------- Glass making
