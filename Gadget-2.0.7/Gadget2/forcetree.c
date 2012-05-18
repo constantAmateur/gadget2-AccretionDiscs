@@ -2664,7 +2664,7 @@ void force_treeallocate(int maxnodes, int maxpart)
       first_flag = 1;
 
       if(ThisTask == 0)
-	printf("\nAllocated %g MByte for BH-tree. %lu\n\n", allbytes / (1024.0 * 1024.0),
+	printf("\nAllocated %g MByte for BH-tree. %d\n\n", allbytes / (1024.0 * 1024.0),
 	       sizeof(struct NODE) + sizeof(struct extNODE));
 
       tabfac = NTAB / 3.0;

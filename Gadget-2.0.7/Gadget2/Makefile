@@ -28,7 +28,7 @@ OPT   +=  -DWALLCLOCK
 
 #--------------------------------------- Single/Double Precision
 OPT   +=  -DDOUBLEPRECISION      
-OPT   +=  -DDOUBLEPRECISION_FFTW      
+#OPT   +=  -DDOUBLEPRECISION_FFTW      
 
 
 #--------------------------------------- Time integration options
@@ -41,7 +41,7 @@ OPT   +=  -DSYNCHRONIZATION
 
 #--------------------------------------- Output 
 #OPT   +=  -DHAVE_HDF5  
-OPT   +=  -DOUTPUTPOTENTIAL
+#OPT   +=  -DOUTPUTPOTENTIAL
 #OPT   +=  -DOUTPUTACCELERATION
 #OPT   +=  -DOUTPUTCHANGEOFENTROPY
 #OPT   +=  -DOUTPUTTIMESTEP
@@ -50,7 +50,7 @@ OPT   +=  -DOUTPUTPOTENTIAL
 #--------------------------------------- Things for special behaviour
 #OPT   +=  -DNOGRAVITY     
 #OPT   +=  -DNOTREERND 
-#OPT   +=  -DNOTYPEPREFIX_FFTW        
+#OPT   +=  -DNOTYPEPREFIX_FFTW      
 #OPT   +=  -DLONG_X=60
 #OPT   +=  -DLONG_Y=5
 #OPT   +=  -DLONG_Z=0.2
@@ -59,15 +59,21 @@ OPT   +=  -DOUTPUTPOTENTIAL
 #OPT   +=  -DNOVISCOSITYLIMITER
 OPT   +=  -DCOMPUTE_POTENTIAL_ENERGY
 #OPT   +=  -DLONGIDS
-#OPT   +=  -DISOTHERM_EQS
+OPT   +=  -DISOTHERM_EQS
 OPT   +=  -DADAPTIVE_GRAVSOFT_FORGAS
 #OPT   +=  -DSELECTIVE_NO_GRAVITY=2+4+8+16
-OPT    += -DNOFFTWINSTALLED
-OPT   +=  -DINDIVIDUALAV
+
+#--------------------------------------- Sink particle options
+OPT   +=  -DSINK_PARTICLES
+#OPT   +=  -DNO_ACC_TEST
+
+#--------------------------------------- Variable viscosity options
+#OPT   +=  -DVARIABLE_VISC_CONST
+#OPT   +=  -DOUTPUTALPHA
+
 
 #--------------------------------------- Testing and Debugging options
 #OPT   +=  -DFORCETEST=0.1
-OPT   +=  -DARTVISCTEST
 
 
 #--------------------------------------- Glass making
@@ -102,46 +108,21 @@ SYSTYPE="IoA"
 #SYSTYPE="Darwin"
 
 
+
 #--------------------------------------- Adjust settings for target computer
 
-ifeq ($(SYSTYPE),"Darwin")
-CC       =  mpicc -g -O2 -Wall -xSSE4.2
-OPTIMIZE =  
-GSL_INCL =  -I/usr/local/Cluster-Apps/gsl/1.9/include
-GSL_LIBS =  -L/usr/local/Cluster-Apps/gsl/1.9/lib
-FFTW_INCL=  -I/usr/local/Cluster-Apps.nehalem/fftw/intel/double/2.1.5/include
-FFTW_LIBS=  -L/usr/local/Cluster-Apps.nehalem/fftw/intel/double/2.1.5/lib
-MPICHLIB = 
-HDF5INCL =
-HDF5LIB  =
+ifeq ($(SYSTYPE),"ioa")
+CC       =  mpicc
+OPTIMIZE =  -O3 -Wall
+GSL_INCL =  -I/opt/ioa/software/gsl/1.14/include
+GSL_LIBS =  -L/opt/ioa/software/gsl/1.14/lib 
+FFTW_INCL=  
+FFTW_LIBS=  
+MPICHLIB =  -L/opt/ioa/software/openmpi/1.4.2/gcc/4.5.0/lib
+HDF5INCL =  
+HDF5LIB  = 
 endif
 
-ifeq ($(SYSTYPE),"IoA")
-#Requires modules, openmpi/gcc,gsl,gcc, NOFFTWINSTALLED option...
-CC =  mpicc
-OPTIMIZE =  -O3 -Wall
-GSL_INCL =  -I/opt/ioa/software/gsl/1.14/include
-GSL_LIBS =  -L/opt/ioa/software/gsl/1.14/lib 
-FFTW_INCL=  -I/opt/ioa/software/fftw/2.1.5_float/include 
-FFTW_LIBS=  -L/opt/ioa/software/fftw/2.1.5_float/lib 
-#MPICHLIB =  -L/opt/ioa/software/openmpi/1.4.2/sunstudio/ss12u1/lib
-#MPICHLIB =  -L/opt/ioa/software/openmpi/1.4.2/intel/11.1/lib
-MPICHLIB = -L/opt/ioa/software/openmpi/1.4.2/gcc/lib
-HDF5INCL =
-HDF5LIB  =
-endif
-ifeq ($(SYSTYPE),"IoA_FFTW")
-#Requires modules openmpi/intel, intel, gsl, gcc, fftw/2.1.5_float
-CC =  mpicc
-OPTIMIZE =  -O3 -Wall
-GSL_INCL =  -I/opt/ioa/software/gsl/1.14/include
-GSL_LIBS =  -L/opt/ioa/software/gsl/1.14/lib 
-FFTW_INCL=  -I/opt/ioa/software/fftw/2.1.5_float/include 
-FFTW_LIBS=  -L/opt/ioa/software/fftw/2.1.5_float/lib 
-MPICHLIB =  -L/opt/ioa/software/openmpi/1.4.2/intel/11.1/lib
-HDF5INCL =
-HDF5LIB  =
-endif
 
 
 ifeq ($(SYSTYPE),"MPA")
@@ -168,7 +149,6 @@ MPICHLIB =
 HDF5INCL =  -I/opt/hdf5/include
 HDF5LIB  =  -L/opt/hdf5/lib -lhdf5 -lz  -Wl,"-R /opt/hdf5/lib"
 endif
-
 
 ifeq ($(SYSTYPE),"OPA-Cluster32")
 CC       =  mpicc   
@@ -281,12 +261,13 @@ else
 endif
 endif
 
-ifeq (NOFFTWINSTALLED,$(findstring NOFFTWINSTALLED,$(OPT)))
-  FFTW_LIB =
-endif
 
+ifeq (PMGRID,$(findstring PMGRID,$(OPT))) 
+  LIBS = $(HDF5LIB) -g $(MPICHLIB) $(GSL_LIBS) -lgsl -lgslcblas -lm $(FFTW_LIB) 
+else 
+  LIBS = $(HDF5LIB) -g $(MPICHLIB) $(GSL_LIBS) -lgsl -lgslcblas -lm 
+endif 
 
-LIBS   =   $(HDF5LIB) -g  $(MPICHLIB)  $(GSL_LIBS) -lgsl -lgslcblas -lm $(FFTW_LIB) 
 
 $(EXEC): $(OBJS) 
 	$(CC) $(OBJS) $(LIBS)   -o  $(EXEC)  

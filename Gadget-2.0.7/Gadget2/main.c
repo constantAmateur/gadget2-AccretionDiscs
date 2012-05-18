@@ -34,7 +34,6 @@ int main(int argc, char **argv)
 	  ("Note: This is a massively parallel code, but you are running with 1 processor only.\nCompared to an equivalent serial code, there is some unnecessary overhead.\n");
     }
 
-  /* Iterate until PTask=2^n where n is the smallest integer s.t. NTask>PTask */
   for(PTask = 0; NTask > (1 << PTask); PTask++);
 
   if(argc < 2)

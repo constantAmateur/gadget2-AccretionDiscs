@@ -41,6 +41,9 @@ void advance_and_find_timesteps(void)
 #ifdef MAKEGLASS
   double disp, dispmax, globmax, dmean, fac, disp2sum, globdisp2sum;
 #endif
+#ifdef VARIABLE_VISC_CONST
+  double soundspeed, tau, f_fac;
+#endif
 
   t0 = second();
 
@@ -283,6 +286,13 @@ void advance_and_find_timesteps(void)
 
 	  if(P[i].Type == 0)	/* SPH stuff */
 	    {
+#ifdef VARIABLE_VISC_CONST
+	      soundspeed  = sqrt(GAMMA * SphP[i].Pressure / SphP[i].Density);
+	      f_fac = fabs(SphP[i].DivVel) / (fabs(SphP[i].DivVel) + SphP[i].CurlVel +
+                                        0.0001 * soundspeed / SphP[i].Hsml);
+	      tau = 2.5 * SphP[i].Hsml / soundspeed;
+	      SphP[i].DtAlpha = f_fac*dmax(-SphP[i].DivVel, 0) * (All.ArtBulkViscConst - SphP[i].Alpha) - (SphP[i].Alpha - .1)/tau;
+#endif
 	      for(j = 0; j < 3; j++)
 		{
 		  dv[j] += SphP[i].HydroAccel[j] * dt_hydrokick;
@@ -538,7 +548,7 @@ int get_timestep(int p,		/*!< particle index */
     {
       printf("\nError: A timestep of size zero was assigned on the integer timeline!\n"
 	     "We better stop.\n"
-	     "Task=%d Part-ID=%d dt=%g tibase=%g ti_step=%d ac=%g xyz=(%g|%g|%g) tree=(%g|%g%g)\n\n",
+	     "Task=%d Part-ID=%d dt=%g tibase=%g ti_step=%d ac=%g xyz=(%g|%g|%g) tree=(%g|%g|%g)\n\n",
 	     ThisTask, (int) P[p].ID, dt, All.Timebase_interval, ti_step, ac,
 	     P[p].Pos[0], P[p].Pos[1], P[p].Pos[2], P[p].GravAccel[0], P[p].GravAccel[1], P[p].GravAccel[2]);
 #ifdef PMGRID

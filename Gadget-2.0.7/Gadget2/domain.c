@@ -62,6 +62,10 @@ static struct topnode_exchange
 void domain_Decomposition(void)
 {
   double t0, t1;
+  
+#ifdef SINK_PARTICLES
+  int AccNumTot;
+#endif
 
 #ifdef PMGRID
   if(All.PM_Ti_endstep == All.Ti_Current)
@@ -76,6 +80,9 @@ void domain_Decomposition(void)
   if(All.NumForcesSinceLastDomainDecomp > All.TotNumPart * All.TreeDomainUpdateFrequency)
     {
       t0 = second();
+#ifdef SINK_PARTICLES
+      AccNumTot = 0;      
+#endif
 
 #ifdef PERIODIC
       do_box_wrapping();	/* map the particles back onto the box */
@@ -104,6 +111,28 @@ void domain_Decomposition(void)
 
       MPI_Allgather(&NumPart, 1, MPI_INT, list_NumPart, 1, MPI_INT, MPI_COMM_WORLD);
       MPI_Allgather(&N_gas, 1, MPI_INT, list_N_gas, 1, MPI_INT, MPI_COMM_WORLD);
+      
+      
+#ifdef SINK_PARTICLES   
+      if(All.NumCurrentTiStep > 0 ){  
+      // first see if any processors have particles scheduled for accretion
+        MPI_Barrier(MPI_COMM_WORLD);         	
+        MPI_Allreduce(&AccNum, &AccNumTot, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD); 
+        
+        // if so, accrete the,
+        if(AccNumTot > 0){
+          destroy_doomed_particles();	
+          MPI_Barrier(MPI_COMM_WORLD);
+          
+          //update global counters
+          All.TotNumPart -= AccNumTot;
+          All.TotN_gas -= AccNumTot;
+          MPI_Allgather(&NumPart, 1, MPI_INT, list_NumPart, 1, MPI_INT, MPI_COMM_WORLD); 
+          MPI_Allgather(&N_gas, 1, MPI_INT, list_N_gas, 1, MPI_INT, MPI_COMM_WORLD);      
+          if(ThisTask == 0) printf("accreted  %d particles\n",AccNumTot);
+        }
+      }
+#endif	
 
       maxload = All.MaxPart * REDUC_FAC;
       maxloadsph = All.MaxPartSph * REDUC_FAC;

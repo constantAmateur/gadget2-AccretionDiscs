@@ -119,8 +119,6 @@ int    hydro_compare_key(const void *a, const void *b);
 void   hydro_evaluate(int target, int mode);
 void   hydro_force(void);
 double hydrokick_integ(double a, void *param);
-void   hydro_visc_force(void);
-void   visc_evaluate(int target, int mode);
 
 int    imax(int, int);
 int    imin(int, int);
@@ -196,4 +194,12 @@ void   write_header_attributes_in_hdf5(hid_t handle);
 #endif
 void   write_file(char *fname, int readTask, int lastTask);
 void   write_pid_file(void);
+
+
+#ifdef SINK_PARTICLES
+void   identify_doomed_particles(void);
+void   destroy_doomed_particles(void);
+int    index_compare_key(const void *a, const void *b);
+#endif
+
 

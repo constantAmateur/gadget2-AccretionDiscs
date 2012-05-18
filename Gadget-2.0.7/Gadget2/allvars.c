@@ -1,22 +1,12 @@
-/*! \file allvars.h
- *  \brief declares global variables.
- *
- *  This file declares all global variables. Further variables should be added here, and declared as
- *  'extern'. The actual existence of these variables is provided by the file 'allvars.c'. To produce
- *  'allvars.c' from 'allvars.h', do the following:
- *
- *     - Erase all #define's, typedef's, and enum's
- *     - add #include "allvars.h", delete the #ifndef ALLVARS_H conditional
- *     - delete all keywords 'extern'
- *     - delete all struct definitions enclosed in {...}, e.g.
- *        "extern struct global_data_all_processes {....} All;"
- *        becomes "struct global_data_all_processes All;"
+/*! \file allvars.c
+ *  \brief provides instances of all global variables.
  */
 
 #include <stdio.h>
 #include <gsl/gsl_rng.h>
 #include "tags.h"
 #include "allvars.h"
+
 
 int ThisTask;		/*!< the rank of the local processor */
 int NTask;               /*!< number of processors */
@@ -40,6 +30,11 @@ int RestartFlag;         /*!< taken from command line used to start code. 0 is n
 char *Exportflag;        /*!< Buffer used for flagging whether a particle needs to be exported to another process */
 
 int  *Ngblist;           /*!< Buffer to hold indices of neighbours retrieved by the neighbour search routines */
+
+#ifdef SINK_PARTICLES
+int AccNum;	             /*!< Number of particles to be accreted on the LOCAL processor */
+int *AccreteList;        /*!< Buffer to hold indices of particles to be accreted */
+#endif
 
 int TreeReconstructFlag; /*!< Signals that a new tree needs to be constructed */
 
@@ -69,7 +64,7 @@ FLOAT  *DomainTreeNodeLen; /*!< this table gives for each leaf of the top-level 
 FLOAT  *DomainHmax;        /*!< this table gives for each leaf of the top-level tree the maximum SPH smoothing length among the particles of the corresponding node of the gravitational tree */
 
 struct DomainNODE
- *DomainMoment;                   /*!< this table stores for each node of the top-level tree corresponding node data from the gravitational tree */
+ *DomainMoment;                    /*!< this table stores for each node of the top-level tree corresponding node data from the gravitational tree */
 
 peanokey *DomainKeyBuf;    /*!< this points to a buffer used during the exchange of particle data */
 
@@ -81,7 +76,7 @@ int NTopnodes;             /*!< total number of nodes in top-level tree */
 int NTopleaves;            /*!< number of leaves in top-level tree. Each leaf can be assigned to a different processor */
 
 struct topnode_data
- *TopNodes;                       /*!< points to the root node of the top-level tree */
+ *TopNodes;                      /*!< points to the root node of the top-level tree */
 
 
 double TimeOfLastTreeConstruction; /*!< holds what it says, only used in connection with FORCETEST */
@@ -117,7 +112,7 @@ void *CommBuffer;   /*!< points to communication buffer, which is used in the do
  * them into this structure.
  */
 struct global_data_all_processes
- All;                                          /*!< a container variable for global variables that are equal on all processors */
+ All;
 
 
 
@@ -167,17 +162,18 @@ struct extNODE           /*!< this structure holds additional tree-node informat
 /*! Header for the standard file format.
  */
 struct io_header
- header;                               /*!< holds header for snapshot files */
+ header;  /*!< holds header for snapshot files */
 
 
 
 char Tab_IO_Labels[IO_NBLOCKS][4];   /*<! This table holds four-byte character tags used for fileformat 2 */
 
 
+
 /* global state of system, used for global statistics
  */
 struct state_of_system
- SysState;                       /*<! Structure for storing some global statistics about the simulation. */
+ SysState;      /*<! Structure for storing some global statistics about the simulation. */
  
 
 
@@ -211,3 +207,5 @@ struct hydrodata_in
 struct hydrodata_out
  *HydroDataResult,              /*!< stores the locally computed SPH hydro results for imported particles */
  *HydroDataPartialResult;       /*!< imported partial SPH hydro-force results from other processors */
+
+

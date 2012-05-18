@@ -149,6 +149,11 @@ extern char *Exportflag;        /*!< Buffer used for flagging whether a particle
 
 extern int  *Ngblist;           /*!< Buffer to hold indices of neighbours retrieved by the neighbour search routines */
 
+#ifdef SINK_PARTICLES
+extern int AccNum;	        /*!< Number of particles to be accreted */
+extern int *AccreteList;        /*!< Buffer to hold indices of particles to be accreted */
+#endif
+
 extern int TreeReconstructFlag; /*!< Signals that a new tree needs to be constructed */
 
 extern int Flag_FullStep;       /*!< This flag signals that the current step involves all particles */
@@ -284,13 +289,15 @@ extern struct global_data_all_processes
   double MaxNumNgbDeviation;    /*!< Maximum allowed deviation neighbour number */
 
   double ArtBulkViscConst;      /*!< Sets the parameter \f$\alpha\f$ of the artificial viscosity */
-  double ArtViscDecayLength;    /* The l value which scales the decay time for per/particle art visc. */
-  double ArtViscbparam;         /* The b parameter which determines the quadratic contribution to the art visc. */
-  double AlphaMax;              /* The maximum value for the artificial viscosity alpha. */
   double InitGasTemp;		/*!< may be used to set the temperature in the IC's */
   double MinGasTemp;		/*!< may be used to set a floor for the gas temperature */
   double MinEgySpec;            /*!< the minimum allowed temperature expressed as energy per unit mass */
 
+
+#ifdef SINK_PARTICLES
+  /* accretion and wind parameters */
+  double AccretionRadius;    /*!< the radius at which sph particles are accreted onto sinks */
+#endif
 
   /* some force counters  */
 
@@ -344,7 +351,9 @@ extern struct global_data_all_processes
   double TimeBetStatistics;     /*!< simulation time interval between computations of energy statistics */
   double TimeLastStatistics;    /*!< simulation time when the energy statistics was computed the last time */
   int NumCurrentTiStep;         /*!< counts the number of system steps taken up to this point */
-
+#ifdef SINK_PARTICLES  
+  int TstepLastAcc;             /*!< Stores the timestep of the last accretion event. */
+#endif
 
   /* Current time of the simulation, global step, and end of simulation */
 
@@ -497,7 +506,7 @@ extern struct particle_data
   FLOAT Vel[3];			/*!< particle velocity at its current time */
   FLOAT GravAccel[3];		/*!< particle acceleration due to gravity */
 #ifdef PMGRID
-  FLOAT GravPM[3];		/*!< particle accelration due to long-range PM gravity force*/
+  FLOAT GravPM[3];		/*!< particle acceleration due to long-range PM gravity force*/
 #endif
 #ifdef FORCETEST
   FLOAT GravAccelDirect[3];	/*!< particle acceleration when computed with direct summation */
@@ -542,25 +551,19 @@ extern struct sph_particle_data
   FLOAT Pressure;		/*!< current pressure */
   FLOAT DtEntropy;              /*!< rate of change of entropy */
   FLOAT HydroAccel[3];		/*!< acceleration due to hydrodynamical force */
-#ifdef ARTVISCTEST
-  FLOAT OldArtViscAccel[3]; /* Store the component of acceleration resulting from the old artificial viscosity estimator. */
-#endif
   FLOAT VelPred[3];		/*!< predicted SPH particle velocity at the current time */
-  FLOAT DivVel;			/*!< local velocity divergence the "standard way".  Still used to estimate factors for the artificial viscosity switch */
-#ifdef INDIVIDUALAV
-  FLOAT ArtVisc;              /* The local value of the artificial viscosity */
-  FLOAT DivVelNew;      /* The new estimate of velocity divergence. */
-  FLOAT DivDotVel;      /*!< local time derivative of velocity divergence */
-  FLOAT ArtViscAccel[3]; /* Store the artificial viscosity acceleration contribution */
-  FLOAT MatrixD[9];     /* The weighted outer product of v_ij with x_ij.  Needed to calculate ArtVisc */
-  FLOAT MatrixT[9];     /* The weighted outer product of x_ij with x_ij.  Needed to calculate ArtVisc */
-  FLOAT R_i;            /* The R factors needed to calculate the viscosity switch. Does not include the factor of 1/rho*/
-  FLOAT SignalVel;      /* The max signal velocity needs to be calculated slightly differently for this artificial viscosity estimator. */
-#endif
+  FLOAT DivVel;			/*!< local velocity divergence */
   FLOAT CurlVel;		/*!< local velocity curl */
   FLOAT Rot[3];		        /*!< local velocity curl */
   FLOAT DhsmlDensityFactor;     /*!< correction factor needed in the equation of motion of the conservative entropy formulation of SPH */
   FLOAT MaxSignalVel;           /*!< maximum "signal velocity" occuring for this particle */
+#ifdef SINK_PARTICLES  
+  int   AccretionTarget;        /*!< flag for accretion. equal to the index of the sink particle it's going to merge with. */
+#endif
+#ifdef VARIABLE_VISC_CONST
+  FLOAT Alpha;		        /*!< viscosity coefficient */
+  FLOAT DtAlpha;       		/*!< time rate of change of viscosity coefficient */
+#endif
 }
  *SphP,                        	/*!< holds SPH particle data on local processor */
  *DomainSphBuf;                 /*!< buffer for SPH particle data in domain decomposition */
@@ -664,6 +667,7 @@ enum iofields           /*!< this enumeration lists the defined output blocks in
   IO_ACCEL,
   IO_DTENTR,
   IO_TSTP,
+  IO_ALPHA,
 };
 
 
@@ -767,12 +771,15 @@ extern struct hydrodata_in
   FLOAT Pressure;
   FLOAT F1;
   FLOAT DhsmlDensityFactor;
-#ifdef INDIVIDUALAV
-  FLOAT ArtVisc;
-#endif
   int   Timestep;
   int   Task;
   int   Index;
+#ifdef VARIABLE_VISC_CONST
+  FLOAT Alpha;
+#endif
+#ifdef SINK_PARTICLES
+  int AccretionTarget;
+#endif
 }
  *HydroDataIn,                  /*!< holds particle data for SPH hydro-force computation to be exported to other processors */
  *HydroDataGet;                 /*!< holds imported particle data for SPH hydro-force computation */
@@ -780,15 +787,8 @@ extern struct hydrodata_in
 extern struct hydrodata_out
 {
   FLOAT Acc[3];
-  FLOAT MatrixD[9];
-  FLOAT MatrixT[9];
-  FLOAT R_i;
-  FLOAT SignalVel;
   FLOAT DtEntropy;
   FLOAT MaxSignalVel;
-#ifdef ARTVISCTEST
-  FLOAT OldArtViscAccel[3];
-#endif
 }
  *HydroDataResult,              /*!< stores the locally computed SPH hydro results for imported particles */
  *HydroDataPartialResult;       /*!< imported partial SPH hydro-force results from other processors */

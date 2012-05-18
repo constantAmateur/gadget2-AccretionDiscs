@@ -585,19 +585,11 @@ void read_parameter_file(char *fname)
       strcpy(tag[nt], "MinGasTemp");
       addr[nt] = &All.MinGasTemp;
       id[nt++] = DOUBLE;
-
-      strcpy(tag[nt], "ArtViscDecayLength");
-      addr[nt] = &All.ArtViscDecayLength;
+#ifdef SINK_PARTICLES      
+      strcpy(tag[nt], "AccretionRadius");
+      addr[nt] = &All.AccretionRadius;
       id[nt++] = DOUBLE;
-
-      strcpy(tag[nt], "ArtViscbparam");
-      addr[nt] = &All.ArtViscbparam;
-      id[nt++] = DOUBLE;
-
-      strcpy(tag[nt], "AlphaMax");
-      addr[nt] = &All.AlphaMax;
-      id[nt++] = DOUBLE;
-
+#endif
       if((fd = fopen(fname, "r")))
 	{
 	  sprintf(buf, "%s%s", fname, "-usedvalues");

@@ -96,7 +96,6 @@ void density(void)
 	NumSphUpdate++;
     }
 
-  /* Seems like we could probably delete one of these NTasks... */
   numlist = malloc(NTask * sizeof(int) * NTask);
   MPI_Allgather(&NumSphUpdate, 1, MPI_INT, numlist, 1, MPI_INT, MPI_COMM_WORLD);
   for(i = 0, ntot = 0; i < NTask; i++)
@@ -110,7 +109,7 @@ void density(void)
    */
   do
     {
-      i = 0;			/* begin with this index */
+      i = 0;			/* beginn with this index */
       ntotleft = ntot;		/* particles left for all tasks together */
 
       while(ntotleft > 0)
@@ -567,7 +566,7 @@ void density_evaluate(int target, int mode)
 		  dvz = vel[2] - SphP[j].VelPred[2];
 
 		  divv -= fac * (dx * dvx + dy * dvy + dz * dvz);
-  
+
 		  rotv[0] += fac * (dz * dvy - dy * dvz);
 		  rotv[1] += fac * (dx * dvz - dz * dvx);
 		  rotv[2] += fac * (dy * dvx - dx * dvy);

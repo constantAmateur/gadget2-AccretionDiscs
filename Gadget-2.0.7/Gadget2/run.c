@@ -23,6 +23,9 @@ void run(void)
   int stopflag = 0;
   char stopfname[200], contfname[200];
   double t0, t1;
+#ifdef SINK_PARTICLES
+  int AccNumTot;
+#endif
 
 
   sprintf(stopfname, "%sstop", All.OutputDir);
@@ -42,11 +45,24 @@ void run(void)
 
 
       domain_Decomposition();	/* do domain decomposition if needed */
+                              // particles are accreted in domain_Decomposition, as well.
 
 
       compute_accelerations(0);	/* compute accelerations for 
 				 * the particles that are to be advanced  
 				 */
+
+#ifdef SINK_PARTICLES
+     // only check for accreted particles every 10 timesteps. this is sort of arbitrary.
+      if(All.NumCurrentTiStep - All.TstepLastAcc > 10){  
+        MPI_Barrier(MPI_COMM_WORLD);  
+
+        identify_doomed_particles();
+       	
+        MPI_Allreduce(&AccNum, &AccNumTot, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);		
+        if(AccNumTot > 0) All.NumForcesSinceLastDomainDecomp =  All.TotNumPart * All.TreeDomainUpdateFrequency + 1;			 
+      }    
+#endif
 
       /* check whether we want a full energy statistics */
       if((All.Time - All.TimeLastStatistics) >= All.TimeBetStatistics)
@@ -163,7 +179,6 @@ void find_next_sync_point_and_drift(void)
       min = P[n].Ti_endstep;
 
   MPI_Allreduce(&min, &min_glob, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
-  /* min will have the smallest timestep locally, min_glob, globally. */
 
   /* We check whether this is a full step where all particles are synchronized */
   flag = 1;
