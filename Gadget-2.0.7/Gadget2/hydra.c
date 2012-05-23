@@ -449,8 +449,6 @@ void hydro_evaluate(int target, int mode)
 
 #ifdef VARIABLE_VISC_CONST
     alpha_visc_j = SphP[j].Alpha;
-#else
-    alpha_visc_j = All.ArtBulkViscConst;
 #endif
 
 #ifdef PERIODIC			/*  find the closest image in the given box size  */
@@ -531,13 +529,15 @@ void hydro_evaluate(int target, int mode)
 		    {
 		      mu_ij = fac_mu * vdotr2 / r;	/* note: this is negative! */
 
-                      vsig = soundspeed_i + soundspeed_j - 3 * mu_ij;
+            //ArtViscPropConst is 3/2 in original implementation...
+                      vsig = soundspeed_i + soundspeed_j - All.ArtViscPropConst*2.0 * mu_ij;
 
 		      if(vsig > maxSignalVel)
 			maxSignalVel = vsig;
 
 		      rho_ij = 0.5 * (rho + SphP[j].Density);
 #ifdef VARIABLE_VISC_CONST		      
+            //The balsara switch is added to the source term if alpha is per particle...
           visc = 0.25 * (alpha_visc + alpha_visc_j) * vsig * (-mu_ij) / rho_ij;
 #else
           f2 =

@@ -585,6 +585,21 @@ void read_parameter_file(char *fname)
       strcpy(tag[nt], "MinGasTemp");
       addr[nt] = &All.MinGasTemp;
       id[nt++] = DOUBLE;
+
+      strcpy(tag[nt], "ArtViscPropConst");
+      addr[nt] = &All.ArtViscPropConst;
+      id[nt++] = DOUBLE;
+
+#ifdef VARIABLE_VISC_CONST
+      strcpy(tag[nt], "VariableViscDecayLength");
+      addr[nt] = &All.VariableViscDecayLength;
+      id[nt++] = DOUBLE;
+
+      strcpy(tag[nt], "VariableViscAlphaMin");
+      addr[nt] = &All.VariableViscAlphaMin;
+      id[nt++] = DOUBLE;
+#endif
+
 #ifdef SINK_PARTICLES      
       strcpy(tag[nt], "AccretionRadius");
       addr[nt] = &All.AccretionRadius;

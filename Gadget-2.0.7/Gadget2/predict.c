@@ -244,6 +244,11 @@ void identify_doomed_particles(void)
       
       
       KeplerL2 = All.G * list_sink_mass[i] * sinkrad;
+      //This needs to be fixed up to handle the case where the ngb buffer gets full
+      //i.e., stick inside do while
+      //do
+      //{
+      //}while(startnode>=0);
       num = ngb_treefind_variable(&pos[0],sinkrad,&startnode); /* find all particles inside the sink radius */
       
       for(n = 0; n < num; n++){
@@ -354,6 +359,7 @@ void destroy_doomed_particles(void)
   /* first transfer momentum from all particles that are going to be accreted */
   
   numsinks = NumPart - N_gas;  
+  //Could we replace this with NtypeLocal[1]?
   MPI_Barrier(MPI_COMM_WORLD);
   MPI_Allreduce(&numsinks, &numsinkstot, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD); 
   
@@ -453,6 +459,7 @@ void destroy_doomed_particles(void)
           dposztot += P[j].Pos[2] * P[j].Mass;
           dmasstot += P[j].Mass;
           
+          //Move position to centre of mass
           P[j].Pos[0] = dposxtot / dmasstot;
           P[j].Pos[1] = dposytot / dmasstot;	  	  
           P[j].Pos[2] = dposztot / dmasstot;	  
@@ -463,10 +470,12 @@ void destroy_doomed_particles(void)
           dvelytot += P[j].Mass * (P[j].Vel[1] + dt_grav * P[j].GravAccel[1]);	  
           dvelztot += P[j].Mass * (P[j].Vel[2] + dt_grav * P[j].GravAccel[2]);
           
+          //Add momentum to the sink
           P[j].Vel[0] = dvelxtot / dmasstot - dt_grav * P[j].GravAccel[0];
           P[j].Vel[1] = dvelytot / dmasstot - dt_grav * P[j].GravAccel[1];
           P[j].Vel[2] = dvelztot / dmasstot - dt_grav * P[j].GravAccel[2];	  	  
           
+          //Add the mass to the sink
           P[j].Mass = dmasstot;
           printf("ID %d task %d accnum %d final vel, pos, mass: (%e|%e|%e), (%e|%e|%e), %e\n", \
                  P[j].ID,ThisTask,AccNum,P[j].Vel[0],P[j].Vel[1],P[j].Vel[2], \
@@ -498,6 +507,7 @@ void destroy_doomed_particles(void)
       }
       NumPart--;   // decrement the local countrs of particles and gas particles
       N_gas--;
+      //Need to decrement the Ntype and Ntypelocal variables too?
       acc_counter++; 
     }
   }

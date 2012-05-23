@@ -42,7 +42,7 @@ void advance_and_find_timesteps(void)
   double disp, dispmax, globmax, dmean, fac, disp2sum, globdisp2sum;
 #endif
 #ifdef VARIABLE_VISC_CONST
-  double soundspeed, tau, f_fac;
+  double soundspeed, tau, f_fac,fac_mu;
 #endif
 
   t0 = second();
@@ -265,11 +265,17 @@ void advance_and_find_timesteps(void)
 	      dt_hydrokick = get_hydrokick_factor(tstart, tend);
 	      dt_gravkick2 = get_gravkick_factor(P[i].Ti_endstep, tend);
 	      dt_hydrokick2 = get_hydrokick_factor(P[i].Ti_endstep, tend);
+#ifdef VARIABLE_VISC_CONST
+         fac_mu= pow(All.Time, 3 * (GAMMA -1 )/2) /All.Time;
+#endif
 	    }
 	  else
 	    {
 	      dt_entr = dt_gravkick = dt_hydrokick = (tend - tstart) * All.Timebase_interval;
 	      dt_gravkick2 = dt_hydrokick2 = dt_entr2 = (tend - P[i].Ti_endstep) * All.Timebase_interval;
+#ifdef VARIABLE_VISC_CONST
+         fac_mu=1.0;
+#endif
 	    }
 
 	  P[i].Ti_begstep = P[i].Ti_endstep;
@@ -289,9 +295,9 @@ void advance_and_find_timesteps(void)
 #ifdef VARIABLE_VISC_CONST
 	      soundspeed  = sqrt(GAMMA * SphP[i].Pressure / SphP[i].Density);
 	      f_fac = fabs(SphP[i].DivVel) / (fabs(SphP[i].DivVel) + SphP[i].CurlVel +
-                                        0.0001 * soundspeed / SphP[i].Hsml);
-	      tau = 2.5 * SphP[i].Hsml / soundspeed;
-	      SphP[i].DtAlpha = f_fac*dmax(-SphP[i].DivVel, 0) * (All.ArtBulkViscConst - SphP[i].Alpha) - (SphP[i].Alpha - .1)/tau;
+                                        0.0001 * soundspeed / SphP[i].Hsml/fac.mu);
+	      tau = 0.5 * SphP[i].Hsml / soundspeed /All.VariableViscDecayLength;
+	      SphP[i].DtAlpha = f_fac*dmax(-SphP[i].DivVel, 0) * (All.ArtBulkViscConst - SphP[i].Alpha) - (SphP[i].Alpha - All.VariableViscAlphaMin)/tau;
 #endif
 	      for(j = 0; j < 3; j++)
 		{
