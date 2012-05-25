@@ -295,7 +295,7 @@ void advance_and_find_timesteps(void)
 #ifdef VARIABLE_VISC_CONST
 	      soundspeed  = sqrt(GAMMA * SphP[i].Pressure / SphP[i].Density);
 	      f_fac = fabs(SphP[i].DivVel) / (fabs(SphP[i].DivVel) + SphP[i].CurlVel +
-                                        0.0001 * soundspeed / SphP[i].Hsml/fac.mu);
+                                        0.0001 * soundspeed / SphP[i].Hsml/fac_mu);
 	      tau = 0.5 * SphP[i].Hsml / soundspeed /All.VariableViscDecayLength;
 	      SphP[i].DtAlpha = f_fac*dmax(-SphP[i].DivVel, 0) * (All.ArtBulkViscConst - SphP[i].Alpha) - (SphP[i].Alpha - All.VariableViscAlphaMin)/tau;
 #endif

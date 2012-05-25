@@ -133,6 +133,13 @@ void gravity_tree(void)
 		      GravDataGet[nexport].Soft = SphP[i].Hsml;
 #endif
 #endif
+#ifdef PRICE_GRAV_SOFT
+          if(P[i].Type ==0)
+          {
+            GravDataGet[nexport].Zeta = SphP[i].Zeta;
+            GravDataGet[nexport].DhsmlDensityFactor = SphP[i].DhsmlDensityFactor;
+          }
+#endif
 		    GravDataGet[nexport].w.OldAcc = P[i].OldAcc;
 		    GravDataIndexTable[nexport].Task = j;
 		    GravDataIndexTable[nexport].Index = i;

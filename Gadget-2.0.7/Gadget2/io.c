@@ -400,6 +400,7 @@ int get_bytes_per_blockelement(enum iofields blocknr)
     case IO_HSML:
     case IO_POT:
     case IO_DTENTR:
+    case IO_ALPHA:
     case IO_TSTP:
       bytes_per_blockelement = sizeof(float);
       break;
@@ -459,6 +460,7 @@ int get_values_per_blockelement(enum iofields blocknr)
     case IO_HSML:
     case IO_POT:
     case IO_DTENTR:
+    case IO_ALPHA:
     case IO_TSTP:
       values = 1;
       break;
@@ -522,6 +524,7 @@ int get_particles_in_block(enum iofields blocknr, int *typelist)
     case IO_U:
     case IO_RHO:
     case IO_HSML:
+    case IO_ALPHA:
     case IO_DTENTR:
       for(i = 1; i < 6; i++)
         typelist[i] = 0;
@@ -614,6 +617,9 @@ void fill_Tab_IO_Labels(void)
     case IO_TSTP:
       strncpy(Tab_IO_Labels[IO_TSTP], "TSTP", 4);
       break;
+    case IO_ALPHA:
+      strncpy(Tab_IO_Labels[IO_ALPHA], "APLHA", 4);
+      break;
   }
 }
 
@@ -660,6 +666,9 @@ void get_dataset_name(enum iofields blocknr, char *buf)
       break;
     case IO_TSTP:
       strcpy(buf, "TimeStep");
+      break;
+    case IO_ALPHA:
+      strcpy(buf, "ArtificialViscosity");
       break;
   }
 }

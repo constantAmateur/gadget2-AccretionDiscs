@@ -45,6 +45,7 @@ OPT   +=  -DOUTPUTPOTENTIAL
 OPT   +=  -DOUTPUTACCELERATION
 OPT   +=  -DOUTPUTCHANGEOFENTROPY
 OPT   +=  -DOUTPUTTIMESTEP
+OPT   +=  -DOUTPUTALPHA
 
 
 #--------------------------------------- Things for special behaviour
@@ -61,16 +62,16 @@ OPT   +=  -DCOMPUTE_POTENTIAL_ENERGY
 #OPT   +=  -DLONGIDS
 OPT   +=  -DISOTHERM_EQS
 OPT   +=  -DADAPTIVE_GRAVSOFT_FORGAS
+OPT   +=  -DPRICE_GRAV_SOFT
 #OPT   +=  -DSELECTIVE_NO_GRAVITY=2+4+8+16
-OPT   +=  -DNOFFTWINSTALLED
+#OPT   +=  -DNOFFTWINSTALLED
 
 #--------------------------------------- Sink particle options
-OPT   +=  -DSINK_PARTICLES
+#OPT   +=  -DSINK_PARTICLES
 #OPT   +=  -DNO_ACC_TEST
 
 #--------------------------------------- Variable viscosity options
-#OPT   +=  -DVARIABLE_VISC_CONST
-#OPT   +=  -DOUTPUTALPHA
+OPT   +=  -DVARIABLE_VISC_CONST
 
 
 #--------------------------------------- Testing and Debugging options
@@ -112,7 +113,7 @@ SYSTYPE="IoA"
 
 #--------------------------------------- Adjust settings for target computer
 
-ifeq ($(SYSTYPE),"ioa")
+ifeq ($(SYSTYPE),"IoA")
 CC       =  mpicc
 OPTIMIZE =  -O3 -Wall
 GSL_INCL =  -I/opt/ioa/software/gsl/1.14/include

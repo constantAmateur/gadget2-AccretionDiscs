@@ -1135,6 +1135,12 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 #ifdef ADAPTIVE_GRAVSOFT_FORGAS
   double soft = 0;
 #endif
+#ifdef PRICE_GRAV_SOFT
+  double h_i,h_j,hinv_i,hinv_j,hinv3_i,hinv3_j,hinv4_i,hinv4_j;
+  double dhsmlDensityFactor_i,dhsmlDensityFactor_j,zeta_i,zeta_j;
+  double u_i,u_j,dwk_i,dwk_j;
+  int ptype_j;
+#endif
 #ifdef PERIODIC
   double boxsize, boxhalf;
 
@@ -1158,6 +1164,13 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
       if(ptype == 0)
 	soft = SphP[target].Hsml;
 #endif
+#if PRICE_GRAV_SOFT
+      if(ptype == 0)
+      {
+        zeta_i = SphP[target].Zeta;
+        dhsmlDensityFactor_i = SphP[target].DhsmlDensityFactor;
+      }
+#endif
     }
   else
     {
@@ -1173,6 +1186,13 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 #ifdef ADAPTIVE_GRAVSOFT_FORGAS
       if(ptype == 0)
 	soft = GravDataGet[target].Soft;
+#endif
+#if PRICE_GRAV_SOFT
+      if(ptype == 0)
+      {
+        zeta_i = GravDataGet[target].Zeta;
+        dhsmlDensityFactor_i = GravDataGet[target].DhsmlDensityFactor;
+      }
 #endif
     }
 
@@ -1231,14 +1251,26 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 	    h = soft;
 	  else
 	    h = All.ForceSoftening[ptype];
+#ifdef PRICE_GRAV_SOFT
+     h_i=h;
+     ptype_j=P[no].Type;
+#endif
 
 	  if(P[no].Type == 0)
 	    {
+#ifdef PRICE_GRAV_SOFT
+         h_j=SphP[no].Hsml;
+         zeta_j = SphP[no].Zeta;
+         dhsmlDensityFactor_j = SphP[no].DhsmlDensityFactor;
+#endif
 	      if(h < SphP[no].Hsml)
 		h = SphP[no].Hsml;
 	    }
 	  else
 	    {
+#ifdef PRICE_GRAV_SOFT
+         h_j=All.ForceSoftening[P[no].Type];
+#endif
 	      if(h < All.ForceSoftening[P[no].Type])
 		h = All.ForceSoftening[P[no].Type];
 	    }
@@ -1330,6 +1362,16 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 	  else
 	    h = All.ForceSoftening[ptype];
 
+#ifdef PRICE_GRAV_SOFT
+     //This should ensure that if there's any chance of any particle in the cell being within the interaction radius of our particle (and hence needing to be smoothed) we will open up the box
+     if(h < nop->maxsoft)
+       h=nop->maxsoft;
+     if(r2 < h*h)
+     {
+       no = nop->u.d.nextnode;
+       continue;
+     }
+#else
 	  if(h < nop->maxsoft)
 	    {
 	      h = nop->maxsoft;
@@ -1339,6 +1381,7 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 		  continue;
 		}
 	    }
+#endif
 #endif
 #endif
 
@@ -1357,10 +1400,56 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 	fac = mass / (r2 * r);
       else
 	{
+#ifdef PRICE_GRAV_SOFT
+     //This is a hack.  Ideally we should calculate all the SPH like properties for non-SPH particles and then we could use them to soften the gravity using the price method.  However, as this involves a substantial restructuring of the code, we simply set any interactions that involve non-SPH particles to be unsoftened.  This will probably never even be an issue if all the non-sph praticles are accreting particles with a reasonable accretion radius (several times their smoothing length).
+     if (ptype_j!=0 || ptype!=0)
+     {
+       fac = mass / (r2 * r);
+     } else {
+       //For PRICE_GRAV_SOFT, if we are in this section of code, we are garunteed
+       //that the "target particle" is in fact a particle and not an unopened cell
+       //this is so we can sensibly include the extra terms in the gravitational acceleration.
+       hinv_i = 1.0/h_i;
+       hinv3_i = hinv_i * hinv_i * hinv_i;
+       hinv4_i = hinv3_i * hinv_i;
+       hinv_j = 1.0/h_j;
+       hinv3_j = hinv_j * hinv_j * hinv_j;
+       hinv4_j = hinv3_j * hinv_j;
+       u_i = r * hinv_i;
+       u_j = r * hinv_j;
+       if(u_i < .5)
+       {
+  	    fac = mass * (hinv3_i * (5.333333333333 + u_i * u_i * (16.0 * u_i - 19.2)));
+         dwk_i = hinv4_i * u_i * (KERNEL_COEFF_3 * u_i - KERNEL_COEFF_4);
+       } else  if(u_i < 1.0){
+  	      fac = mass * (hinv3_i * (10.666666666667 - 24.0 * u_i + 
+                19.2 * u_i * u_i - 5.333333333333 * u_i * u_i * u_i - 
+                0.0333333333333 / (u_i * u_i * u_i)));
+         dwk_i = hinv4_i * KERNEL_COEFF_6 * (1.0 - u_i) * (1.0 - u_i);
+       } else {
+         fac = 0;
+         dwk_i = 0;
+       }
+       if(u_j < .5)
+       {
+  	    fac += mass * (hinv3_j * (5.333333333333 + u_j * u_j * (16.0 * u_j - 19.2)));
+         dwk_j = hinv4_j * u_j * (KERNEL_COEFF_3 * u_j - KERNEL_COEFF_4);
+       } else  if(u_j < 1.0){
+  	      fac += mass * (hinv3_j * (10.666666666667 - 24.0 * u_j + 
+                19.2 * u_j * u_j - 5.333333333333 * u_j * u_j * u_j - 
+                0.0333333333333 / (u_j * u_j * u_j)));
+         dwk_j = hinv4_j * KERNEL_COEFF_6 * (1.0 - u_j) * (1.0 - u_j);
+       } else {
+         dwk_j = 0;
+       }
+       fac += .5 * mass * (zeta_i * dhsmlDensityFactor_i * dwk_i + zeta_j* dhsmlDensityFactor_j *dwk_j)/r;
+     }
+#else
 #ifdef UNEQUALSOFTENINGS
 	  h_inv = 1.0 / h;
 	  h3_inv = h_inv * h_inv * h_inv;
 #endif
+
 	  u = r * h_inv;
 	  if(u < 0.5)
 	    fac = mass * h3_inv * (10.666666666667 + u * u * (32.0 * u - 38.4));
@@ -1368,6 +1457,7 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 	    fac =
 	      mass * h3_inv * (21.333333333333 - 48.0 * u +
 			       38.4 * u * u - 10.666666666667 * u * u * u - 0.066666666667 / (u * u * u));
+#endif
 	}
 
       acc_x += dx * fac;

@@ -109,7 +109,7 @@ void density(void)
    */
   do
     {
-      i = 0;			/* beginn with this index */
+      i = 0;			/* begin with this index */
       ntotleft = ntot;		/* particles left for all tasks together */
 
       while(ntotleft > 0)
@@ -261,6 +261,9 @@ void density(void)
 			      SphP[place].DivVel += DensDataPartialResult[source].Div;
 
 			      SphP[place].DhsmlDensityFactor += DensDataPartialResult[source].DhsmlDensity;
+#ifdef PRICE_GRAV_SOFT
+               SphP[place].Zeta += DensDataPartialResult[source].Zeta;
+#endif
 
 			      SphP[place].Rot[0] += DensDataPartialResult[source].Rot[0];
 			      SphP[place].Rot[1] += DensDataPartialResult[source].Rot[1];
@@ -295,6 +298,9 @@ void density(void)
 	      {
 		SphP[i].DhsmlDensityFactor =
 		  1 / (1 + SphP[i].Hsml * SphP[i].DhsmlDensityFactor / (NUMDIMS * SphP[i].Density));
+#ifdef PRICE_GRAV_SOFT
+      SphP[i].Zeta = -SphP[i].Hsml * SphP[i].Zeta / ( NUMDIMS * SphP[i].Density);
+#endif
 
 		SphP[i].CurlVel = sqrt(SphP[i].Rot[0] * SphP[i].Rot[0] +
 				       SphP[i].Rot[1] * SphP[i].Rot[1] +
@@ -472,6 +478,9 @@ void density_evaluate(int target, int mode)
   double dx, dy, dz, r, r2, u, mass_j;
   double dvx, dvy, dvz, rotv[3];
   double weighted_numngb, dhsmlrho;
+#ifdef PRICE_GRAV_SOFT
+  double zeta,dphi,hinv2;
+#endif
   FLOAT *pos, *vel;
 
   if(mode == 0)
@@ -489,6 +498,9 @@ void density_evaluate(int target, int mode)
 
   h2 = h * h;
   hinv = 1.0 / h;
+#ifdef PRICE_GRAV_SOFT
+  hinv2 = hinv * hinv;
+#endif
 #ifndef  TWODIMS
   hinv3 = hinv * hinv * hinv;
 #else
@@ -499,6 +511,9 @@ void density_evaluate(int target, int mode)
   rho = divv = rotv[0] = rotv[1] = rotv[2] = 0;
   weighted_numngb = 0;
   dhsmlrho = 0;
+#ifdef PRICE_GRAV_SOFT
+  zeta = 0;
+#endif;
 
   startnode = All.MaxPart;
   numngb = 0;
@@ -542,11 +557,17 @@ void density_evaluate(int target, int mode)
 		{
 		  wk = hinv3 * (KERNEL_COEFF_1 + KERNEL_COEFF_2 * (u - 1) * u * u);
 		  dwk = hinv4 * u * (KERNEL_COEFF_3 * u - KERNEL_COEFF_4);
+#ifdef PRICE_GRAV_SOFT
+        dphi = hinv2 * (-32.0 * u*u +96.0*u*u*u*u - 76.8*u*u*u*u*u +5.6);
+#endif
 		}
 	      else
 		{
 		  wk = hinv3 * KERNEL_COEFF_5 * (1.0 - u) * (1.0 - u) * (1.0 - u);
 		  dwk = hinv4 * KERNEL_COEFF_6 * (1.0 - u) * (1.0 - u);
+#ifdef PRICE_GRAV_SOFT
+        dphi = hinv2 * (-64.0 * u*u +128.0*u*u*u-96.0*u*u*u*u+25.6*u*u*u*u*u+6.4);
+#endif
 		}
 
 	      mass_j = P[j].Mass;
@@ -556,6 +577,10 @@ void density_evaluate(int target, int mode)
 	      weighted_numngb += NORM_COEFF * wk / hinv3;
 
 	      dhsmlrho += -mass_j * (NUMDIMS * hinv * wk + u * dwk);
+
+#ifdef PRICE_GRAV_SOFT
+         zeta += mass_j * dphi;
+#endif
 
 	      if(r > 0)
 		{
@@ -585,6 +610,9 @@ void density_evaluate(int target, int mode)
       SphP[target].Rot[0] = rotv[0];
       SphP[target].Rot[1] = rotv[1];
       SphP[target].Rot[2] = rotv[2];
+#ifdef PRICE_GRAV_SOFT
+      SphP[target].Zeta = zeta;
+#endif
     }
   else
     {
@@ -595,6 +623,10 @@ void density_evaluate(int target, int mode)
       DensDataResult[target].Rot[0] = rotv[0];
       DensDataResult[target].Rot[1] = rotv[1];
       DensDataResult[target].Rot[2] = rotv[2];
+#ifdef PRICE_GRAV_SOFT
+      DensDataResult[target].Zeta = zeta;
+#endif
+
     }
 }
 

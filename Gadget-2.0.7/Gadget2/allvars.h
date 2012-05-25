@@ -292,7 +292,7 @@ extern struct global_data_all_processes
   double ArtViscPropConst;      /* In the artificial viscosity formulation beta /prop alpha, this is the constant of proportionality.  Set to 3/2 in the original code */
 #ifdef VARIABLE_VISC_CONST
   double VariableViscDecayLength;  /* The "l" value which sets how quickly the artificial viscosity decays back to zero in the absence of any source terms.  Can be thought of as the number of smoothing lengths over which Art Visc decays.  Typically .1*/
-  double VariableViscAlphaMin   /* Minimum value of artificial viscosity */
+  double VariableViscAlphaMin;   /* Minimum value of artificial viscosity */
 #endif
   double InitGasTemp;		/*!< may be used to set the temperature in the IC's */
   double MinGasTemp;		/*!< may be used to set a floor for the gas temperature */
@@ -569,6 +569,9 @@ extern struct sph_particle_data
   FLOAT Alpha;		        /*!< viscosity coefficient */
   FLOAT DtAlpha;       		/*!< time rate of change of viscosity coefficient */
 #endif
+#ifdef PRICE_GRAV_SOFT
+  FLOAT Zeta;             /* The factor needed to calculate the grav softening correction */
+#endif
 }
  *SphP,                        	/*!< holds SPH particle data on local processor */
  *DomainSphBuf;                 /*!< buffer for SPH particle data in domain decomposition */
@@ -721,6 +724,10 @@ extern struct gravdata_in
   FLOAT Soft;
 #endif
 #endif
+#ifdef PRICE_GRAV_SOFT
+  FLOAT Zeta;
+  FLOAT DhsmlDensityFactor;
+#endif
   union
   {
     FLOAT OldAcc;
@@ -760,6 +767,9 @@ extern struct densdata_out
   FLOAT Div, Rot[3];
   FLOAT DhsmlDensity;
   FLOAT Ngb;
+#ifdef PRICE_GRAV_SOFT
+  FLOAT Zeta;
+#endif
 }
  *DensDataResult,               /*!< stores the locally computed SPH density results for imported particles */
  *DensDataPartialResult;        /*!< imported partial SPH density results from other processors */
