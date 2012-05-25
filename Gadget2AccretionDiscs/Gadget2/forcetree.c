@@ -1153,6 +1153,8 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
   boxhalf = 0.5 * All.BoxSize;
 #endif
 
+  //if(ThisTask==0)
+  //  printf("Start force evaluation for target %d in mode %d.\n",target,mode);
   acc_x = 0;
   acc_y = 0;
   acc_z = 0;
@@ -1424,7 +1426,7 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
        u_j = r * hinv_j;
        if(u_i < .5)
        {
-  	    fac = mass * (hinv3_i * (5.333333333333 + u_i * u_i * (16.0 * u_i - 19.2)));
+  	      fac = mass * (hinv3_i * (5.333333333333 + u_i * u_i * (16.0 * u_i - 19.2)));
          dwk_i = hinv4_i * u_i * (KERNEL_COEFF_3 * u_i - KERNEL_COEFF_4);
        } else  if(u_i < 1.0){
   	      fac = mass * (hinv3_i * (10.666666666667 - 24.0 * u_i + 
@@ -1432,7 +1434,7 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
                 0.0333333333333 / (u_i * u_i * u_i)));
          dwk_i = hinv4_i * KERNEL_COEFF_6 * (1.0 - u_i) * (1.0 - u_i);
        } else {
-         fac = 0;
+         fac = 0.5* mass /(r2*r);
          dwk_i = 0;
        }
        if(u_j < .5)
@@ -1446,8 +1448,15 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
          dwk_j = hinv4_j * KERNEL_COEFF_6 * (1.0 - u_j) * (1.0 - u_j);
        } else {
          dwk_j = 0;
+         fac += 0.5 * mass / (r2*r); 
        }
-       fac += .5 * mass * (zeta_i * dhsmlDensityFactor_i * dwk_i + zeta_j* dhsmlDensityFactor_j *dwk_j)/r;
+       //if(ThisTask ==0)
+       //  printf("After second pass, factor is %g.\n",fac);
+       //fac += 0.5 * mass * (zeta_i * dhsmlDensityFactor_i * dwk_i + zeta_j* dhsmlDensityFactor_j *dwk_j)/r;
+       //if(ThisTask ==0)
+       //  printf("After final pass, factor is %g.\n",fac);
+       //if(ThisTask ==0)
+       //  printf("Final pass zeta_i,j - dwk_i,j - dhsml_i,j and r %g,%g - %g,%g - %g,%g and %g.\n",zeta_i,zeta_j,dwk_i,dwk_j,dhsmlDensityFactor_i,dhsmlDensityFactor_j,r);
      }
 #else
 #ifdef UNEQUALSOFTENINGS
@@ -1464,16 +1473,25 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 			       38.4 * u * u - 10.666666666667 * u * u * u - 0.066666666667 / (u * u * u));
 #endif
 	}
+      if(r==0)
+        fac = 0;
 
+      //printf("Mass of %g and factor of %g.\n",mass,fac);
       acc_x += dx * fac;
       acc_y += dy * fac;
       acc_z += dz * fac;
+      //if(ThisTask ==0)
+      //  printf("The factor, mass are %g and %g.\n",fac,mass);
+      //if(ThisTask ==0)
+      //  printf("The Types are %d, %d.\n",ptype,ptype_j);
+
 
       ninteractions++;
     }
 
 
   /* store result at the proper place */
+  //printf("Final forces are (%g,%g,%g).\n",acc_x,acc_y,acc_z);
   if(mode == 0)
     {
       P[target].GravAccel[0] = acc_x;

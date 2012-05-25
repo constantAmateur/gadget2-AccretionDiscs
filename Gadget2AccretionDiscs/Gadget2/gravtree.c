@@ -359,6 +359,8 @@ void gravity_tree(void)
 
   if(ThisTask == 0)
     printf("tree is done.\n");
+ // for(i = 0; i< NumPart; i++)
+   // printf("Gravity for particle %d is (%g,%g,%g)\n",i,P[i].GravAccel[0],P[i].GravAccel[1],P[i].GravAccel[2]);
 
 #else /* gravity is switched off */
 
