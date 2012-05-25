@@ -152,9 +152,12 @@ void do_box_wrapping(void)
 #ifdef SINK_PARTICLES
 void identify_doomed_particles(void)
 {
-  int n, i, j, k, pindex;
-  float seperation, relvel, relenergy, little_L, KeplerL2, sinkrad;
+#ifdef CUTOFF_RADIUS
+  int pindex;
   float EffectiveCutoff;
+#endif
+  int n, i, j, k;
+  float seperation, relvel, relenergy, little_L, KeplerL2, sinkrad;
   int num, startnode;
   int numsinks, numsinkstot;
   int notestflag;
@@ -340,18 +343,16 @@ void identify_doomed_particles(void)
 
 void destroy_doomed_particles(void)
 {
-  int n, i, j, k, s, target, acc_counter, distant_sink_counter, accflag = 0;
+  int n, i, j, k, s, target, acc_counter, accflag = 0;
   int numsinks, numsinkstot;
-  double combined_mass; 
   double *local_sink_posx, *local_sink_posy, *local_sink_posz;
   double *local_sink_velx, *local_sink_vely, *local_sink_velz;
   double *local_sink_mass;
   int *local_sink_ID;
   double dposx, dposy, dposz, dvelx, dvely, dvelz, dmass;
   double dposxtot, dposytot, dposztot, dvelxtot, dvelytot, dvelztot, dmasstot;      
-  double Ei, Ef, Einit, Efinal, sep, hinv, u, wp;
-  double entropychange,dt_entropy,dt_grav;
-  double momx,momy,momz;
+  double Ei, Ef;
+  double dt_grav;
 
   
   for(k = N_gas; k < NumPart; k++) printf("ID %d (%d) init vel, pos, mass: (%e|%e|%e), (%e|%e|%e), %e\n",P[k].ID,k,P[k].Vel[0],P[k].Vel[1],P[k].Vel[2],

@@ -513,7 +513,7 @@ void density_evaluate(int target, int mode)
   dhsmlrho = 0;
 #ifdef PRICE_GRAV_SOFT
   zeta = 0;
-#endif;
+#endif
 
   startnode = All.MaxPart;
   numngb = 0;

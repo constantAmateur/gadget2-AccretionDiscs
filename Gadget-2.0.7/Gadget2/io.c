@@ -353,12 +353,14 @@ void fill_write_buffer(enum iofields blocknr, int *startindex, int pc, int type)
       
     case IO_ALPHA:  /* viscosity */
 #ifdef OUTPUTALPHA
+#ifdef VARIABLE_VISC_CONST
       for(n = 0; n < pc; pindex++)
         if(P[pindex].Type == type)
         {
           *fp++ = SphP[pindex].Alpha;
           n++;
         }
+#endif
 #endif
       break;
       

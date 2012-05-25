@@ -67,7 +67,7 @@ OPT   +=  -DPRICE_GRAV_SOFT
 #OPT   +=  -DNOFFTWINSTALLED
 
 #--------------------------------------- Sink particle options
-#OPT   +=  -DSINK_PARTICLES
+OPT   +=  -DSINK_PARTICLES
 #OPT   +=  -DNO_ACC_TEST
 
 #--------------------------------------- Variable viscosity options

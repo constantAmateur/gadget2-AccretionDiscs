@@ -362,8 +362,10 @@ void hydro_evaluate(int target, int mode)
 {
   int j, k, n, timestep, startnode, numngb;
   FLOAT *pos, *vel;
-  FLOAT mass, h_i, dhsmlDensityFactor, rho, pressure, f1, alpha_visc, alpha_visc_j;
-#ifndef VARIABLE_VISC_CONST
+  FLOAT mass, h_i, dhsmlDensityFactor, rho, pressure, f1, alpha_visc;
+#ifdef VARIABLE_VISC_CONST
+  FLOAT alpha_visc_j;
+#else
   FLOAT f2;
   alpha_visc = All.ArtBulkViscConst;
 #endif

@@ -117,7 +117,7 @@ void allocate_memory(void)
       bytes_tot += bytes;
 
       if(ThisTask == 0)
-	printf("\nAllocated %g MByte for particle storage. %d\n\n", bytes_tot / (1024.0 * 1024.0), sizeof(struct particle_data));
+	printf("\nAllocated %g MByte for particle storage. %lu\n\n", bytes_tot / (1024.0 * 1024.0), sizeof(struct particle_data));
     }
 
   if(All.MaxPartSph > 0)
@@ -126,13 +126,13 @@ void allocate_memory(void)
 
       if(!(SphP = malloc(bytes = All.MaxPartSph * sizeof(struct sph_particle_data))))
 	{
-	  printf("failed to allocate memory for `SphP' (%g MB) %d.\n", bytes / (1024.0 * 1024.0), sizeof(struct sph_particle_data));
+	  printf("failed to allocate memory for `SphP' (%g MB) %lu.\n", bytes / (1024.0 * 1024.0), sizeof(struct sph_particle_data));
 	  endrun(1);
 	}
       bytes_tot += bytes;
 
       if(ThisTask == 0)
-	printf("Allocated %g MByte for storage of SPH data. %d\n\n", bytes_tot / (1024.0 * 1024.0), sizeof(struct sph_particle_data));
+	printf("Allocated %g MByte for storage of SPH data. %lu\n\n", bytes_tot / (1024.0 * 1024.0), sizeof(struct sph_particle_data));
     }
 }
 

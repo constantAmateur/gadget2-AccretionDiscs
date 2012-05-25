@@ -1127,7 +1127,10 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 {
   struct NODE *nop = 0;
   int no, ninteractions, ptype;
-  double r2, dx, dy, dz, mass, r, fac, u, h, h_inv, h3_inv;
+  double r2, dx, dy, dz, mass, r, fac, h;
+#ifndef PRICE_GRAV_SOFT
+  double u,h_inv,h3_inv;
+#endif
   double acc_x, acc_y, acc_z, pos_x, pos_y, pos_z, aold;
 #if defined(UNEQUALSOFTENINGS) && !defined(ADAPTIVE_GRAVSOFT_FORGAS)
   int maxsofttype;
@@ -1140,6 +1143,8 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
   double dhsmlDensityFactor_i,dhsmlDensityFactor_j,zeta_i,zeta_j;
   double u_i,u_j,dwk_i,dwk_j;
   int ptype_j;
+  dhsmlDensityFactor_i=dhsmlDensityFactor_j=zeta_i=zeta_j=0;
+  h_i=h_j=ptype_j=0;
 #endif
 #ifdef PERIODIC
   double boxsize, boxhalf;
@@ -2754,7 +2759,7 @@ void force_treeallocate(int maxnodes, int maxpart)
       first_flag = 1;
 
       if(ThisTask == 0)
-	printf("\nAllocated %g MByte for BH-tree. %d\n\n", allbytes / (1024.0 * 1024.0),
+	printf("\nAllocated %g MByte for BH-tree. %lu\n\n", allbytes / (1024.0 * 1024.0),
 	       sizeof(struct NODE) + sizeof(struct extNODE));
 
       tabfac = NTAB / 3.0;
