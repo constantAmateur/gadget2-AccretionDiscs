@@ -302,6 +302,7 @@ extern struct global_data_all_processes
 #ifdef SINK_PARTICLES
   /* accretion and wind parameters */
   double AccretionRadius;    /*!< the radius at which sph particles are accreted onto sinks */
+  int AccreteFlag;           /* Determines whether a domain decomposition should cause accretion to be processed */
 #endif
 
   /* some force counters  */

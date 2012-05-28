@@ -165,7 +165,7 @@ void identify_doomed_particles(void)
   double *local_sink_velx, *local_sink_vely, *local_sink_velz;
   double *local_sink_mass;  
   int *local_sink_ID;  
-  int verbose = 0;
+  int verbose = 1;
   FLOAT *pos, *vel;
   FLOAT Postemp[3], Veltemp[3];
   
@@ -483,7 +483,6 @@ void destroy_doomed_particles(void)
                  P[j].ID,ThisTask,AccNum,P[j].Vel[0],P[j].Vel[1],P[j].Vel[2], \
                  P[j].Pos[0],P[j].Pos[1],P[j].Pos[2],P[j].Mass);
           P[j].Ti_endstep = All.Ti_Current;
-          
         }   
       }
     }        
@@ -500,6 +499,8 @@ void destroy_doomed_particles(void)
       if(P[i].Ti_endstep == All.Ti_Current){
         NumForceUpdate--;
         NumSphUpdate--;
+      }else{
+        printf("This is not a current time step particle.\nIt has ID,Type,start,end,current %d,%d,%d,%d,%d\n",P[i].ID,P[i].Type,P[i].Ti_begstep,P[i].Ti_endstep,All.Ti_Current);
       }
       for(k = i+1; k<=NumPart; k++){ // actually remove the particle here, 
                                      // and shift everything down to fill the gap in the array.

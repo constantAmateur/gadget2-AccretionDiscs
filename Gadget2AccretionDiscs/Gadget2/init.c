@@ -23,6 +23,9 @@ void init(void)
   double a3;
 
   All.Time = All.TimeBegin;
+#ifdef SINK_PARTICLES
+  All.AccreteFlag = 1;
+#endif
 
   switch (All.ICFormat)
     {

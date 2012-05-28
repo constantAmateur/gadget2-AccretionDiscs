@@ -1,10 +1,10 @@
 %Filenames and file formats
 
 OutputDir	/data/my304/Output/Tests
-SnapshotFileBase	ThinDisc
+SnapshotFileBase	LowResThinDisc
 SnapFormat	1
 NumFilesPerSnapshot	1
-InitCondFile /data/my304/Working/gadget2-AccretionDiscs/Gadget2AccretionDiscs/Tests/thinDisc.IC
+InitCondFile /data/my304/Working/gadget2-AccretionDiscs/Gadget2AccretionDiscs/Tests/LowResThinDisc.IC
 ICFormat	1
 RestartFile	restart
 InfoFile	info.txt
@@ -60,8 +60,8 @@ MaxRMSDisplacementFac	0.25
 OutputListOn	0
 OutputListFilename	output_times.txt
 TimeOfFirstSnapshot	0.0
-TimeBetSnapshot	1
-TimeBetStatistics	1
+TimeBetSnapshot	.025
+TimeBetStatistics	.025
 NumFilesWrittenInParallel	1
 
 %Unit system

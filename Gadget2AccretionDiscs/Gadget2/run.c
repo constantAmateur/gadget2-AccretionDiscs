@@ -60,6 +60,7 @@ void run(void)
         identify_doomed_particles();
        	
         MPI_Allreduce(&AccNum, &AccNumTot, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);		
+        //This will cause domain decomposition to be performed next time this loop is iterated
         if(AccNumTot > 0) All.NumForcesSinceLastDomainDecomp =  All.TotNumPart * All.TreeDomainUpdateFrequency + 1;			 
       }    
 #endif
@@ -232,7 +233,10 @@ void find_next_sync_point_and_drift(void)
 
 #ifdef OUTPUTPOTENTIAL
       All.NumForcesSinceLastDomainDecomp = 1 + All.TotNumPart * All.TreeDomainUpdateFrequency;
+      //Don't want to accrete here, want to do that when we expect it.
+      All.AccreteFlag=0;
       domain_Decomposition();
+      All.AccreteFlag=1;
       compute_potential();
 #endif
       savepositions(All.SnapshotFileCount++);	/* write snapshot file */
