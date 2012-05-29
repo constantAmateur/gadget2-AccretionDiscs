@@ -1,7 +1,7 @@
 %Filenames and file formats
 
-OutputDir	/data/my304/Output/Tests
-SnapshotFileBase	LowResThinDisc
+OutputDir	/data/my304/Output/Tests/SinkTests/accretion/
+SnapshotFileBase	LowResThinDisc_accretion
 SnapFormat	1
 NumFilesPerSnapshot	1
 InitCondFile /data/my304/Working/gadget2-AccretionDiscs/Gadget2AccretionDiscs/Tests/LowResThinDisc.IC
@@ -48,11 +48,11 @@ ErrTolForceAcc	0.005
 
 %Time integration accuracy
 
-MaxSizeTimestep	0.01
+MaxSizeTimestep	0.1
 MinSizeTimestep	0.0
 TypeOfTimestepCriterion	0
 ErrTolIntAccuracy	0.025
-TreeDomainUpdateFrequency	0.1
+TreeDomainUpdateFrequency	0.25
 MaxRMSDisplacementFac	0.25
 
 %Output of snapshot files
@@ -60,8 +60,8 @@ MaxRMSDisplacementFac	0.25
 OutputListOn	0
 OutputListFilename	output_times.txt
 TimeOfFirstSnapshot	0.0
-TimeBetSnapshot	.025
-TimeBetStatistics	.025
+TimeBetSnapshot	.25
+TimeBetStatistics	.25
 NumFilesWrittenInParallel	1
 
 %Unit system

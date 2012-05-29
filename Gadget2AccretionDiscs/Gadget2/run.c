@@ -23,9 +23,9 @@ void run(void)
   int stopflag = 0;
   char stopfname[200], contfname[200];
   double t0, t1;
-#ifdef SINK_PARTICLES
-  int AccNumTot;
-#endif
+//#ifdef SINK_PARTICLES
+//  int AccNumTot;
+//#endif
 
 
   sprintf(stopfname, "%sstop", All.OutputDir);
@@ -60,7 +60,7 @@ void run(void)
 
         identify_doomed_particles();
         //Make sure we're done with accretion on all processors before we chug off
-        MPI_Barrier(MPI_COMM_WORLD)
+        MPI_Barrier(MPI_COMM_WORLD);
        	
         //This will cause domain decomposition to be performed next time this loop is iterated
         //MPI_Allreduce(&AccNum, &AccNumTot, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);		

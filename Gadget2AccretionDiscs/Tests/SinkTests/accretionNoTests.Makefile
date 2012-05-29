@@ -9,17 +9,18 @@
 
 
 #--------------------------------------- Basic operation mode of code
-OPT   +=  -DPERIODIC 
-#OPT   +=  -DUNEQUALSOFTENINGS
+#OPT   +=  -DPERIODIC 
+OPT   +=  -DUNEQUALSOFTENINGS
 
 
 #--------------------------------------- Things that are always recommended
 OPT   +=  -DPEANOHILBERT
 OPT   +=  -DWALLCLOCK   
+OPT   +=  -DPRICE_GRAV_SOFT
 
 
 #--------------------------------------- TreePM Options
-OPT   +=  -DPMGRID=128
+#OPT   +=  -DPMGRID=128
 #OPT   +=  -DPLACEHIGHRESREGION=3
 #OPT   +=  -DENLARGEREGION=1.2
 #OPT   +=  -DASMTH=1.25
@@ -27,7 +28,7 @@ OPT   +=  -DPMGRID=128
 
 
 #--------------------------------------- Single/Double Precision
-#OPT   +=  -DDOUBLEPRECISION      
+OPT   +=  -DDOUBLEPRECISION      
 #OPT   +=  -DDOUBLEPRECISION_FFTW      
 
 
@@ -39,28 +40,39 @@ OPT   +=  -DSYNCHRONIZATION
 #OPT   +=  -DNOPMSTEPADJUSTMENT
 
 
-#--------------------------------------- Output options
+#--------------------------------------- Output 
 #OPT   +=  -DHAVE_HDF5  
-#OPT   +=  -DOUTPUTPOTENTIAL
-#OPT   +=  -DOUTPUTACCELERATION
-#OPT   +=  -DOUTPUTCHANGEOFENTROPY
-#OPT   +=  -DOUTPUTTIMESTEP
+OPT   +=  -DOUTPUTPOTENTIAL
+OPT   +=  -DOUTPUTACCELERATION
+OPT   +=  -DOUTPUTCHANGEOFENTROPY
+OPT   +=  -DOUTPUTTIMESTEP
+OPT   +=  -DOUTPUTALPHA
 
 
 #--------------------------------------- Things for special behaviour
 #OPT   +=  -DNOGRAVITY     
 #OPT   +=  -DNOTREERND 
-#OPT   +=  -DNOTYPEPREFIX_FFTW        
+#OPT   +=  -DNOTYPEPREFIX_FFTW
 #OPT   +=  -DLONG_X=60
 #OPT   +=  -DLONG_Y=5
 #OPT   +=  -DLONG_Z=0.2
 #OPT   +=  -DTWODIMS
 #OPT   +=  -DSPH_BND_PARTICLES
 #OPT   +=  -DNOVISCOSITYLIMITER
-#OPT   +=  -DCOMPUTE_POTENTIAL_ENERGY
+OPT   +=  -DCOMPUTE_POTENTIAL_ENERGY
 #OPT   +=  -DLONGIDS
-#OPT   +=  -DISOTHERMAL
+#OPT   +=  -DISOTHERM_EQS
+OPT   +=  -DADAPTIVE_GRAVSOFT_FORGAS
 #OPT   +=  -DSELECTIVE_NO_GRAVITY=2+4+8+16
+OPT   +=  -DNOFFTWINSTALLED
+
+#--------------------------------------- Sink particle options
+OPT   +=  -DSINK_PARTICLES
+OPT   +=  -DNO_ACC_TEST
+
+#--------------------------------------- Variable viscosity options
+OPT   +=  -DVARIABLE_VISC_CONST
+
 
 #--------------------------------------- Testing and Debugging options
 #OPT   +=  -DFORCETEST=0.1
@@ -88,35 +100,81 @@ MPICHLIB =  -lmpich
 #SYSTYPE="MPA"
 #SYSTYPE="Mako"
 #SYSTYPE="Regatta"
-SYSTYPE="RZG_LinuxCluster"
+#SYSTYPE="RZG_LinuxCluster"
 #SYSTYPE="RZG_LinuxCluster-gcc"
-#SYSTYPE="Opteron"
+#SYSTYPE="OpteronMPA"
+#SYSTYPE="OPA-Cluster32"
+#SYSTYPE="OPA-Cluster64"
+SYSTYPE="IoA"
+#SYSTYPE="IoA_FFTW"
+#SYSTYPE="Darwin"
+
+
 
 #--------------------------------------- Adjust settings for target computer
+
+ifeq ($(SYSTYPE),"IoA")
+CC       =  mpicc
+OPTIMIZE =  -O3 -Wall
+GSL_INCL =  -I/opt/ioa/software/gsl/1.14/include
+GSL_LIBS =  -L/opt/ioa/software/gsl/1.14/lib 
+FFTW_INCL=  
+FFTW_LIBS=  
+MPICHLIB =  -L/opt/ioa/software/openmpi/1.4.2/gcc/4.5.0/lib
+HDF5INCL =  
+HDF5LIB  = 
+endif
+
+
 
 ifeq ($(SYSTYPE),"MPA")
 CC       =  mpicc   
 OPTIMIZE =  -O3 -Wall
 GSL_INCL =  -I/usr/common/pdsoft/include
-GSL_LIBS =  -L/usr/common/pdsoft/lib
+GSL_LIBS =  -L/usr/common/pdsoft/lib  -Wl,"-R /usr/common/pdsoft/lib"
 FFTW_INCL= 
 FFTW_LIBS= 
 MPICHLIB =
-HDF5INCL =  -I/opt/hdf5/include
-HDF5LIB  =  -L/opt/hdf5/lib -static -lhdf5 -lz 
+HDF5INCL =  
+HDF5LIB  =  -lhdf5 -lz 
 endif
 
 
-ifeq ($(SYSTYPE),"Opteron")
+ifeq ($(SYSTYPE),"OpteronMPA")
 CC       =  mpicc   
 OPTIMIZE =  -O3 -Wall -m64
 GSL_INCL =  -L/usr/local/include
-GSL_LIBS =  -L/usr/local/lib -static
+GSL_LIBS =  -L/usr/local/lib 
 FFTW_INCL=
 FFTW_LIBS=
 MPICHLIB =
 HDF5INCL =  -I/opt/hdf5/include
-HDF5LIB  =  -L/opt/hdf5/lib -static -lhdf5 -lz
+HDF5LIB  =  -L/opt/hdf5/lib -lhdf5 -lz  -Wl,"-R /opt/hdf5/lib"
+endif
+
+ifeq ($(SYSTYPE),"OPA-Cluster32")
+CC       =  mpicc   
+OPTIMIZE =  -O3 -Wall 
+GSL_INCL =  -I/afs/rzg/bc-b/vrs/opteron32/include
+GSL_LIBS =  -L/afs/rzg/bc-b/vrs/opteron32/lib  -Wl,"-R /afs/rzg/bc-b/vrs/opteron32/lib"
+FFTW_INCL=  -I/afs/rzg/bc-b/vrs/opteron32/include
+FFTW_LIBS=  -L/afs/rzg/bc-b/vrs/opteron32/lib 
+MPICHLIB =
+HDF5INCL =  
+HDF5LIB  =  -lhdf5 -lz 
+endif
+
+
+ifeq ($(SYSTYPE),"OPA-Cluster64")
+CC       =  mpicc   
+OPTIMIZE =  -O3 -Wall -m64
+GSL_INCL =  -I/afs/rzg/bc-b/vrs/opteron64/include
+GSL_LIBS =  -L/afs/rzg/bc-b/vrs/opteron64/lib  -Wl,"-R /afs/rzg/bc-b/vrs/opteron64/lib"
+FFTW_INCL=  -I/afs/rzg/bc-b/vrs/opteron64/include
+FFTW_LIBS=  -L/afs/rzg/bc-b/vrs/opteron64/lib 
+MPICHLIB =
+HDF5INCL =  
+HDF5LIB  =  -lhdf5 -lz 
 endif
 
 
@@ -128,6 +186,8 @@ GSL_LIBS =
 FFTW_INCL= 
 FFTW_LIBS= 
 MPICHLIB =
+HDF5INCL =  
+HDF5LIB  =  -lhdf5 -lz 
 endif
 
 
@@ -148,11 +208,11 @@ ifeq ($(SYSTYPE),"RZG_LinuxCluster")
 CC       =  mpicci   
 OPTIMIZE =  -O3 -ip     # Note: Don't use the "-rcd" optimization of Intel's compiler! (causes code crashes)
 GSL_INCL =  -I/afs/rzg/u/vrs/gsl_linux/include
-GSL_LIBS =  -L/afs/rzg/u/vrs/gsl_linux/lib -static
+GSL_LIBS =  -L/afs/rzg/u/vrs/gsl_linux/lib  -Wl,"-R /afs/rzg/u/vrs/gsl_linux/lib"
 FFTW_INCL=  -I/afs/rzg/u/vrs/fftw_linux/include
 FFTW_LIBS=  -L/afs/rzg/u/vrs/fftw_linux/lib
 HDF5INCL =  -I/afs/rzg/u/vrs/hdf5_linux/include
-HDF5LIB  =  -L/afs/rzg/u/vrs/hdf5_linux/lib -static  -lhdf5 -L/afs/rzg/u/vrs/zlib_linux/lib -lz 
+HDF5LIB  =  -L/afs/rzg/u/vrs/hdf5_linux/lib -lhdf5 -lz  -Wl,"-R /afs/rzg/u/vrs/hdf5_linux/lib"
 endif
 
 
@@ -160,11 +220,11 @@ ifeq ($(SYSTYPE),"RZG_LinuxCluster-gcc")
 CC       =  mpiccg
 OPTIMIZE =  -Wall -g -O3 -march=pentium4
 GSL_INCL =  -I/afs/rzg/u/vrs/gsl_linux_gcc3.2/include
-GSL_LIBS =  -L/afs/rzg/u/vrs/gsl_linux_gcc3.2/lib
+GSL_LIBS =  -L/afs/rzg/u/vrs/gsl_linux_gcc3.2/lib  -Wl,"-R /afs/rzg/u/vrs/gsl_linux_gcc3.2/lib"
 FFTW_INCL=  -I/afs/rzg/u/vrs/fftw_linux_gcc3.2/include
 FFTW_LIBS=  -L/afs/rzg/u/vrs/fftw_linux_gcc3.2/lib  
 HDF5INCL =  -I/afs/rzg/u/vrs/hdf5_linux/include
-HDF5LIB  =  -L/afs/rzg/u/vrs/hdf5_linux/lib -static  -lhdf5 -L/afs/rzg/u/vrs/zlib_linux/lib -lz 
+HDF5LIB  =  -L/afs/rzg/u/vrs/hdf5_linux/lib  -lhdf5 -lz  -Wl,"-R /afs/rzg/u/vrs/hdf5_linux/lib"
 endif
 
 
@@ -203,8 +263,16 @@ else
 endif
 endif
 
+ifeq (NOFFTWINSTALLED,$(findstring NOFFTWINSTALLED,$(OPT)))
+  FFTW_LIB =
+endif
 
-LIBS   =   $(HDF5LIB) -g  $(MPICHLIB)  $(GSL_LIBS) -lgsl -lgslcblas -lm $(FFTW_LIB) 
+ifeq (PMGRID,$(findstring PMGRID,$(OPT))) 
+  LIBS = $(HDF5LIB) -g $(MPICHLIB) $(GSL_LIBS) -lgsl -lgslcblas -lm $(FFTW_LIB) 
+else 
+  LIBS = $(HDF5LIB) -g $(MPICHLIB) $(GSL_LIBS) -lgsl -lgslcblas -lm 
+endif 
+
 
 $(EXEC): $(OBJS) 
 	$(CC) $(OBJS) $(LIBS)   -o  $(EXEC)  
@@ -423,10 +491,19 @@ clean:
 #     64-bit long integers. This is only really needed if you want to
 #     go beyond ~2 billion particles.
 #
-# - ISOTHERMAL:
-#     This special option makes the gas behave like an isothermal gas.
-#     The corresponding temperature is set by the parameter MinGasTemp
-#     in the parameterfile.
+# - ISOTHERM_EQS:
+#     This special option makes the gas behave like an isothermal gas
+#     with equation of state P = cs^2 * rho. The sound-speed cs is set by 
+#     the thermal energy per unit mass in the intial conditions, 
+#     i.e. cs^2=u. If the value for u is zero, then the initial gas 
+#     temperature in the parameter file is used to define the sound speed
+#     according to cs^2 = 3/2 kT/mp, where mp is the proton mass.
+#
+# - ADAPTIVE_GRAVSOFT_FORGAS:
+#     When this option is set, the gravitational softening lengths used for
+#     gas particles is tied to their SPH smoothing length. This can be useful
+#     for dissipative collapse simulations. The option requires the setting
+#     of UNEQUALSOFTENINGS.
 #
 # - SELECTIVE_NO_GRAVITY:
 #     This can be used for special computations where one wants to 

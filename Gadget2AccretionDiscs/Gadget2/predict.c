@@ -276,6 +276,7 @@ void identify_doomed_particles(void)
               for(little_L = 0, j = 0;j < 3; j++) little_L +=pow( (P[k].Pos[(j+1)%3] - pos[(j+1)%3]) * (P[k].Vel[(j+2)%3] - vel[(j+2)%3]) -  \
                                                                  (P[k].Pos[(j+2)%3] - pos[(j+2)%3]) * (P[k].Vel[(j+1)%3] - vel[(j+1)%3]) ,2); /* L.L */
               if(notestflag) little_L = KeplerL2 /2;								  						
+              //This test may be a bit too stringent, turn it off if things aren't being accreted
               if(little_L < KeplerL2){             
                 if(SphP[k].AccretionTarget == 0){  /* if targeted by another sink, it doesn't get accreted */ 
                   SphP[k].AccretionTarget = list_sink_ID[i];       /* if bound in E and L, accrete it */
