@@ -54,14 +54,17 @@ void run(void)
 
 #ifdef SINK_PARTICLES
      // only check for accreted particles every 10 timesteps. this is sort of arbitrary.
-      if(All.NumCurrentTiStep - All.TstepLastAcc > 10){  
+     // don't destroy particles as soon as they're marked.
+      if(1 || All.NumCurrentTiStep - All.TstepLastAcc > 10){  
         MPI_Barrier(MPI_COMM_WORLD);  
 
         identify_doomed_particles();
+        //Make sure we're done with accretion on all processors before we chug off
+        MPI_Barrier(MPI_COMM_WORLD)
        	
-        MPI_Allreduce(&AccNum, &AccNumTot, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);		
         //This will cause domain decomposition to be performed next time this loop is iterated
-        if(AccNumTot > 0) All.NumForcesSinceLastDomainDecomp =  All.TotNumPart * All.TreeDomainUpdateFrequency + 1;			 
+        //MPI_Allreduce(&AccNum, &AccNumTot, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);		
+        //if(AccNumTot > 0) All.NumForcesSinceLastDomainDecomp =  All.TotNumPart * All.TreeDomainUpdateFrequency + 1;			 
       }    
 #endif
 
@@ -233,10 +236,14 @@ void find_next_sync_point_and_drift(void)
 
 #ifdef OUTPUTPOTENTIAL
       All.NumForcesSinceLastDomainDecomp = 1 + All.TotNumPart * All.TreeDomainUpdateFrequency;
+#ifdef SINK_PARTICLES
       //Don't want to accrete here, want to do that when we expect it.
       All.AccreteFlag=0;
+#endif
       domain_Decomposition();
+#ifdef SINK_PARTICLES
       All.AccreteFlag=1;
+#endif
       compute_potential();
 #endif
       savepositions(All.SnapshotFileCount++);	/* write snapshot file */

@@ -257,11 +257,14 @@ void identify_doomed_particles(void)
       for(n = 0; n < num; n++){
         k = Ngblist[n];
         
-        if(P[k].Type == 0 && k < N_gas){  /* only accrete gas particles! */
+        //We want to only mark particles for accretion if they haven't been marked previously
+        if(P[k].Type == 0 && k < N_gas && (SphP[k].AccretionTarget ==0 || SphP[k].AccretionTarget==-2)){  /* only accrete gas particles! */
           for(seperation = 0,j = 0; j < 3; j++) seperation += (P[k].Pos[j]-pos[j]) * (P[k].Pos[j]-pos[j]);  /* r.r */  
           seperation = sqrt(seperation);   /* r */
           
           if(seperation < sinkrad){
+
+            if(verbose) printf("Particle ID %d is within accretion radius of sink ID %d from %d %f %f\n",P[k].ID,list_sink_ID[i],ThisTask,seperation,sinkrad);
             for(relvel = 0,j = 0; j < 3; j++)
               relvel += (P[k].Vel[j]-vel[j]) * (P[k].Vel[j]-vel[j]);      /* v.v */
             
@@ -499,8 +502,6 @@ void destroy_doomed_particles(void)
       if(P[i].Ti_endstep == All.Ti_Current){
         NumForceUpdate--;
         NumSphUpdate--;
-      }else{
-        printf("This is not a current time step particle.\nIt has ID,Type,start,end,current %d,%d,%d,%d,%d\n",P[i].ID,P[i].Type,P[i].Ti_begstep,P[i].Ti_endstep,All.Ti_Current);
       }
       for(k = i+1; k<=NumPart; k++){ // actually remove the particle here, 
                                      // and shift everything down to fill the gap in the array.

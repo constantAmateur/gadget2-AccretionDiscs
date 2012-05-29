@@ -28,7 +28,7 @@ void gravity_tree(void)
 {
   long long ntot;
   int numnodes, nexportsum = 0;
-  int i, j, iter = 0,ndonetot=0,nloop=0;
+  int i, j, iter = 0;
   int *numnodeslist, maxnumnodes, nexport, *numlist, *nrecv, *ndonelist;
   double tstart, tend, timetree = 0, timecommsumm = 0, timeimbalance = 0, sumimbalance;
   double ewaldcount;
@@ -99,50 +99,17 @@ void gravity_tree(void)
   i = 0;			/* beginn with this index */
   ntotleft = ntot;		/* particles left for all tasks together */
 
-  ndonetot = 0;
-  MPI_Allgather(&NumPart, 1, MPI_INT, ndonelist, 1, MPI_INT, MPI_COMM_WORLD);
-  for(j = 0; j < NTask; j++)
-  ndonetot += ndonelist[j];
-  if(ThisTask==0)
-  printf("The total number of particles is %d\n",ndonetot);
-
-
-  if(ThisTask ==0)
-  {
-    printf("Beginning non-trivial stuff.\n");
-    printf("There are %d particles marked for accretion.\n",AccNum);
-    printf("There are %d particles that need processing.\n",ntot);
-  }
-  for(j=0;j<NumPart;j++)
-  {
-    if(P[j].ID==4678)
-    {
-      printf("At time %d, bad particle has (Start,End) = (%d,%d), Acc = %d\n",All.Ti_Current,P[j].Ti_begstep,P[j].Ti_endstep,SphP[j].AccretionTarget);
-    }
-  }
   while(ntotleft > 0)
     {
-      if(ThisTask ==0)
-        printf("Begin the while loop.  With %d particle to do. NumPart is %d.  Starting at index %d\n",ntotleft,NumPart,i);
       iter++;
 
       for(j = 0; j < NTask; j++)
 	nsend_local[j] = 0;
-  for(j=0;j<NumPart;j++)
-  {
-    if(P[j].ID==4678)
-    {
-      printf("At time %d, before main loop, particle has (Start,End) = (%d,%d), Acc = %d\n",All.Ti_Current,P[j].Ti_begstep,P[j].Ti_endstep,SphP[j].AccretionTarget);
-    }
-  }
-
 
       /* do local particles and prepare export list */
       tstart = second();
       for(nexport = 0, ndone = 0; i < NumPart && nexport < All.BunchSizeForce - NTask; i++)
       {
-        //printf("Time is %d\n",All.Ti_Current);
-        nloop++;
 	if(P[i].Ti_endstep == All.Ti_Current)
 	  {
 	    ndone++;
@@ -182,26 +149,8 @@ void gravity_tree(void)
 		    nsend_local[j]++;
 		  }
 	      }
-	  }else{
-       printf("In the main loop, it has ID = %d, Type %d, (start,end) = (%d,%d) and current = %d\n",P[i].ID,P[i].Type,P[i].Ti_begstep,P[i].Ti_endstep,All.Ti_Current);
-     }
-
+	  }
       }
-      ndonetot = 0;
-      MPI_Allgather(&ndone, 1, MPI_INT, ndonelist, 1, MPI_INT, MPI_COMM_WORLD);
-      for(j = 0; j < NTask; j++)
-	ndonetot += ndonelist[j];
-      if(ThisTask==0)
-      printf("We have processed %d particles.\n",ndonetot);
-      ndonetot = 0;
-      MPI_Allgather(&nloop, 1, MPI_INT, ndonelist, 1, MPI_INT, MPI_COMM_WORLD);
-      for(j = 0; j < NTask; j++)
-	ndonetot += ndonelist[j];
-      if(ThisTask==0)
-      printf("But the loop has seen %d particles.\n",ndonetot);
-
-      if(ThisTask==0)
-        printf("Local particles done.  Processed %d particles. Need to export %d of them.\n",ndone,nexport);
       tend = second();
       timetree += timediff(tstart, tend);
 
@@ -275,9 +224,7 @@ void gravity_tree(void)
 	    }
 	  tend = second();
 	  timetree += timediff(tstart, tend);
-      if(ThisTask==0)
-        printf("Remote particles done.\n");
- 
+
 	  tstart = second();
 	  MPI_Barrier(MPI_COMM_WORLD);
 	  tend = second();
@@ -335,16 +282,11 @@ void gravity_tree(void)
 
 	  level = ngrp - 1;
 	}
-      if(ThisTask==0)
-        printf("particles done.\n");
- 
+
       MPI_Allgather(&ndone, 1, MPI_INT, ndonelist, 1, MPI_INT, MPI_COMM_WORLD);
       for(j = 0; j < NTask; j++)
 	ntotleft -= ndonelist[j];
     }
-  if(ThisTask==0)
-    printf("Done all but trivial tasks. ntotleft is %d\n",ntotleft);
-
   free(ndonelist);
   free(nsend);
   free(nsend_local);
@@ -417,9 +359,6 @@ void gravity_tree(void)
 
   if(ThisTask == 0)
     printf("tree is done.\n");
- // for(i = 0; i< NumPart; i++)
-   // printf("Gravity for particle %d is (%g,%g,%g)\n",i,P[i].GravAccel[0],P[i].GravAccel[1],P[i].GravAccel[2]);
-
 #else /* gravity is switched off */
 
   for(i = 0; i < NumPart; i++)

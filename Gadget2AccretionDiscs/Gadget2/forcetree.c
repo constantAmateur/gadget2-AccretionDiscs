@@ -1128,9 +1128,7 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
   struct NODE *nop = 0;
   int no, ninteractions, ptype;
   double r2, dx, dy, dz, mass, r, fac, h;
-#ifndef PRICE_GRAV_SOFT
   double u,h_inv,h3_inv;
-#endif
   double acc_x, acc_y, acc_z, pos_x, pos_y, pos_z, aold;
 #if defined(UNEQUALSOFTENINGS) && !defined(ADAPTIVE_GRAVSOFT_FORGAS)
   int maxsofttype;
@@ -1411,7 +1409,20 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
      //This is a hack.  Ideally we should calculate all the SPH like properties for non-SPH particles and then we could use them to soften the gravity using the price method.  However, as this involves a substantial restructuring of the code, we simply set any interactions that involve non-SPH particles to be unsoftened.  This will probably never even be an issue if all the non-sph praticles are accreting particles with a reasonable accretion radius (several times their smoothing length).
      if (ptype_j!=0 || ptype!=0)
      {
-       fac = mass / (r2 * r);
+       //If the interaction involves a non-SPH particle, revert to old method
+#ifdef UNEQUALSOFTENINGS
+	  h_inv = 1.0 / h;
+	  h3_inv = h_inv * h_inv * h_inv;
+#endif
+
+	  u = r * h_inv;
+	  if(u < 0.5)
+	    fac = mass * h3_inv * (10.666666666667 + u * u * (32.0 * u - 38.4));
+	  else
+	    fac =
+	      mass * h3_inv * (21.333333333333 - 48.0 * u +
+			       38.4 * u * u - 10.666666666667 * u * u * u - 0.066666666667 / (u * u * u));
+
      } else {
        //For PRICE_GRAV_SOFT, if we are in this section of code, we are garunteed
        //that the "target particle" is in fact a particle and not an unopened cell
