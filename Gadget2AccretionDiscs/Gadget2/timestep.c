@@ -299,6 +299,7 @@ void advance_and_find_timesteps(void)
 	      tau = 0.5 * SphP[i].Hsml / soundspeed /All.VariableViscDecayLength;
 	      SphP[i].DtAlpha = f_fac*dmax(-SphP[i].DivVel, 0) * (All.ArtBulkViscConst - SphP[i].Alpha) - (SphP[i].Alpha - All.VariableViscAlphaMin)/tau;
 #endif
+#ifndef NONINTERACTING_GAS
 	      for(j = 0; j < 3; j++)
 		{
 		  dv[j] += SphP[i].HydroAccel[j] * dt_hydrokick;
@@ -310,6 +311,7 @@ void advance_and_find_timesteps(void)
 		  SphP[i].VelPred[j] += P[i].GravPM[j] * dt_gravkickB;
 #endif
 		}
+#endif
 
 	      /* In case of cooling, we prevent that the entropy (and
 	         hence temperature decreases by more than a factor 0.5 */

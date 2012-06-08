@@ -22,7 +22,7 @@ CpuTimeBetRestartFile	7200
 %Simulation specific parameters
 
 TimeBegin	0.0
-TimeMax	30.0
+TimeMax	300.0
 BoxSize	10000.0
 PeriodicBoundariesOn	0
 ComovingIntegrationOn	0
@@ -84,8 +84,8 @@ MinGasHsmlFractional	0.0
 
 ArtViscPropConst  1.5
 ArtBulkViscConst	2.0
-VariableViscAlphaMin  .1
-VariableViscDecayLength  .1
+%VariableViscAlphaMin  .1
+%VariableViscDecayLength  .1
 
 
 %Gravitational Softening
