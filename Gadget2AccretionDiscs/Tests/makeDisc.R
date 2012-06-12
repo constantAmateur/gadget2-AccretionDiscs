@@ -34,13 +34,13 @@ M_star = 1.
 #Mass of the disk (all disk particles given same mass)
 M_disk = .1
 #Inner radius (vacant area around star)
-r_inner = 10
+r_inner = 5
 #Outer radius (edge of disk)
-r_outer = 100
+r_outer = 50
 #How does the temperature scale with radius? 0 gives isothermal
 temppower = 0.0
 #What is the temperature for the disc...
-baseTemp = 16.700
+baseTemp = 167.00
 #Adiabatic index
 gamma = 5/3
 #specific heat capacity at constant volume (for converting between temperature and internal energy)
@@ -48,7 +48,7 @@ cv=3/2
 #Moleculare weight in units of hydrogen mass
 mu=2.3
 #Power law index, density (and column density) goes like R^plIndex
-plIndex=-.5
+plIndex=-1.5
 
 ############I/O################
 
