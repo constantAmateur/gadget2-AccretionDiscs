@@ -412,9 +412,9 @@ void every_timestep_stuff(void)
 	}
       else
 	{
-	  fprintf(FdInfo, "\nBegin Step %d, Time: %g, Systemstep: %g\n", All.NumCurrentTiStep, All.Time,
-		  All.TimeStep);
-	  printf("\nBegin Step %d, Time: %g, Systemstep: %g\n", All.NumCurrentTiStep, All.Time, All.TimeStep);
+	  fprintf(FdInfo, "\nBegin Step %d, Time: %g, Systemstep: %g NPart: %d\n", All.NumCurrentTiStep, All.Time,
+		  All.TimeStep,Ntype[0]);
+	  printf("\nBegin Step %d, Time: %g, Systemstep: %g NPart: %d\n", All.NumCurrentTiStep, All.Time, All.TimeStep,Ntype[0]);
 	  fflush(FdInfo);
 	}
 

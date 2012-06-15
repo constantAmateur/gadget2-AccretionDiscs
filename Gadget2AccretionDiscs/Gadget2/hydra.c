@@ -57,6 +57,10 @@ void hydro_force(void)
   double tstart, tend, sumt, sumcomm;
   double timecomp = 0, timecommsumm = 0, timeimbalance = 0, sumimbalance;
   MPI_Status status;
+#ifdef BETA_COOLING
+  int numsinks,root,globalroot;
+  double starData[4],tdyn,E,R,v2;
+#endif
 
 #ifdef PERIODIC
   boxSize = All.BoxSize;
@@ -110,6 +114,29 @@ void hydro_force(void)
     ntot += numlist[i];
   free(numlist);
 
+#ifdef BETA_COOLING
+  /* Get the position and mass of the central object and send it to everyone */
+  numsinks=NumPart - N_gas;
+  starData[0]=starData[1]=starData[2]=starData[3]= -1.0;
+  root=-1;
+  for(i=0; i<numsinks;i++)
+  {
+    if(P[i+N_gas].ID==All.StarID)
+    {
+      starData[0] = P[i+N_gas].Pos[0];
+      starData[1] = P[i+N_gas].Pos[1];
+      starData[2] = P[i+N_gas].Pos[2];
+      starData[3] = P[i+N_gas].Mass;
+      root = ThisTask;
+    }
+  }
+  /* Get the node that has the data */
+  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Allreduce(&root,&globalroot,1,MPI_INT,MPI_MAX,MPI_COMM_WORLD);
+  /* Broadcast it. */
+  MPI_Bcast(&starData,4,MPI_DOUBLE,globalroot,MPI_COMM_WORLD);
+  //printf("The star ID is %d. The position is (%g,%g,%g) and the mass is %g.\n",All.StarID,starData[0],starData[1],starData[2],starData[3]);
+#endif
 
   noffset = malloc(sizeof(int) * NTask);	/* offsets of bunches in common list */
   nbuffer = malloc(sizeof(int) * NTask);
@@ -326,6 +353,17 @@ void hydro_force(void)
     if(P[i].Ti_endstep == All.Ti_Current)
       {
 	SphP[i].DtEntropy *= GAMMA_MINUS1 / (hubble_a2 * pow(SphP[i].Density, GAMMA_MINUS1));
+#ifdef BETA_COOLING
+   for(j=0,R=0,v2=0;j<3;j++)
+   {
+     R+=(P[i].Pos[j]-starData[j])*(P[i].Pos[j]-starData[j]);
+     v2+=P[i].Vel[j]*P[i].Vel[j];
+   }
+   R=sqrt(R);
+   E = (v2/2.0) - ((All.G*starData[3]) / (R * P[i].Mass));
+   tdyn=sqrt(-8.0*E*E*E)/(All.G*starData[3]*All.G*starData[3]);
+   SphP[i].DtEntropy -= SphP[i].Entropy / All.CoolingRate / tdyn;
+#endif
 #ifdef SPH_BND_PARTICLES
 	if(P[i].ID == 0)
 	  {

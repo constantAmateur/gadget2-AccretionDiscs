@@ -9,14 +9,14 @@
 
 
 #--------------------------------------- Basic operation mode of code
-#OPT   +=  -DPERIODIC 
+OPT   +=  -DPERIODIC 
 OPT   +=  -DUNEQUALSOFTENINGS
 
 
 #--------------------------------------- Things that are always recommended
 OPT   +=  -DPEANOHILBERT
 OPT   +=  -DWALLCLOCK   
-#OPT   +=  -DPRICE_GRAV_SOFT
+OPT   +=  -DPRICE_GRAV_SOFT
 
 
 #--------------------------------------- TreePM Options
@@ -42,36 +42,37 @@ OPT   +=  -DSYNCHRONIZATION
 
 #--------------------------------------- Output 
 #OPT   +=  -DHAVE_HDF5  
-OPT   +=  -DOUTPUTPOTENTIAL
-OPT   +=  -DOUTPUTACCELERATION
-OPT   +=  -DOUTPUTCHANGEOFENTROPY
-OPT   +=  -DOUTPUTTIMESTEP
-OPT   +=  -DOUTPUTALPHA
+#OPT   +=  -DOUTPUTPOTENTIAL
+#OPT   +=  -DOUTPUTACCELERATION
+#OPT   +=  -DOUTPUTCHANGEOFENTROPY
+#OPT   +=  -DOUTPUTTIMESTEP
+#OPT   +=  -DOUTPUTALPHA
 
 
 #--------------------------------------- Things for special behaviour
 #OPT   +=  -DNOGRAVITY     
 #OPT   +=  -DNOTREERND 
 #OPT   +=  -DNOTYPEPREFIX_FFTW
-#OPT   +=  -DLONG_X=60
-#OPT   +=  -DLONG_Y=5
-#OPT   +=  -DLONG_Z=0.2
+OPT   +=  -DLONG_X=60
+OPT   +=  -DLONG_Y=5
+OPT   +=  -DLONG_Z=0.2
 #OPT   +=  -DTWODIMS
 #OPT   +=  -DSPH_BND_PARTICLES
 #OPT   +=  -DNOVISCOSITYLIMITER
-OPT   +=  -DCOMPUTE_POTENTIAL_ENERGY
+#OPT   +=  -DCOMPUTE_POTENTIAL_ENERGY
 #OPT   +=  -DLONGIDS
 #OPT   +=  -DISOTHERM_EQS
-OPT   +=  -DADAPTIVE_GRAVSOFT_FORGAS
+#OPT   +=  -DADAPTIVE_GRAVSOFT_FORGAS
 #OPT   +=  -DSELECTIVE_NO_GRAVITY=2+4+8+16
 OPT   +=  -DNOFFTWINSTALLED
+#OPT   +=  -DBETA_COOLING
 
 #--------------------------------------- Sink particle options
 #OPT   +=  -DSINK_PARTICLES
 #OPT   +=  -DNO_ACC_TEST
 
 #--------------------------------------- Variable viscosity options
-OPT   +=  -DVARIABLE_VISC_CONST
+#OPT   +=  -DVARIABLE_VISC_CONST
 
 
 #--------------------------------------- Testing and Debugging options
@@ -79,7 +80,7 @@ OPT   +=  -DVARIABLE_VISC_CONST
 
 
 #--------------------------------------- Glass making
-#OPT   +=  -DMAKEGLASS=262144
+OPT   +=  -DMAKEGLASS=65536
 
 
 #----------------------------------------------------------------------

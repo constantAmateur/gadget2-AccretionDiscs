@@ -605,6 +605,11 @@ void read_parameter_file(char *fname)
       addr[nt] = &All.AccretionRadius;
       id[nt++] = DOUBLE;
 #endif
+#ifdef BETA_COOLING
+      strcpy(tag[nt], "CoolingRate");
+      addr[nt] = &All.CoolingRate;
+      id[nt++] = DOUBLE;
+#endif
       if((fd = fopen(fname, "r")))
 	{
 	  sprintf(buf, "%s%s", fname, "-usedvalues");

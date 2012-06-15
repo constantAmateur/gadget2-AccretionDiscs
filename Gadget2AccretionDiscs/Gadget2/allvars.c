@@ -62,6 +62,10 @@ int    *DomainTask;        /*!< this table gives for each leaf of the top-level 
 int    *DomainNodeIndex;   /*!< this table gives for each leaf of the top-level tree the corresponding node of the gravitational tree */
 FLOAT  *DomainTreeNodeLen; /*!< this table gives for each leaf of the top-level tree the side-length of the corresponding node of the gravitational tree */
 FLOAT  *DomainHmax;        /*!< this table gives for each leaf of the top-level tree the maximum SPH smoothing length among the particles of the corresponding node of the gravitational tree */
+#ifdef BETA_COOLING
+double StarPos[3];
+double StarMass;
+#endif
 
 struct DomainNODE
  *DomainMoment;                    /*!< this table stores for each node of the top-level tree corresponding node data from the gravitational tree */

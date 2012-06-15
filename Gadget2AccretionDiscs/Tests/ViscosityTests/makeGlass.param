@@ -1,10 +1,10 @@
 %Filenames and file formats
 
-OutputDir	/data/my304/Output/Tests/CoolingTests/constantQ/
-SnapshotFileBase	LowResConstantQ
+OutputDir	/data/my304/Output/Tests/ViscosityTests/glass/
+SnapshotFileBase	glass
 SnapFormat	1
 NumFilesPerSnapshot	1
-InitCondFile /data/my304/Working/gadget2-AccretionDiscs/Gadget2AccretionDiscs/Tests/LowResConstantQ.IC
+InitCondFile /data/my304/Working/gadget2-AccretionDiscs/Gadget2AccretionDiscs/Tests/LowResThinDisc.IC
 ICFormat	1
 RestartFile	restart
 InfoFile	info.txt
@@ -22,9 +22,9 @@ CpuTimeBetRestartFile	7200
 %Simulation specific parameters
 
 TimeBegin	0.0
-TimeMax	3000.0
+TimeMax	300.0
 BoxSize	10000.0
-PeriodicBoundariesOn	0
+PeriodicBoundariesOn	1
 ComovingIntegrationOn	0
 
 %Cosmological parameters (These are ignored for my stuff)
@@ -83,9 +83,9 @@ MinGasHsmlFractional	0.0
 %Artificial viscosity
 
 ArtViscPropConst  1.5
-ArtBulkViscConst	.000000002
-VariableViscAlphaMin  .000000001
-VariableViscDecayLength  .1
+ArtBulkViscConst	2.0
+%VariableViscAlphaMin  .1
+%VariableViscDecayLength  .1
 
 
 %Gravitational Softening
@@ -104,7 +104,4 @@ SofteningStarsMaxPhys	0
 SofteningBndryMaxPhys	0
 
 %Particle accretion
-AccretionRadius  5.0
-
-%Cooling
-CoolingRate 0.0005
+%AccretionRadius  10.0

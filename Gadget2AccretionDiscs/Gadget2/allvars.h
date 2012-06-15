@@ -294,6 +294,9 @@ extern struct global_data_all_processes
   double VariableViscDecayLength;  /* The "l" value which sets how quickly the artificial viscosity decays back to zero in the absence of any source terms.  Can be thought of as the number of smoothing lengths over which Art Visc decays.  Typically .1*/
   double VariableViscAlphaMin;   /* Minimum value of artificial viscosity */
 #endif
+#ifdef BETA_COOLING
+  int StarID;              /* The ID of the central object. */
+#endif
   double InitGasTemp;		/*!< may be used to set the temperature in the IC's */
   double MinGasTemp;		/*!< may be used to set a floor for the gas temperature */
   double MinEgySpec;            /*!< the minimum allowed temperature expressed as energy per unit mass */
@@ -359,6 +362,9 @@ extern struct global_data_all_processes
   int NumCurrentTiStep;         /*!< counts the number of system steps taken up to this point */
 #ifdef SINK_PARTICLES  
   int TstepLastAcc;             /*!< Stores the timestep of the last accretion event. */
+#endif
+#ifdef BETA_COOLING
+  double CoolingRate;             /* "Beta".  The number of dynamical times the cooling rate is set to */
 #endif
 
   /* Current time of the simulation, global step, and end of simulation */

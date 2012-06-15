@@ -76,6 +76,7 @@ OPT   +=  -DVARIABLE_VISC_CONST
 
 #--------------------------------------- Testing and Debugging options
 #OPT   +=  -DFORCETEST=0.1
+OPT   +=  -DNONINTERACTING_GAS
 
 
 #--------------------------------------- Glass making

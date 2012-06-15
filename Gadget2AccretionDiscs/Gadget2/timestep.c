@@ -89,10 +89,12 @@ void advance_and_find_timesteps(void)
     {
       for(j = 0; j < 3; j++)
 	{
-	  P[i].GravPM[j] *= -1;
 	  P[i].GravAccel[j] *= -1;
+#ifdef PMGRID
+	  P[i].GravPM[j] *= -1;
 	  P[i].GravAccel[j] += P[i].GravPM[j];
 	  P[i].GravPM[j] = 0;
+#endif
 	}
 
       disp = sqrt(P[i].GravAccel[0] * P[i].GravAccel[0] +

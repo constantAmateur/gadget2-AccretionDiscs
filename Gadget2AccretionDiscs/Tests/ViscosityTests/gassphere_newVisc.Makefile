@@ -10,13 +10,13 @@
 
 #--------------------------------------- Basic operation mode of code
 #OPT   +=  -DPERIODIC 
-OPT   +=  -DUNEQUALSOFTENINGS
+#OPT   +=  -DUNEQUALSOFTENINGS
 
 
 #--------------------------------------- Things that are always recommended
 OPT   +=  -DPEANOHILBERT
 OPT   +=  -DWALLCLOCK   
-OPT   +=  -DPRICE_GRAV_SOFT
+#OPT   +=  -DPRICE_GRAV_SOFT
 
 
 #--------------------------------------- TreePM Options
@@ -62,13 +62,12 @@ OPT   +=  -DOUTPUTALPHA
 OPT   +=  -DCOMPUTE_POTENTIAL_ENERGY
 #OPT   +=  -DLONGIDS
 #OPT   +=  -DISOTHERM_EQS
-OPT   +=  -DADAPTIVE_GRAVSOFT_FORGAS
+#OPT   +=  -DADAPTIVE_GRAVSOFT_FORGAS
 #OPT   +=  -DSELECTIVE_NO_GRAVITY=2+4+8+16
 OPT   +=  -DNOFFTWINSTALLED
-OPT   +=  -BETA_COOLING
 
 #--------------------------------------- Sink particle options
-OPT   +=  -DSINK_PARTICLES
+#OPT   +=  -DSINK_PARTICLES
 #OPT   +=  -DNO_ACC_TEST
 
 #--------------------------------------- Variable viscosity options

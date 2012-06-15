@@ -21,6 +21,10 @@ void init(void)
 {
   int i, j;
   double a3;
+#ifdef BETA_COOLING
+  int starID,*list_starID;
+  double starMass,*list_starMass;
+#endif
 
   All.Time = All.TimeBegin;
 #ifdef SINK_PARTICLES
@@ -82,7 +86,10 @@ void init(void)
 	for(j = 0; j < 3; j++)
 	  P[i].Vel[j] *= sqrt(All.Time) * All.Time;
     }
-
+#ifdef BETA_COOLING
+  starMass=-1.0;
+  starID=-1;
+#endif
   for(i = 0; i < NumPart; i++)	/*  start-up initialization */
     {
       for(j = 0; j < 3; j++)
@@ -97,7 +104,43 @@ void init(void)
       P[i].OldAcc = 0;
       P[i].GravCost = 1;
       P[i].Potential = 0;
+#ifdef BETA_COOLING
+      /* All processors will have the ID with the largest mass in them */
+      if(i>=N_gas)
+      {
+        if(P[i].Mass>starMass)
+        {
+          starMass=P[i].Mass;
+          starID=P[i].ID;
+        }
+      }
+#endif
     }
+#ifdef BETA_COOLING
+  /* Gather all the sink IDs together */
+  list_starMass = malloc(NTask * sizeof(double));
+  list_starID = malloc(NTask * sizeof(int));
+  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Allgather(&starMass,1,MPI_DOUBLE,list_starMass,1,MPI_DOUBLE,MPI_COMM_WORLD);
+  MPI_Allgather(&starID,1,MPI_INT,list_starID,1,MPI_INT,MPI_COMM_WORLD);
+  /* Now identify the final ID that we'll use*/
+  for(i=0;i<NTask;i++)
+  {
+    if(list_starMass[i]>starMass)
+    {
+      starMass=list_starMass[i];
+      starID=list_starID[i];
+    }
+  }
+  /* Now we all have the same starMass and starID */
+  All.StarID=starID;
+  if(ThisTask==1)
+    printf("The star ID is %d\n",All.StarID);
+  free(list_starMass);
+  free(list_starID);
+#endif
+
+
 
 #ifdef PMGRID
   All.PM_Ti_endstep = All.PM_Ti_begstep = 0;

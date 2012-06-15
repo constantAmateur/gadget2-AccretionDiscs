@@ -16,7 +16,7 @@ OPT   +=  -DUNEQUALSOFTENINGS
 #--------------------------------------- Things that are always recommended
 OPT   +=  -DPEANOHILBERT
 OPT   +=  -DWALLCLOCK   
-#OPT   +=  -DPRICE_GRAV_SOFT
+OPT   +=  -DPRICE_GRAV_SOFT
 
 
 #--------------------------------------- TreePM Options
@@ -76,6 +76,7 @@ OPT   +=  -DVARIABLE_VISC_CONST
 
 #--------------------------------------- Testing and Debugging options
 #OPT   +=  -DFORCETEST=0.1
+OPT   +=  -DNONINTERACTING_GAS
 
 
 #--------------------------------------- Glass making

@@ -16,7 +16,7 @@ OPT   +=  -DUNEQUALSOFTENINGS
 #--------------------------------------- Things that are always recommended
 OPT   +=  -DPEANOHILBERT
 OPT   +=  -DWALLCLOCK   
-#OPT   +=  -DPRICE_GRAV_SOFT
+OPT   +=  -DPRICE_GRAV_SOFT
 
 
 #--------------------------------------- TreePM Options
@@ -65,9 +65,10 @@ OPT   +=  -DCOMPUTE_POTENTIAL_ENERGY
 OPT   +=  -DADAPTIVE_GRAVSOFT_FORGAS
 #OPT   +=  -DSELECTIVE_NO_GRAVITY=2+4+8+16
 OPT   +=  -DNOFFTWINSTALLED
+#OPT   +=  -DBETA_COOLING
 
 #--------------------------------------- Sink particle options
-#OPT   +=  -DSINK_PARTICLES
+OPT   +=  -DSINK_PARTICLES
 #OPT   +=  -DNO_ACC_TEST
 
 #--------------------------------------- Variable viscosity options
