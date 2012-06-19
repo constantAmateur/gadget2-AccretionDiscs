@@ -71,7 +71,7 @@ OPT   +=  -DADAPTIVE_GRAVSOFT_FORGAS
 #OPT   +=  -DNO_ACC_TEST
 
 #--------------------------------------- Variable viscosity options
-#OPT   +=  -DVARIABLE_VISC_CONST
+OPT   +=  -DVARIABLE_VISC_CONST
 
 
 #--------------------------------------- Testing and Debugging options
