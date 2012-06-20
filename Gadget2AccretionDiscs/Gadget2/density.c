@@ -63,6 +63,10 @@ void density(void)
   double sumt, sumcomm, timengb, sumtimengb;
   double timecomp = 0, timeimbalance = 0, timecommsumm = 0, sumimbalance;
   MPI_Status status;
+#ifdef ALT_DIVV
+  int k;
+  double Tinv[9],V[9];
+#endif
 
 #ifdef PERIODIC
   boxSize = All.BoxSize;
@@ -264,7 +268,13 @@ void density(void)
 #ifdef PRICE_GRAV_SOFT
                SphP[place].Zeta += DensDataPartialResult[source].Zeta;
 #endif
-
+#ifdef ALT_DIVV
+               for(k=0;k<9;k++)
+               {
+                 SphP[place].D[k] += DensDataPartialResult[source].D[k];
+                 SphP[place].T[k] += DensDataPartialResult[source].T[k];
+               }
+#endif
 			      SphP[place].Rot[0] += DensDataPartialResult[source].Rot[0];
 			      SphP[place].Rot[1] += DensDataPartialResult[source].Rot[1];
 			      SphP[place].Rot[2] += DensDataPartialResult[source].Rot[2];
@@ -307,6 +317,37 @@ void density(void)
 				       SphP[i].Rot[2] * SphP[i].Rot[2]) / SphP[i].Density;
 
 		SphP[i].DivVel /= SphP[i].Density;
+#ifdef ALT_DIVV
+      fac = SphP[i].T[0]*(SphP[i].T[4]*SphP[i].T[8]-SphP[i].T[5]*SphP[i].T[7])+SphP[i].T[1]*(SphP[i].T[5]*SphP[i].T[6]-SphP[i].T[8]*SphP[i].T[3])+SphP[i].T[2]*(SphP[i].T[3]*SphP[i].T[7]-SphP[i].T[4]*SphP[i].T[6]);
+      Tinv[0]=(SphP[i].T[4]*SphP[i].T[8]-SphP[i].T[5]*SphP[i].T[7])/fac;
+      Tinv[1]=(SphP[i].T[2]*SphP[i].T[7]-SphP[i].T[1]*SphP[i].T[8])/fac;
+      Tinv[2]=(SphP[i].T[1]*SphP[i].T[5]-SphP[i].T[2]*SphP[i].T[4])/fac;
+      Tinv[3]=(SphP[i].T[5]*SphP[i].T[6]-SphP[i].T[3]*SphP[i].T[8])/fac;
+      Tinv[4]=(SphP[i].T[0]*SphP[i].T[8]-SphP[i].T[2]*SphP[i].T[6])/fac;
+      Tinv[5]=(SphP[i].T[2]*SphP[i].T[3]-SphP[i].T[0]*SphP[i].T[5])/fac;
+      Tinv[6]=(SphP[i].T[3]*SphP[i].T[7]-SphP[i].T[4]*SphP[i].T[6])/fac;
+      Tinv[7]=(SphP[i].T[6]*SphP[i].T[1]-SphP[i].T[0]*SphP[i].T[7])/fac;
+      Tinv[8]=(SphP[i].T[0]*SphP[i].T[4]-SphP[i].T[1]*SphP[i].T[3])/fac;
+      //Estimate the velocity matrix as D.T^-1
+      V[0]=SphP[i].D[0]*Tinv[0]+SphP[i].D[1]*Tinv[3]+SphP[i].D[2]*Tinv[6];
+      V[1]=SphP[i].D[0]*Tinv[1]+SphP[i].D[1]*Tinv[4]+SphP[i].D[2]*Tinv[7];
+      V[2]=SphP[i].D[0]*Tinv[2]+SphP[i].D[1]*Tinv[5]+SphP[i].D[2]*Tinv[8];
+      V[3]=SphP[i].D[3]*Tinv[0]+SphP[i].D[4]*Tinv[3]+SphP[i].D[5]*Tinv[6];
+      V[4]=SphP[i].D[3]*Tinv[1]+SphP[i].D[4]*Tinv[4]+SphP[i].D[5]*Tinv[7];
+      V[5]=SphP[i].D[3]*Tinv[2]+SphP[i].D[4]*Tinv[5]+SphP[i].D[5]*Tinv[8];
+      V[6]=SphP[i].D[6]*Tinv[0]+SphP[i].D[7]*Tinv[3]+SphP[i].D[8]*Tinv[6];
+      V[7]=SphP[i].D[6]*Tinv[1]+SphP[i].D[7]*Tinv[4]+SphP[i].D[8]*Tinv[7];
+      V[8]=SphP[i].D[6]*Tinv[2]+SphP[i].D[7]*Tinv[5]+SphP[i].D[8]*Tinv[8];
+      //Add in the factors of 1/rho_i to T and D.  Note this does not change the estimate of V as they cancel in D.T^-1
+      for(k=0;k<9;k++){
+        Tinv[k] *= SphP[i].Density;
+        SphP[i].T[k] /= SphP[i].Density;
+        SphP[i].D[k] /= SphP[i].Density;
+      }
+      //If we wanted to save Tinv or V, do it here...
+      //Calculate the new estimate...
+      SphP[i].DivVel = SphP[i].D[0]*Tinv[0]+SphP[i].D[1]*Tinv[3]+SphP[i].D[2]*Tinv[6]+SphP[i].D[3]*Tinv[1]+SphP[i].D[4]*Tinv[4]+SphP[i].D[5]*Tinv[7]+SphP[i].D[6]*Tinv[2]+SphP[i].D[7]*Tinv[5]+SphP[i].D[8]*Tinv[8];
+#endif
 
 		dt_entr = (All.Ti_Current - (P[i].Ti_begstep + P[i].Ti_endstep) / 2) * All.Timebase_interval;
 
@@ -481,6 +522,9 @@ void density_evaluate(int target, int mode)
 #ifdef PRICE_GRAV_SOFT
   double zeta,dphi,hinv2;
 #endif
+#ifdef ALT_DIVV
+  double D[9],T[9],hi5;
+#endif
   FLOAT *pos, *vel;
 
   if(mode == 0)
@@ -497,6 +541,9 @@ void density_evaluate(int target, int mode)
     }
 
   h2 = h * h;
+#ifdef ALT_DIVV
+  hi5 = h2 * h2 * h;
+#endif
   hinv = 1.0 / h;
 #ifdef PRICE_GRAV_SOFT
   hinv2 = hinv * hinv;
@@ -513,6 +560,12 @@ void density_evaluate(int target, int mode)
   dhsmlrho = 0;
 #ifdef PRICE_GRAV_SOFT
   zeta = 0;
+#endif
+#ifdef ALT_DIVV
+  for(i=0;i<9;i++)
+  {
+    D[i]=T[i]=0;
+  }
 #endif
 
   startnode = All.MaxPart;
@@ -582,6 +635,7 @@ void density_evaluate(int target, int mode)
          zeta += mass_j * dphi;
 #endif
 
+
 	      if(r > 0)
 		{
 		  fac = mass_j * dwk / r;
@@ -595,6 +649,31 @@ void density_evaluate(int target, int mode)
 		  rotv[0] += fac * (dz * dvy - dy * dvz);
 		  rotv[1] += fac * (dx * dvz - dz * dvx);
 		  rotv[2] += fac * (dy * dvx - dx * dvy);
+
+#ifdef ALT_DIVV
+        //This should really be devided by rho_j, but so should the GADGET estimator, so we'll do the same thing they do and divide by rho_i at the end instead
+        fac = hi5*mass_j * dwk / r;
+        D[0] += fac * (dvx*dx);
+        D[1] += fac * (dvx*dy);
+        D[2] += fac * (dvx*dz);
+        D[3] += fac * (dvy*dx);
+        D[4] += fac * (dvy*dy);
+        D[5] += fac * (dvy*dz);
+        D[6] += fac * (dvz*dx);
+        D[7] += fac * (dvz*dy);
+        D[8] += fac * (dvz*dz);
+
+        T[0] += fac * (dx*dx);
+        T[1] += fac * (dx*dy);
+        T[2] += fac * (dx*dz);
+        T[3] += fac * (dy*dx);
+        T[4] += fac * (dy*dy);
+        T[5] += fac * (dy*dz);
+        T[6] += fac * (dz*dx);
+        T[7] += fac * (dz*dy);
+        T[8] += fac * (dz*dz);
+#endif
+
 		}
 	    }
 	}
@@ -613,6 +692,13 @@ void density_evaluate(int target, int mode)
 #ifdef PRICE_GRAV_SOFT
       SphP[target].Zeta = zeta;
 #endif
+#ifdef ALT_DIVV
+      for(i=0;i<9;i++)
+      {
+        SphP[target].D[i]=D[i];
+        SphP[target].T[i]=T[i];
+      }
+#endif
     }
   else
     {
@@ -626,7 +712,13 @@ void density_evaluate(int target, int mode)
 #ifdef PRICE_GRAV_SOFT
       DensDataResult[target].Zeta = zeta;
 #endif
-
+#ifdef ALT_DIVV
+      for(i=0; i<9; i++)
+      {
+        DensDataResult[target].D[i]=D[i];
+        DensDataResult[target].T[i]=T[i];
+      }
+#endif
     }
 }
 

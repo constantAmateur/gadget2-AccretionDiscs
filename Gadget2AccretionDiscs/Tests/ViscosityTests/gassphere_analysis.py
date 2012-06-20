@@ -1,13 +1,43 @@
 
-limit=70
+limit=301
 import numpy as np
+import os
 from matplotlib import pyplot as plt
 
-#first="GadgetOriginal/energy.txt"
-#first="NewViscPriceGrav/energy.txt"
+#Calculate potential from ascii
+def potential(base,stop=301):
+  start=0
+  energy=np.zeros((stop-start+1,2))
+  for i in xrange(start,stop+1):
+    nom=base % i
+    tmp=np.genfromtxt(nom)
+    x=tmp[:,0]
+    y=tmp[:,1]
+    z=tmp[:,2]
+    pe=0
+    for j in xrange(0,len(x)):
+      pe = pe - np.sum(1.0/np.sqrt((x[j]-x[j+1:])**2 + (y[j]-y[j+1:])**2 + (z[j]-z[j+1:])**2))
+    energy[i,0]=i
+    energy[i,1]=pe
+  return energy[:,1]
+
+
+#Gravity test
+#Original
+first="OrigAV_FixedGrav/energy.txt"
+second="Pristene_OrigAV_VarGrav/energy.txt"
+third="OrigAV_PriceGrav/energy.txt"
+#New
 first="NewAV_FixedGrav/energy.txt"
 second="NewAV_VarGrav/energy.txt"
 third="NewAV_PriceGrav/energy.txt"
+#AV test
+first="OrigAV_FixedGrav/energy.txt"
+second="NewAV_FixedGrav/energy.txt"
+third="NewAV_FixedGrav/energy.txt"
+#potential returns sum(1/r), multiply it by this factor...
+potFac=5e-7
+calcPot=False
 
 fdat=np.genfromtxt(first)
 fdat=fdat[:limit,]
@@ -15,6 +45,16 @@ sdat=np.genfromtxt(second)
 sdat=sdat[:limit,]
 tdat=np.genfromtxt(third)
 tdat=tdat[:limit,]
+#Calculate the potential?
+if calcPot:
+  fpot=potential(os.path.dirname(first)+"/gassphere_%03d.ascii")*potFac
+  fdat[:,2]=fpot[:limit]
+  spot=potential(os.path.dirname(second)+"/gassphere_%03d.ascii")*potFac
+  sdat[:,2]=spot[:limit]
+  tpot=potential(os.path.dirname(third)+"/gassphere_%03d.ascii")*potFac
+  tdat[:,2]=tpot[:limit]
+
+
 #First column is time, second is thermal, third is potential, fourth is kinetic
 t=(fdat[:,0]+sdat[:,0]+tdat[:,0])/3.0
 #Thermal
@@ -41,22 +81,4 @@ plt.title("Energy evolution for different code setups")
 #'$E_{kin}^{def}$','$E_{kin}^{vis}$','$E_{kin}^{grav+vis}$',
 #'$E_{pot}^{def}$','$E_{pot}^{vis}$','$E_{pot}^{grav+vis}$',
 #'$E_{tot}^{def}$','$E_{tot}^{vis}$','$E_{tot}^{grav+vis}$'),ncol=4)
-
-#Calculate potential from ascii
-start=0
-stop=301
-energy=np.zeros((stop-start+1,2))
-for i in xrange(start,stop+1):
-  nom="gassphere_%03d.ascii" % i
-  tmp=np.genfromtxt(nom)
-  x=tmp[:,0]
-  y=tmp[:,1]
-  z=tmp[:,2]
-  m=tmp[:,13]
-  pe=0
-  for j in xrange(0,len(x)):
-    pe = pe - np.sum((m[j]*m[j+1:])/np.sqrt((x[j]-x[j+1:])**2 + (y[j]-y[j+1:])**2 + (z[j]-z[j+1:])**2))
-  energy[i,0]=i
-  energy[i,1]=pe
-
 

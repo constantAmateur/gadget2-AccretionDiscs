@@ -421,8 +421,6 @@ void hydro_evaluate(int target, int mode)
   int acctarget;
 #endif
 
-
-
   if(mode == 0)
     {
       pos = P[target].Pos;
@@ -531,12 +529,17 @@ void hydro_evaluate(int target, int mode)
 		      hinv4 = hinv * hinv * hinv * hinv;
 #else
 		      hinv4 = hinv * hinv * hinv / boxSize_Z;
+
 #endif
 		      u = r * hinv;
 		      if(u < 0.5)
-			dwk_i = hinv4 * u * (KERNEL_COEFF_3 * u - KERNEL_COEFF_4);
+            {
+			     dwk_i = hinv4 * u * (KERNEL_COEFF_3 * u - KERNEL_COEFF_4);
+            }
 		      else
-			dwk_i = hinv4 * KERNEL_COEFF_6 * (1.0 - u) * (1.0 - u);
+            {
+			     dwk_i = hinv4 * KERNEL_COEFF_6 * (1.0 - u) * (1.0 - u);
+            }
 		    }
 		  else
 		    {
@@ -561,7 +564,6 @@ void hydro_evaluate(int target, int mode)
 		    {
 		      dwk_j = 0;
 		    }
-
 		  if(soundspeed_i + soundspeed_j > maxSignalVel)
 		    maxSignalVel = soundspeed_i + soundspeed_j;
 

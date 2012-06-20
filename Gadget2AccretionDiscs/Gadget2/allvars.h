@@ -579,6 +579,10 @@ extern struct sph_particle_data
 #ifdef PRICE_GRAV_SOFT
   FLOAT Zeta;             /* The factor needed to calculate the grav softening correction */
 #endif
+#ifdef ALT_DIVV
+  FLOAT D[9];
+  FLOAT T[9];             /* The two matrices needed for the more advanced estimation */
+#endif
 }
  *SphP,                        	/*!< holds SPH particle data on local processor */
  *DomainSphBuf;                 /*!< buffer for SPH particle data in domain decomposition */
@@ -776,6 +780,10 @@ extern struct densdata_out
   FLOAT Ngb;
 #ifdef PRICE_GRAV_SOFT
   FLOAT Zeta;
+#endif
+#ifdef ALT_DIVV
+  FLOAT D[9];
+  FLOAT T[9];
 #endif
 }
  *DensDataResult,               /*!< stores the locally computed SPH density results for imported particles */
