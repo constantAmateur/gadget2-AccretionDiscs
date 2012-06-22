@@ -1,7 +1,7 @@
 #############################
 # PREAMBLE/PARAMATERS   #####
 #############################
-source("~/Source/Common/Rinit.R")
+source("~/Projects/Common/Rinit.R")
 
 #########UNITS###############
 
@@ -40,7 +40,7 @@ r_outer = 50
 #How does the temperature scale with radius? 0 gives isothermal
 temppower = 0.0
 #What is the temperature for the disc...
-baseTemp = 10.6700
+baseTemp = 100.6700
 #Adiabatic index
 gamma = 5/3
 #specific heat capacity at constant volume (for converting between temperature and internal energy)

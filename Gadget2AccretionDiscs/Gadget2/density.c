@@ -65,7 +65,7 @@ void density(void)
   MPI_Status status;
 #ifdef ALT_DIVV
   int k;
-  double Tinv[9],V[9];
+  double Tinv[9],V[9],fac;
 #endif
 
 #ifdef PERIODIC
@@ -523,6 +523,7 @@ void density_evaluate(int target, int mode)
   double zeta,dphi,hinv2;
 #endif
 #ifdef ALT_DIVV
+  int i;
   double D[9],T[9],hi5;
 #endif
   FLOAT *pos, *vel;

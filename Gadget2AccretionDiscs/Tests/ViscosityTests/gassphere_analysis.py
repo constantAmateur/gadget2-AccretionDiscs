@@ -32,9 +32,9 @@ first="NewAV_FixedGrav/energy.txt"
 second="NewAV_VarGrav/energy.txt"
 third="NewAV_PriceGrav/energy.txt"
 #AV test
-first="OrigAV_FixedGrav/energy.txt"
+first="Pristene_OrigAV_FixedGrav/energy.txt"
 second="NewAV_FixedGrav/energy.txt"
-third="NewAV_FixedGrav/energy.txt"
+third="NewAV_FixedGrav_AltDivv/energy.txt"
 #potential returns sum(1/r), multiply it by this factor...
 potFac=5e-7
 calcPot=False
@@ -57,6 +57,13 @@ if calcPot:
 
 #First column is time, second is thermal, third is potential, fourth is kinetic
 t=(fdat[:,0]+sdat[:,0]+tdat[:,0])/3.0
+#Some virial ratio stuff...
+#vratio1=-2.0*(fdat[:,3]+fdat[:,1])/fdat[:,2]
+#vratio2=-2.0*(sdat[:,3]+sdat[:,1])/sdat[:,2]
+#vratio3=-2.0*(tdat[:,3]+tdat[:,1])/tdat[:,2]
+#plt.plot(t,vratio1,'r-')
+#plt.plot(t,vratio2,'g--')
+#plt.plot(t,vratio3,'b-.')
 #Thermal
 plt.plot(t,fdat[:,1],'r-')
 plt.plot(t,sdat[:,1],'r--')
