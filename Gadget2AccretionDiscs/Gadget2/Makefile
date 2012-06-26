@@ -77,6 +77,7 @@ OPT   +=  -DVARIABLE_VISC_CONST
 
 #--------------------------------------- Testing and Debugging options
 #OPT   +=  -DFORCETEST=0.1
+#OPT	 +=  -DVERBOSE
 
 
 #--------------------------------------- Glass making
@@ -592,5 +593,7 @@ clean:
 # - NOFFTWINSTALLED
 #     Allows the code to compile even if FFTW is not installed.  Will not work if an 
 #     option is selected which needs FFTW such as PMGRID.
+# - VERBOSE
+#     Prints out various diagnostic messages.
 #-----------------------------------------------------------------------
 

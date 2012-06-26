@@ -353,14 +353,16 @@ void fill_write_buffer(enum iofields blocknr, int *startindex, int pc, int type)
       
     case IO_ALPHA:  /* viscosity */
 #ifdef OUTPUTALPHA
-#ifdef VARIABLE_VISC_CONST
       for(n = 0; n < pc; pindex++)
         if(P[pindex].Type == type)
         {
+#ifdef VARIABLE_VISC_CONST
           *fp++ = SphP[pindex].Alpha;
+#else
+          *fp++ = All.ArtBulkViscConst;
+#endif
           n++;
         }
-#endif
 #endif
       break;
       
@@ -567,6 +569,11 @@ int blockpresent(enum iofields blocknr)
   if(blocknr == IO_TSTP)
     return 0;
 #endif
+
+#ifndef OUTPUTALPHA
+  if(blocknr == IO_ALPHA)
+    return 0;
+#endif
   
   return 1;			/* default: present */
 }
@@ -761,8 +768,9 @@ void write_file(char *fname, int writeTask, int lastTask)
   header.flag_cooling = 0;
   header.flag_stellarage = 0;
   header.flag_metals = 0;
+  header.extra_output = 0;
   
-#ifdef COOLING
+#ifdef BETA_COOLING
   header.flag_cooling = 1;
 #endif
 #ifdef SFR
@@ -773,6 +781,21 @@ void write_file(char *fname, int writeTask, int lastTask)
 #endif
 #ifdef METALS
   header.flag_metals = 1;
+#endif
+#ifdef OUTPUTPOTENTIAL
+  header.extra_output += 1;
+#endif
+#ifdef OUTPUTACCELERATION
+  header.extra_output += 2;
+#endif
+#ifdef OUTPUTCHANGEOFENTROPY
+  header.extra_output += 4;
+#endif
+#ifdef OUTPUTTIMESTEP
+  header.extra_output += 8;
+#endif
+#ifdef OUTPUTALHPA
+  header.extra_output += 16;
 #endif
 #endif
   
@@ -1129,6 +1152,12 @@ void write_header_attributes_in_hdf5(hid_t handle)
   H5Sset_extent_simple(hdf5_dataspace, 1, adim, NULL);
   hdf5_attribute = H5Acreate(handle, "Flag_Entropy_ICs", H5T_NATIVE_UINT, hdf5_dataspace, H5P_DEFAULT);
   H5Awrite(hdf5_attribute, H5T_NATIVE_UINT, &header.flag_entropy_instead_u);
+  H5Aclose(hdf5_attribute);
+  H5Sclose(hdf5_dataspace);
+
+  hdf5_dataspace = H5Screate(H5S_SCALAR);
+  hdf5_attribute = H5Acreate(handle, "Extra_Output", H5T_NATIVE_INT, hdf5_dataspace, H5P_DEFAULT);
+  H5Awrite(hdf5_attribute, H5T_NATIVE_INT, &header.extra_output);
   H5Aclose(hdf5_attribute);
   H5Sclose(hdf5_dataspace);
 }

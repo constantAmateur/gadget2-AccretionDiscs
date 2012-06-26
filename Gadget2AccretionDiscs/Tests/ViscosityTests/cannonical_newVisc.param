@@ -14,7 +14,7 @@ EnergyFile	energy.txt
 
 %CPU-time limit and restart options
 
-TimeLimitCPU	40000.0
+TimeLimitCPU	400000.0
 ResubmitCommand	xyz
 ResubmitOn	0
 CpuTimeBetRestartFile	7200

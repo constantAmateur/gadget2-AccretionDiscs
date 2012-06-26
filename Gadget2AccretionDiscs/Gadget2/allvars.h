@@ -671,12 +671,14 @@ extern struct io_header
   int flag_metals;                     /*!< flags whether the file contains metallicity values for gas and star particles */
   unsigned int npartTotalHighWord[6];  /*!< High word of the total number of particles of each type */
   int  flag_entropy_instead_u;         /*!< flags that IC-file contains entropy instead of u */
-  char fill[60];	               /*!< fills to 256 Bytes */
+  unsigned int  extra_output;          /* This encodes any of the extra output blocks that are added to the snapshot.
+                                        They are encoded as:2^0 = grav potential, 2^1=accelerations,2^2=rate of entropy,2^3=timesteps,2^4=alpha*/
+  char fill[56];	               /*!< fills to 256 Bytes */
 }
  header;                               /*!< holds header for snapshot files */
 
 
-#define IO_NBLOCKS 11   /*!< total number of defined information blocks for snapshot files.
+#define IO_NBLOCKS 12   /*!< total number of defined information blocks for snapshot files.
                              Must be equal to the number of entries in "enum iofields" */
 
 enum iofields           /*!< this enumeration lists the defined output blocks in snapshot files. Not all of them need to be present. */

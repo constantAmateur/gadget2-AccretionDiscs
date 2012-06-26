@@ -1,4 +1,12 @@
-
+#NOTE THAT THE SNAPSHOT IS SLIGHTLY DIFFERENT FROM WHAT IS DESCRIBED IN 
+#THE USER GUIDE.
+#The flag_cooling will be set to 1 if the BETA_COOLING flag is used.
+#Additionally, an extra unsigned int is found at the end of the header,
+#which encodes which extra output blocks are written to the snapshot 
+#files (if any).  This is encoded as value=1*(OUTPUTPOTENTIAL==TRUE)+
+#2*(OUTPUTACCELERATION==TRUE)+4*(OUTPUTCHANGEOFENTROPY==TRUE)+
+#8*(OUTPUTTIMESTEP==TRUE)+16*(OUTPUTALPHA==TRUE)
+#
 #----------------------------------------------------------------------
 # From the list below, please activate/deactivate the options that     
 # apply to your run. If you modify any of these options, make sure     
