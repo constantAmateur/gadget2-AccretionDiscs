@@ -41,6 +41,10 @@ static double boxSize_Z, boxHalf_Z;
 #endif
 #endif
 
+#ifdef NK_AV
+static double starData[7];
+#endif
+
 
 
 /*! This function is the driver routine for the calculation of hydrodynamical
@@ -59,7 +63,10 @@ void hydro_force(void)
   MPI_Status status;
 #ifdef BETA_COOLING
   int numsinks,root,globalroot;
-  double starData[4],tdyn,E,R,v2;
+  double tdyn,E,R,v2;
+#endif
+#ifdef NK_AV
+  int numsinks,root,globalroot;
 #endif
 
 #ifdef PERIODIC
@@ -114,7 +121,7 @@ void hydro_force(void)
     ntot += numlist[i];
   free(numlist);
 
-#ifdef BETA_COOLING
+#if defined BETA_COOLING || defined NK_AV
   /* Get the position and mass of the central object and send it to everyone */
   numsinks=NumPart - N_gas;
   starData[0]=starData[1]=starData[2]=starData[3]= -1.0;
@@ -127,6 +134,10 @@ void hydro_force(void)
       starData[1] = P[i+N_gas].Pos[1];
       starData[2] = P[i+N_gas].Pos[2];
       starData[3] = P[i+N_gas].Mass;
+      //This needs to be changed to the PREDICTED velocity
+      starData[4] = P[i+N_gas].Vel[0];
+      starData[5] = P[i+N_gas].Vel[1];
+      starData[6] = P[i+N_gas].Vel[2];
       root = ThisTask;
     }
   }
@@ -134,7 +145,7 @@ void hydro_force(void)
   MPI_Barrier(MPI_COMM_WORLD);
   MPI_Allreduce(&root,&globalroot,1,MPI_INT,MPI_MAX,MPI_COMM_WORLD);
   /* Broadcast it. */
-  MPI_Bcast(&starData,4,MPI_DOUBLE,globalroot,MPI_COMM_WORLD);
+  MPI_Bcast(&starData,7,MPI_DOUBLE,globalroot,MPI_COMM_WORLD);
   //printf("The star ID is %d. The position is (%g,%g,%g) and the mass is %g.\n",All.StarID,starData[0],starData[1],starData[2],starData[3]);
 #endif
 
@@ -319,6 +330,10 @@ void hydro_force(void)
 
 			  if(SphP[place].MaxSignalVel < HydroDataPartialResult[source].MaxSignalVel)
 			    SphP[place].MaxSignalVel = HydroDataPartialResult[source].MaxSignalVel;
+#ifdef NK_AV
+           SphP[place].NumNK += HydroDataPartialResult[source].NumNK;
+           SphP[place].NumN += HydroDataPartialResult[source].NumN;
+#endif
 			}
 		    }
 		}
@@ -420,6 +435,10 @@ void hydro_evaluate(int target, int mode)
 #ifdef SINK_PARTICLES
   int acctarget;
 #endif
+#ifdef NK_AV
+  double v2r_i,v2r_j,r2_j,v2_j,NK_test;
+  int numN,numNK;
+#endif
 
   if(mode == 0)
     {
@@ -470,6 +489,13 @@ void hydro_evaluate(int target, int mode)
 
   p_over_rho2_i = pressure / (rho * rho) * dhsmlDensityFactor;
   h_i2 = h_i * h_i;
+  
+#ifdef NK_AV
+  //Calculate the local values
+  v2r_i = ((starData[4]-vel[0])*(starData[4]-vel[0])+(starData[5]-vel[1])*(starData[5]-vel[1])+(starData[6]-vel[2])*(starData[6]-vel[2]))*sqrt((starData[0]-pos[0])*(starData[0]-pos[0])+(starData[1]-pos[1])*(starData[1]-pos[1])+(starData[2]-pos[2])*(starData[2]-pos[2]));
+  numN=numNK=0;
+#endif
+
 
   /* Now start the actual SPH computation for this particle */
   startnode = All.MaxPart;
@@ -486,7 +512,7 @@ void hydro_evaluate(int target, int mode)
 	  dz = pos[2] - P[j].Pos[2];
 
 #ifdef VARIABLE_VISC_CONST
-    alpha_visc_j = SphP[j].Alpha;
+     alpha_visc_j = SphP[j].Alpha;
 #endif
 
 #ifdef PERIODIC			/*  find the closest image in the given box size  */
@@ -524,6 +550,19 @@ void hydro_evaluate(int target, int mode)
 
 		  if(r2 < h_i2)
 		    {
+#ifdef NK_AV
+            numN++;
+            v2_j = ((starData[4]-SphP[j].VelPred[0])*(starData[4]-SphP[j].VelPred[0])+(starData[5]-SphP[j].VelPred[1])*(starData[5]-SphP[j].VelPred[1])+(starData[6]-SphP[j].VelPred[2])*(starData[6]-SphP[j].VelPred[2]));
+            r2_j = ((starData[0]-P[j].Pos[0])*(starData[0]-P[j].Pos[0])+(starData[1]-P[j].Pos[1])*(starData[1]-P[j].Pos[1])+(starData[2]-P[j].Pos[2])*(starData[2]-P[j].Pos[2]));
+            NK_test =fabs(((SphP[j].VelPred[0]-starData[4])*(P[j].Pos[0]-starData[0])+(SphP[j].VelPred[1]-starData[5])*(P[j].Pos[1]-starData[1])+(SphP[j].VelPred[2]-starData[6])*(P[j].Pos[2]-starData[2]))/sqrt(v2_j*r2_j));
+            v2r_j = v2_j * sqrt(r2_j);
+            //if(NK_test > All.NKtollerence || fabs(1-(v2r_i/v2r_j)) < All.NKtollerence)
+            if(fabs(1-(v2r_i/v2r_j)) < All.NKtollerence)
+            {
+              numNK++;
+              //printf("The particle had ratio %g and dot prod %g\n",NK_test,1-(v2r_i/v2r_j));
+            }
+#endif
 		      hinv = 1.0 / h_i;
 #ifndef  TWODIMS
 		      hinv4 = hinv * hinv * hinv * hinv;
@@ -624,6 +663,10 @@ void hydro_evaluate(int target, int mode)
 	SphP[target].HydroAccel[k] = acc[k];
       SphP[target].DtEntropy = dtEntropy;
       SphP[target].MaxSignalVel = maxSignalVel;
+#ifdef NK_AV
+      SphP[target].NumNK = numNK;
+      SphP[target].NumN = numN;
+#endif
     }
   else
     {
@@ -631,6 +674,10 @@ void hydro_evaluate(int target, int mode)
 	HydroDataResult[target].Acc[k] = acc[k];
       HydroDataResult[target].DtEntropy = dtEntropy;
       HydroDataResult[target].MaxSignalVel = maxSignalVel;
+#ifdef NK_AV
+      HydroDataResult[target].NumNK = numNK;
+      HydroDataResult[target].NumN = numN;
+#endif
     }
 }
 

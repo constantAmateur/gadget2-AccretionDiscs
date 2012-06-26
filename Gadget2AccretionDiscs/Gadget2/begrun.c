@@ -610,6 +610,11 @@ void read_parameter_file(char *fname)
       addr[nt] = &All.CoolingRate;
       id[nt++] = DOUBLE;
 #endif
+#ifdef NK_AV
+      strcpy(tag[nt], "NKtollerence");
+      addr[nt] = &All.NKtollerence;
+      id[nt++] = DOUBLE;
+#endif
       if((fd = fopen(fname, "r")))
 	{
 	  sprintf(buf, "%s%s", fname, "-usedvalues");

@@ -21,7 +21,7 @@ void init(void)
 {
   int i, j;
   double a3;
-#ifdef BETA_COOLING
+#if defined BETA_COOLING || defined NK_AV
   int starID,*list_starID;
   double starMass,*list_starMass;
 #endif
@@ -86,7 +86,7 @@ void init(void)
 	for(j = 0; j < 3; j++)
 	  P[i].Vel[j] *= sqrt(All.Time) * All.Time;
     }
-#ifdef BETA_COOLING
+#if defined BETA_COOLING || defined NK_AV
   starMass=-1.0;
   starID=-1;
 #endif
@@ -104,7 +104,7 @@ void init(void)
       P[i].OldAcc = 0;
       P[i].GravCost = 1;
       P[i].Potential = 0;
-#ifdef BETA_COOLING
+#if defined BETA_COOLING || NK_AV
       /* All processors will have the ID with the largest mass in them */
       if(i>=N_gas)
       {
@@ -116,7 +116,7 @@ void init(void)
       }
 #endif
     }
-#ifdef BETA_COOLING
+#if defined BETA_COOLING || NK_AV
   /* Gather all the sink IDs together */
   list_starMass = malloc(NTask * sizeof(double));
   list_starID = malloc(NTask * sizeof(int));

@@ -44,9 +44,9 @@ OPT   +=  -DSYNCHRONIZATION
 #--------------------------------------- Output 
 #OPT   +=  -DHAVE_HDF5  
 OPT   +=  -DOUTPUTPOTENTIAL
-#OPT   +=  -DOUTPUTACCELERATION
-#OPT   +=  -DOUTPUTCHANGEOFENTROPY
-#OPT   +=  -DOUTPUTTIMESTEP
+OPT   +=  -DOUTPUTACCELERATION
+OPT   +=  -DOUTPUTCHANGEOFENTROPY
+OPT   +=  -DOUTPUTTIMESTEP
 OPT   +=  -DOUTPUTALPHA
 
 
@@ -68,7 +68,7 @@ OPT   +=  -DADAPTIVE_GRAVSOFT_FORGAS
 #OPT   +=  -DNOFFTWINSTALLED
 
 #--------------------------------------- Sink particle options
-#OPT   +=  -DSINK_PARTICLES
+OPT   +=  -DSINK_PARTICLES
 #OPT   +=  -DNO_ACC_TEST
 
 #--------------------------------------- Variable viscosity options
@@ -93,7 +93,7 @@ OPT   +=  -DVARIABLE_VISC_CONST
 
 CC       =  mpicc               # sets the C-compiler
 OPTIMIZE =  -O2 -Wall -g        # sets optimization and warning flags
-MPICHLIB =  -lmpich 
+MPICHLIB =  -lmpich
 
 
 #--------------------------------------- Select target computer

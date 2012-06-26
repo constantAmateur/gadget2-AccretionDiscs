@@ -294,7 +294,7 @@ extern struct global_data_all_processes
   double VariableViscDecayLength;  /* The "l" value which sets how quickly the artificial viscosity decays back to zero in the absence of any source terms.  Can be thought of as the number of smoothing lengths over which Art Visc decays.  Typically .1*/
   double VariableViscAlphaMin;   /* Minimum value of artificial viscosity */
 #endif
-#ifdef BETA_COOLING
+#if defined BETA_COOLING || defined NK_AV
   int StarID;              /* The ID of the central object. */
 #endif
   double InitGasTemp;		/*!< may be used to set the temperature in the IC's */
@@ -306,6 +306,9 @@ extern struct global_data_all_processes
   /* accretion and wind parameters */
   double AccretionRadius;    /*!< the radius at which sph particles are accreted onto sinks */
   int AccreteFlag;           /* Determines whether a domain decomposition should cause accretion to be processed */
+#endif
+#ifdef NK_AV
+  double NKtollerence;       //How much can a particle deviate from keplerian before it is "anomolous" default .03
 #endif
 
   /* some force counters  */
@@ -583,6 +586,9 @@ extern struct sph_particle_data
   FLOAT D[9];
   FLOAT T[9];             /* The two matrices needed for the more advanced estimation */
 #endif
+#ifdef NK_AV
+  int NumN,NumNK;         //Counters for the number of neighbours and non-keplerian neighbours
+#endif
 }
  *SphP,                        	/*!< holds SPH particle data on local processor */
  *DomainSphBuf;                 /*!< buffer for SPH particle data in domain decomposition */
@@ -819,6 +825,9 @@ extern struct hydrodata_out
   FLOAT Acc[3];
   FLOAT DtEntropy;
   FLOAT MaxSignalVel;
+#ifdef NK_AV
+  int NumN,NumNK;         //Counters for the number of neighbours and non-keplerian neighbours
+#endif
 }
  *HydroDataResult,              /*!< stores the locally computed SPH hydro results for imported particles */
  *HydroDataPartialResult;       /*!< imported partial SPH hydro-force results from other processors */

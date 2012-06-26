@@ -165,7 +165,11 @@ void identify_doomed_particles(void)
   double *local_sink_velx, *local_sink_vely, *local_sink_velz;
   double *local_sink_mass;  
   int *local_sink_ID;  
+#ifdef VERBOSE
   int verbose = 1;
+#else
+  int verbose = 0;
+#endif
   FLOAT *pos, *vel;
   FLOAT Postemp[3], Veltemp[3];
   
