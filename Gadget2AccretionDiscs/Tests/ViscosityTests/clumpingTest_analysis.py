@@ -5,7 +5,7 @@ import os
 import re
 import progressbar
 
-dir="/home/myoung/Output/Tests/ViscosityTests/clumping/noVisc_reverseSpin"
+dir="/home/myoung/Output/Tests/ViscosityTests/clumping/newVisc_NK"
 ff=re.compile("clumping_([0-9]+).ascii")
 nsamp=10
 

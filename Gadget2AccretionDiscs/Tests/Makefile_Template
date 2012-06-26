@@ -66,6 +66,7 @@ OPT   +=  -DCOMPUTE_POTENTIAL_ENERGY
 OPT   +=  -DADAPTIVE_GRAVSOFT_FORGAS
 #OPT   +=  -DSELECTIVE_NO_GRAVITY=2+4+8+16
 #OPT   +=  -DNOFFTWINSTALLED
+OPT   +=  -DNK_AV
 
 #--------------------------------------- Sink particle options
 #OPT   +=  -DSINK_PARTICLES
@@ -77,6 +78,7 @@ OPT   +=  -DVARIABLE_VISC_CONST
 
 #--------------------------------------- Testing and Debugging options
 #OPT   +=  -DFORCETEST=0.1
+#OPT   +=  -DVERBOSE
 
 
 #--------------------------------------- Glass making
@@ -592,5 +594,14 @@ clean:
 # - NOFFTWINSTALLED
 #     Allows the code to compile even if FFTW is not installed.  Will not work if an 
 #     option is selected which needs FFTW such as PMGRID.
+# - NK_AV
+#     Rather than use the ballsara switch, this uses the keplerian template method to
+#     avoid anomolous aritficial viscosity in differentially rotating flows.  Currently 
+#     this will only work for the per particle artificial viscosity, although I may change
+#     this in future.  Also doesn't use the predicted velocity of the star, which it really
+#     should, but will only matter if the star is accelerating violently, which is unlikely.
+#     In my opinion, this is currently broken.
+# - VERBOSE
+#     Prints a bunch of diagnostic messages when enabled.
 #-----------------------------------------------------------------------
 
