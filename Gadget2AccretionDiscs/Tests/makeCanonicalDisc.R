@@ -39,7 +39,7 @@ print(paste("The unit mass in g is:",M_unit))
 #######DISK VARIABLES#########
 
 #Number of disk particles
-Npart = 2.5e4
+Npart = 2.5e3
 #Mass of the central star
 M_star = 1.
 #Mass of the disk (all disk particles given same mass)
@@ -87,8 +87,12 @@ temp = baseTemp * ((radi/r_inner)^temppower)
 cs = sqrt(gamma*k_b*temp/(mu*m_H))
 #Calculate the velocities (just the usual 1/sqrt(r) keplerian)
 vphi=sqrt((ginternal * M_star)/(radi^3))
+#Add the pressure modification?
+vphi=sqrt((ginternal * M_star)/(radi))
+vphi=vphi*sqrt(1-plIndex*cs*cs/(vphi*vphi))
+vphi=vphi/radi
 #This determines the vertical scale of the disk, it goes as r^(3/2-temppower/2)
-scale_H = (radi*cs /vphi)
+scale_H = (cs /vphi)
 #The z coordinate
 z= rnorm(Npart)*scale_H
 #An array of masses...
