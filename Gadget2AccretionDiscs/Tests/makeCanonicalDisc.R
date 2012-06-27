@@ -39,7 +39,7 @@ print(paste("The unit mass in g is:",M_unit))
 #######DISK VARIABLES#########
 
 #Number of disk particles
-Npart = 2.5e5
+Npart = 2.5e4
 #Mass of the central star
 M_star = 1.
 #Mass of the disk (all disk particles given same mass)

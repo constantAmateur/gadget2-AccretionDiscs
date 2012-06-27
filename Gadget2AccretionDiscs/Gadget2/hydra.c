@@ -62,10 +62,9 @@ void hydro_force(void)
   double timecomp = 0, timecommsumm = 0, timeimbalance = 0, sumimbalance;
   MPI_Status status;
 #ifdef BETA_COOLING
-  int numsinks,root,globalroot;
   double tdyn,E,R,v2;
 #endif
-#ifdef NK_AV
+#if defined BETA_COOLING || defined NK_AV
   int numsinks,root,globalroot;
 #endif
 
@@ -432,9 +431,6 @@ void hydro_evaluate(int target, int mode)
 #ifndef NOVISCOSITYLIMITER
   double dt;
 #endif
-#ifdef SINK_PARTICLES
-  int acctarget;
-#endif
 #ifdef NK_AV
   double v2r_i,v2r_j,r2_j,v2_j,NK_test;
   int numN,numNK;
@@ -458,9 +454,6 @@ void hydro_evaluate(int target, int mode)
 	(fabs(SphP[target].DivVel) + SphP[target].CurlVel +
 	 0.0001 * soundspeed_i / SphP[target].Hsml / fac_mu);
 #endif
-#ifdef SINK_PARTICLES
-      acctarget = SphP[target].AccretionTarget;
-#endif   
     }
   else
     {
@@ -476,9 +469,6 @@ void hydro_evaluate(int target, int mode)
       f1 = HydroDataGet[target].F1;
 #ifdef VARIABLE_VISC_CONST
       alpha_visc = HydroDataGet[target].Alpha;
-#endif
-#ifdef SINK_PARTICLES
-      acctarget = HydroDataGet[target].AccretionTarget;
 #endif
     }
 

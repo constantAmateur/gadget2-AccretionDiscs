@@ -45,6 +45,10 @@ void gravity_tree(void)
   double ax, ay, az;
   MPI_Status status;
 #endif
+#ifdef ADD_CENTRAL_GRAVITY
+  int numsinks,root,globalroot;
+  double starData[4],r;
+#endif
 
   /* set new softening lengths */
   if(All.ComovingIntegrationOn)
@@ -368,6 +372,40 @@ void gravity_tree(void)
 
 #endif
 
+#ifdef ADD_CENTRAL_GRAVITY
+  /* Get the position and mass of the central object and send it to everyone */
+  numsinks=NumPart - N_gas;
+  starData[0]=starData[1]=starData[2]=starData[3]= -1.0;
+  root=-1;
+  for(i=0; i<numsinks;i++)
+  {
+    if(P[i+N_gas].ID==All.StarID)
+    {
+      starData[0] = P[i+N_gas].Pos[0];
+      starData[1] = P[i+N_gas].Pos[1];
+      starData[2] = P[i+N_gas].Pos[2];
+      starData[3] = P[i+N_gas].Mass;
+      root = ThisTask;
+    }
+  }
+  /* Get the node that has the data */
+  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Allreduce(&root,&globalroot,1,MPI_INT,MPI_MAX,MPI_COMM_WORLD);
+  /* Broadcast it. */
+  MPI_Bcast(&starData,4,MPI_DOUBLE,globalroot,MPI_COMM_WORLD);
+  //We have the central object mass and position, add its gravity
+  for(i = 0; i < NumPart; i++)
+  {
+    if(P[i].Ti_endstep == All.Ti_Current && P[i].ID!=All.StarID)
+    {
+      r=sqrt((starData[0]-P[i].Pos[0])*(starData[0]-P[i].Pos[0])+(starData[1]-P[i].Pos[1])*(starData[1]-P[i].Pos[1])+(starData[2]-P[i].Pos[2])*(starData[2]-P[i].Pos[2]));
+      for(j=0;j<3;j++)
+      {
+        P[i].GravAccel[j]+=(starData[j]-P[i].Pos[j])*All.G*starData[3]/(r*r*r);
+      }
+    }
+  }
+#endif
 
 
 

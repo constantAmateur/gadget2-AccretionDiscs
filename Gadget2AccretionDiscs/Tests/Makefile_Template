@@ -73,6 +73,7 @@ OPT   +=  -DCOMPUTE_POTENTIAL_ENERGY
 #OPT   +=  -DISOTHERM_EQS
 OPT   +=  -DADAPTIVE_GRAVSOFT_FORGAS
 #OPT   +=  -DSELECTIVE_NO_GRAVITY=2+4+8+16
+#OPT   +=  -DADD_CENTRAL_GRAVITY
 #OPT   +=  -DNOFFTWINSTALLED
 OPT   +=  -DNK_AV
 
@@ -611,5 +612,9 @@ clean:
 #     In my opinion, this is currently broken.
 # - VERBOSE
 #     Prints a bunch of diagnostic messages when enabled.
+# - ADD_CENTRAL_GRAVITY
+#     Adds the gravity from a central body to all particles.  Intended to be used in conjunction
+#     with NOGRAVITY to provide a simulation of a disc without self gravity, but retaining
+#     gravity due to the central object.
 #-----------------------------------------------------------------------
 

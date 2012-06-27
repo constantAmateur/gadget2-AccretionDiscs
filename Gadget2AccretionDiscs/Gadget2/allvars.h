@@ -294,7 +294,7 @@ extern struct global_data_all_processes
   double VariableViscDecayLength;  /* The "l" value which sets how quickly the artificial viscosity decays back to zero in the absence of any source terms.  Can be thought of as the number of smoothing lengths over which Art Visc decays.  Typically .1*/
   double VariableViscAlphaMin;   /* Minimum value of artificial viscosity */
 #endif
-#if defined BETA_COOLING || defined NK_AV
+#if defined BETA_COOLING || defined NK_AV || defined ADD_CENTRAL_GRAVITY
   int StarID;              /* The ID of the central object. */
 #endif
   double InitGasTemp;		/*!< may be used to set the temperature in the IC's */

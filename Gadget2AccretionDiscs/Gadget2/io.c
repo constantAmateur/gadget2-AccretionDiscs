@@ -782,6 +782,7 @@ void write_file(char *fname, int writeTask, int lastTask)
 #ifdef METALS
   header.flag_metals = 1;
 #endif
+#endif
 #ifdef OUTPUTPOTENTIAL
   header.extra_output += 1;
 #endif
@@ -794,9 +795,8 @@ void write_file(char *fname, int writeTask, int lastTask)
 #ifdef OUTPUTTIMESTEP
   header.extra_output += 8;
 #endif
-#ifdef OUTPUTALHPA
+#ifdef OUTPUTALPHA
   header.extra_output += 16;
-#endif
 #endif
   
   header.num_files = All.NumFilesPerSnapshot;
