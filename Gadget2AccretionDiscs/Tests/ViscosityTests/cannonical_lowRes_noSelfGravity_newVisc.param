@@ -1,7 +1,7 @@
 %Filenames and file formats
 
 InitCondFile ../Tests/ViscosityTests/CannonicalDisc_SuperLowRes.IC
-OutputDir	/home/myoung/Output/Tests/ViscosityTests/cannonical/superLowRes_noSelfGravity_oldVisc/
+OutputDir	/home/myoung/Output/Tests/ViscosityTests/cannonical/superLowRes_noSelfGravity_newVisc/
 SnapshotFileBase	cannonical
 SnapFormat	1
 NumFilesPerSnapshot	1
@@ -82,20 +82,20 @@ MinGasHsmlFractional	0.0
 
 %Artificial viscosity
 
-ArtViscPropConst  2.0
-ArtBulkViscConst	0.1
-%VariableViscAlphaMin  .1
-%VariableViscDecayLength  .1
+ArtViscPropConst  1.5
+ArtBulkViscConst	1.5
+VariableViscAlphaMin  0
+VariableViscDecayLength  .1
 
 
 %Gravitational Softening
 
-SofteningGas	.07
-SofteningHalo	.07
-SofteningDisk	.07
-SofteningBulge	.07
-SofteningStars	.07
-SofteningBndry	.07
+SofteningGas	.01
+SofteningHalo	.01
+SofteningDisk	.01
+SofteningBulge	.01
+SofteningStars	.01
+SofteningBndry	.01
 SofteningGasMaxPhys	0
 SofteningHaloMaxPhys	0
 SofteningDiskMaxPhys	0

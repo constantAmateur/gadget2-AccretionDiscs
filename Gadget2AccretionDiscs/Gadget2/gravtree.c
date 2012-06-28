@@ -47,7 +47,7 @@ void gravity_tree(void)
 #endif
 #ifdef ADD_CENTRAL_GRAVITY
   int numsinks,root,globalroot;
-  double starData[4],r;
+  double starData[4],r,h,h_inv,h3_inv,u;
 #endif
 
   /* set new softening lengths */
@@ -393,15 +393,35 @@ void gravity_tree(void)
   MPI_Allreduce(&root,&globalroot,1,MPI_INT,MPI_MAX,MPI_COMM_WORLD);
   /* Broadcast it. */
   MPI_Bcast(&starData,4,MPI_DOUBLE,globalroot,MPI_COMM_WORLD);
-  //We have the central object mass and position, add its gravity
+  //We have the central object mass and position, add its gravity, it is softened by the type 1 softening...
   for(i = 0; i < NumPart; i++)
   {
+    h = All.ForceSoftening[1];
     if(P[i].Ti_endstep == All.Ti_Current && P[i].ID!=All.StarID)
     {
       r=sqrt((starData[0]-P[i].Pos[0])*(starData[0]-P[i].Pos[0])+(starData[1]-P[i].Pos[1])*(starData[1]-P[i].Pos[1])+(starData[2]-P[i].Pos[2])*(starData[2]-P[i].Pos[2]));
+      if(r >= h)
+      {
+	       fac = 1 / (r*r*r);
+      }
+      else
+      {
+  	     h_inv = 1.0 / h;
+  	     h3_inv = h_inv * h_inv * h_inv;
+  	     u = r * h_inv;
+  	     if(u < 0.5)
+        {
+  	       fac = h3_inv * (10.666666666667 + u * u * (32.0 * u - 38.4));
+        }
+  	     else
+        {
+  	       fac = h3_inv * (21.333333333333 - 48.0 * u +
+  			   38.4 * u * u - 10.666666666667 * u * u * u - 0.066666666667 / (u * u * u));
+        }
+      }
       for(j=0;j<3;j++)
       {
-        P[i].GravAccel[j]+=(starData[j]-P[i].Pos[j])*All.G*starData[3]/(r*r*r);
+        P[i].GravAccel[j]+=(starData[j]-P[i].Pos[j])*All.G*starData[3]*fac;
       }
     }
   }
