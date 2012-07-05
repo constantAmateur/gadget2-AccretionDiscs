@@ -302,8 +302,17 @@ void advance_and_find_timesteps(void)
 #else
          f_fac = (( 1.0 / SphP[i].NumN) * SphP[i].NumNK);
 #endif
-	      tau = 0.5 * SphP[i].Hsml / soundspeed /All.VariableViscDecayLength;
-	      SphP[i].DtAlpha = f_fac*dmax(-SphP[i].DivVel, 0) * (All.ArtBulkViscConst - SphP[i].Alpha) - (SphP[i].Alpha - All.VariableViscAlphaMin)/tau;
+         //Soundspeed being 0 really screws up everything...
+         if(soundspeed==0 && SphP[i].DivVel==0 && SphP[i].CurlVel==0)
+           f_fac=0.0;
+         //Move the factor of 1/soundspped into the asignment of dtalpha in case it's 0
+	      tau = 0.5 * SphP[i].Hsml / All.VariableViscDecayLength;
+         //printf("Tau: h= %g, c_s = %g\n",SphP[i].Hsml,soundspeed);
+         //printf("f_fac: curlvel= %g, fac_mu = %g\n",SphP[i].CurlVel,fac_mu);
+         //printf("The initial value of alpha is %g\n",SphP[i].Alpha);
+	      SphP[i].DtAlpha = f_fac*dmax(-SphP[i].DivVel, 0) * (All.ArtBulkViscConst - SphP[i].Alpha) - (soundspeed*(SphP[i].Alpha - All.VariableViscAlphaMin))/tau;
+         //printf("divv = %g, f_fac = %g, tau=%g\n",SphP[i].DivVel,f_fac,tau);
+         //printf("The initial value of Dtalpha is %g\n",SphP[i].DtAlpha);
 #endif
 #ifndef NONINTERACTING_GAS
 	      for(j = 0; j < 3; j++)

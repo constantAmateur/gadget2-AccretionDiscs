@@ -11,7 +11,9 @@ M_unit=1.989e33 #Solar mass
 L_unit=1.496e13 #An AU
 #We want the unit of time to be one outer rotation periods, so we set that and let the velocity unit follow...
 #That is t_unit=2pisqrt(R^3/GM), giving t in units of seconds
-t_unit=2*pi*sqrt(((25*1.496e13)^3)/(6.673e-8*1.989e33))
+#t_unit=2*pi*sqrt(((25*1.496e13)^3)/(6.673e-8*1.989e33))
+#This unit choice gives G=1 (or at least it should).  It sets the time unit to be 1/Omega at R=1
+t_unit=sqrt((L_unit^3)/(6.673e-08*M_unit))
 #Infer the velocity unit
 v_unit=L_unit/t_unit
 ##Unit Velocity in cm/sec
@@ -34,12 +36,13 @@ print("Set the GADGET units to the following...")
 print(paste("The unit velocity in cm/s is:",v_unit))
 print(paste("The unit length in cm is:",L_unit))
 print(paste("The unit mass in g is:",M_unit))
+print(paste("The value of G in this system is:",ginternal))
 
 
 #######DISK VARIABLES#########
 
 #Number of disk particles
-Npart = 2.5e3
+Npart = 5e5
 #Mass of the central star
 M_star = 1.
 #Mass of the disk (all disk particles given same mass)
@@ -52,8 +55,6 @@ r_outer = 25
 temppower = -0.5
 #Adiabatic index
 gamma = 5/3
-#specific heat capacity at constant volume (for converting between temperature and internal energy)
-cv=3/2
 #Moleculare weight in units of hydrogen mass
 mu=2.3
 #Power law index, density (and column density) goes like R^plIndex
@@ -102,7 +103,7 @@ pos=cyl2cart(cbind(radi,theta,z))
 #The 1/r is to convert vphi to an angular velocity (i.e. dtheta/dt)
 vel=cbind(-pos[,2]*vphi,pos[,1]*vphi,0)
 #We need to convert the temperature to internal energy per unit mass
-u=temp*cv*k_b/(mu*m_H)
+u=temp*k_b/(mu*m_H*(gamma-1))
 #Add on the star...  It doesn't need an internal energy as it's a different "type"
 pos=rbind(pos,c(0,0,0))
 vel=rbind(vel,c(0,0,0))

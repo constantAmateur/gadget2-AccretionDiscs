@@ -9,7 +9,7 @@
 
 
 #--------------------------------------- Basic operation mode of code
-#OPT   +=  -DPERIODIC 
+OPT   +=  -DPERIODIC 
 #OPT   +=  -DUNEQUALSOFTENINGS
 
 
@@ -66,14 +66,14 @@ OPT   +=  -DNOGRAVITY
 #OPT   +=  -DADAPTIVE_GRAVSOFT_FORGAS
 #OPT   +=  -DSELECTIVE_NO_GRAVITY=2+4+8+16
 #OPT   +=  -DNOFFTWINSTALLED
-OPT   +=  -DADD_CENTRAL_GRAVITY
+#OPT   +=  -DADD_CENTRAL_GRAVITY
 
 #--------------------------------------- Sink particle options
-OPT   +=  -DSINK_PARTICLES
+#OPT   +=  -DSINK_PARTICLES
 #OPT   +=  -DNO_ACC_TEST
 
 #--------------------------------------- Variable viscosity options
-#OPT   +=  -DVARIABLE_VISC_CONST
+OPT   +=  -DVARIABLE_VISC_CONST
 
 
 #--------------------------------------- Testing and Debugging options

@@ -167,6 +167,9 @@ void init(void)
 #ifdef SINK_PARTICLES
       SphP[i].AccretionTarget = 0; 
 #endif
+#ifdef VARIABLE_VISC_CONST
+      SphP[i].Alpha=All.VariableViscAlphaMin;
+#endif
       if(RestartFlag == 0)
 	{
 	  SphP[i].Hsml = 0;

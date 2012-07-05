@@ -41,7 +41,7 @@ static double boxSize_Z, boxHalf_Z;
 #endif
 #endif
 
-#ifdef NK_AV
+#if defined BETA_COOLING || defined NK_AV
 static double starData[7];
 #endif
 
