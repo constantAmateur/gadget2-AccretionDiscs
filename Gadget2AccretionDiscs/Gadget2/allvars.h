@@ -818,6 +818,9 @@ extern struct hydrodata_in
 #ifdef SINK_PARTICLES
   int AccretionTarget;
 #endif
+#ifdef PRICE_GRAV_SOFT
+  FLOAT Zeta;
+#endif
 }
  *HydroDataIn,                  /*!< holds particle data for SPH hydro-force computation to be exported to other processors */
  *HydroDataGet;                 /*!< holds imported particle data for SPH hydro-force computation */

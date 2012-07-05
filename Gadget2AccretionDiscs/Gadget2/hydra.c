@@ -206,6 +206,9 @@ void hydro_force(void)
 #ifdef SINK_PARTICLES
         HydroDataIn[nexport].AccretionTarget = SphP[i].AccretionTarget;
 #endif	
+#ifdef PRICE_GRAV_SOFT
+        HydroDataIn[nexport].Zeta = SphP[i].Zeta;
+#endif
         
 		    nexport++;
 		    nsend_local[j]++;
@@ -435,6 +438,9 @@ void hydro_evaluate(int target, int mode)
   double v2r_i,v2r_j,r2_j,v2_j,NK_test;
   int numN,numNK;
 #endif
+#ifdef PRICE_GRAV_SOFT
+  double zeta=0;
+#endif
 
   if(mode == 0)
     {
@@ -450,6 +456,9 @@ void hydro_evaluate(int target, int mode)
 #ifdef VARIABLE_VISC_CONST
       alpha_visc = SphP[target].Alpha;
 #else
+#ifdef PRICE_GRAV_SOFT
+      zeta = SphP[target].Zeta;
+#endif
       f1 = fabs(SphP[target].DivVel) /
 	(fabs(SphP[target].DivVel) + SphP[target].CurlVel +
 	 0.0001 * soundspeed_i / SphP[target].Hsml / fac_mu);
@@ -470,6 +479,9 @@ void hydro_evaluate(int target, int mode)
 #ifdef VARIABLE_VISC_CONST
       alpha_visc = HydroDataGet[target].Alpha;
 #endif
+#ifdef PRICE_GRAV_SOFT
+      zeta = HydroDataGet[target].Zeta;
+#endif
     }
 
 
@@ -478,6 +490,9 @@ void hydro_evaluate(int target, int mode)
   maxSignalVel = 0;
 
   p_over_rho2_i = pressure / (rho * rho) * dhsmlDensityFactor;
+#ifdef PRICE_GRAV_SOFT
+  p_over_rho2_i = dhsmlDensityFactor * ((pressure/(rho*rho))+(zeta*All.G*.5));
+#endif
   h_i2 = h_i * h_i;
   
 #ifdef NK_AV
@@ -528,6 +543,9 @@ void hydro_evaluate(int target, int mode)
 		{
 		  p_over_rho2_j = SphP[j].Pressure / (SphP[j].Density * SphP[j].Density);
 		  soundspeed_j = sqrt(GAMMA * p_over_rho2_j * SphP[j].Density);
+#ifdef PRICE_GRAV_SOFT
+        p_over_rho2_j += 0.5 * All.G * SphP[j].Zeta;
+#endif
 		  dvx = vel[0] - SphP[j].VelPred[0];
 		  dvy = vel[1] - SphP[j].VelPred[1];
 		  dvz = vel[2] - SphP[j].VelPred[2];

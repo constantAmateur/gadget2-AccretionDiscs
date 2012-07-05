@@ -10,13 +10,13 @@
 
 #--------------------------------------- Basic operation mode of code
 #OPT   +=  -DPERIODIC 
-OPT   +=  -DUNEQUALSOFTENINGS
+#OPT   +=  -DUNEQUALSOFTENINGS
 
 
 #--------------------------------------- Things that are always recommended
 OPT   +=  -DPEANOHILBERT
 OPT   +=  -DWALLCLOCK   
-OPT   +=  -DPRICE_GRAV_SOFT
+#OPT   +=  -DPRICE_GRAV_SOFT
 #OPT   +=  -DALT_DIVV
 
 
@@ -63,7 +63,7 @@ OPT   +=  -DOUTPUTPOTENTIAL
 OPT   +=  -DCOMPUTE_POTENTIAL_ENERGY
 #OPT   +=  -DLONGIDS
 #OPT   +=  -DISOTHERM_EQS
-OPT   +=  -DADAPTIVE_GRAVSOFT_FORGAS
+#OPT   +=  -DADAPTIVE_GRAVSOFT_FORGAS
 #OPT   +=  -DSELECTIVE_NO_GRAVITY=2+4+8+16
 #OPT   +=  -DNOFFTWINSTALLED
 #OPT   +=  -DADD_CENTRAL_GRAVITY

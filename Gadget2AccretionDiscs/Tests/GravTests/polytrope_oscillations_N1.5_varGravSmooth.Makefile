@@ -16,7 +16,7 @@ OPT   +=  -DUNEQUALSOFTENINGS
 #--------------------------------------- Things that are always recommended
 OPT   +=  -DPEANOHILBERT
 OPT   +=  -DWALLCLOCK   
-OPT   +=  -DPRICE_GRAV_SOFT
+#OPT   +=  -DPRICE_GRAV_SOFT
 #OPT   +=  -DALT_DIVV
 
 

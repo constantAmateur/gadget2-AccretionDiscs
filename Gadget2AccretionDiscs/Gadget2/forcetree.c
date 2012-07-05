@@ -1406,11 +1406,13 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
       else
 	{
 #ifdef PRICE_GRAV_SOFT
-     //This is a hack.  Ideally we should calculate all the SPH like properties for non-SPH particles and then we could use them to soften the gravity using the price method.  However, as this involves a substantial restructuring of the code, we simply set any interactions that involve non-SPH particles to be unsoftened.  This will probably never even be an issue if all the non-sph praticles are accreting particles with a reasonable accretion radius (several times their smoothing length).
+     //This is a hack.  Ideally we should calculate all the SPH like properties for non-SPH particles and then we could use them to soften the gravity using the price method.  However, as this involves a substantial restructuring of the code, we simply set any interactions that involve non-SPH particles to be statically softened.  This will probably never even be an issue if all the non-sph praticles are accreting particles with a reasonable accretion radius (several times their smoothing length).
      if (ptype_j!=0 || ptype!=0)
      {
        //If the interaction involves a non-SPH particle, revert to old method
 #ifdef UNEQUALSOFTENINGS
+       //The static softening radius
+     h = All.ForceSoftening[1];
 	  h_inv = 1.0 / h;
 	  h3_inv = h_inv * h_inv * h_inv;
 #endif
@@ -1427,43 +1429,45 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
        //For PRICE_GRAV_SOFT, if we are in this section of code, we are garunteed
        //that the "target particle" is in fact a particle and not an unopened cell
        //this is so we can sensibly include the extra terms in the gravitational acceleration.
+       //This now just does the symmetrized forces, the extra zeta term is far more easily added in the hydro loop
        hinv_i = 1.0/h_i;
        hinv3_i = hinv_i * hinv_i * hinv_i;
-       hinv4_i = hinv3_i * hinv_i;
+       //hinv4_i = hinv3_i * hinv_i;
        hinv_j = 1.0/h_j;
        hinv3_j = hinv_j * hinv_j * hinv_j;
-       hinv4_j = hinv3_j * hinv_j;
+       //hinv4_j = hinv3_j * hinv_j;
        u_i = r * hinv_i;
        u_j = r * hinv_j;
        if(u_i < .5)
        {
   	      fac = mass * (hinv3_i * (5.333333333333 + u_i * u_i * (16.0 * u_i - 19.2)));
-         dwk_i = hinv4_i * u_i * (KERNEL_COEFF_3 * u_i - KERNEL_COEFF_4);
+         //dwk_i = hinv4_i * u_i * (KERNEL_COEFF_3 * u_i - KERNEL_COEFF_4);
        } else  if(u_i < 1.0){
   	      fac = mass * (hinv3_i * (10.666666666667 - 24.0 * u_i + 
                 19.2 * u_i * u_i - 5.333333333333 * u_i * u_i * u_i - 
                 0.0333333333333 / (u_i * u_i * u_i)));
-         dwk_i = hinv4_i * KERNEL_COEFF_6 * (1.0 - u_i) * (1.0 - u_i);
+         //dwk_i = hinv4_i * KERNEL_COEFF_6 * (1.0 - u_i) * (1.0 - u_i);
        } else {
          fac = 0.5* mass /(r2*r);
-         dwk_i = 0;
+         //dwk_i = 0;
        }
        if(u_j < .5)
        {
   	    fac += mass * (hinv3_j * (5.333333333333 + u_j * u_j * (16.0 * u_j - 19.2)));
-         dwk_j = hinv4_j * u_j * (KERNEL_COEFF_3 * u_j - KERNEL_COEFF_4);
+         //dwk_j = hinv4_j * u_j * (KERNEL_COEFF_3 * u_j - KERNEL_COEFF_4);
        } else  if(u_j < 1.0){
   	      fac += mass * (hinv3_j * (10.666666666667 - 24.0 * u_j + 
                 19.2 * u_j * u_j - 5.333333333333 * u_j * u_j * u_j - 
                 0.0333333333333 / (u_j * u_j * u_j)));
-         dwk_j = hinv4_j * KERNEL_COEFF_6 * (1.0 - u_j) * (1.0 - u_j);
+         //dwk_j = hinv4_j * KERNEL_COEFF_6 * (1.0 - u_j) * (1.0 - u_j);
        } else {
-         dwk_j = 0;
+         //dwk_j = 0;
          fac += 0.5 * mass / (r2*r); 
        }
        //if(ThisTask ==0)
        //  printf("After second pass, factor is %g.\n",fac);
-       //fac += 0.5 * mass * (zeta_i * dhsmlDensityFactor_i * dwk_i + zeta_j* dhsmlDensityFactor_j *dwk_j)/r;
+       //if(r>0)
+       //  fac += 0.5 * mass * (zeta_i * dhsmlDensityFactor_i * dwk_i + zeta_j* dhsmlDensityFactor_j *dwk_j)/r;
        //if(ThisTask ==0)
        //  printf("After final pass, factor is %g.\n",fac);
        //if(ThisTask ==0)

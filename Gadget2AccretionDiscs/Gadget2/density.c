@@ -612,7 +612,7 @@ void density_evaluate(int target, int mode)
 		  wk = hinv3 * (KERNEL_COEFF_1 + KERNEL_COEFF_2 * (u - 1) * u * u);
 		  dwk = hinv4 * u * (KERNEL_COEFF_3 * u - KERNEL_COEFF_4);
 #ifdef PRICE_GRAV_SOFT
-        dphi = hinv2 * (-32.0 * u*u +96.0*u*u*u*u - 76.8*u*u*u*u*u +5.6);
+        dphi = hinv2 * (-16.0 * u*u +48.0*u*u*u*u - 38.4*u*u*u*u*u +2.8);
 #endif
 		}
 	      else
@@ -620,7 +620,7 @@ void density_evaluate(int target, int mode)
 		  wk = hinv3 * KERNEL_COEFF_5 * (1.0 - u) * (1.0 - u) * (1.0 - u);
 		  dwk = hinv4 * KERNEL_COEFF_6 * (1.0 - u) * (1.0 - u);
 #ifdef PRICE_GRAV_SOFT
-        dphi = hinv2 * (-64.0 * u*u +128.0*u*u*u-96.0*u*u*u*u+25.6*u*u*u*u*u+6.4);
+        dphi = hinv2 * (-32.0 * u*u +64.0*u*u*u-48.0*u*u*u*u+12.8*u*u*u*u*u+3.2);
 #endif
 		}
 
