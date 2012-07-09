@@ -1411,8 +1411,11 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
      {
        //If the interaction involves a non-SPH particle, revert to old method
 #ifdef UNEQUALSOFTENINGS
-       //The static softening radius
-     h = All.ForceSoftening[1];
+       //The static softening radius, will be taken to be the lager of the two types
+     if (ptype>=ptype_j)
+       h=All.ForceSoftening[ptype];
+     else 
+       h=All.ForceSoftening[ptype_j];
 	  h_inv = 1.0 / h;
 	  h3_inv = h_inv * h_inv * h_inv;
 #endif
