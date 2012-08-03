@@ -85,7 +85,7 @@ r=sqrt(lat[,1]^2+lat[,2]^2+lat[,3]^2)
 maxr=r[order(r)[Npart]]
 pos=lat[which(r<=maxr),]
 #Now we need to rescale everything so that rmax=1
-lat=lat*(rs/maxr)
+pos=pos*(rs/maxr)
 #All done...
 Npart=dim(pos)[1]
 vel=data.frame(vx=rep(0,Npart),vy=rep(0,Npart),vz=rep(0,Npart))

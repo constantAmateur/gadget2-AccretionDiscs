@@ -44,10 +44,10 @@ OPT   +=  -DSYNCHRONIZATION
 #--------------------------------------- Output 
 #OPT   +=  -DHAVE_HDF5  
 OPT   +=  -DOUTPUTPOTENTIAL
-#OPT   +=  -DOUTPUTACCELERATION
-#OPT   +=  -DOUTPUTCHANGEOFENTROPY
-#OPT   +=  -DOUTPUTTIMESTEP
-#OPT   +=  -DOUTPUTALPHA
+OPT   +=  -DOUTPUTACCELERATION
+OPT   +=  -DOUTPUTCHANGEOFENTROPY
+OPT   +=  -DOUTPUTTIMESTEP
+OPT   +=  -DOUTPUTALPHA
 
 
 #--------------------------------------- Things for special behaviour

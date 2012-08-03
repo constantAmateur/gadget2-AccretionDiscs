@@ -38,7 +38,7 @@ OmegaBaryon	0.04
 
 BufferSize	1024
 PartAllocFactor	2.5
-TreeAllocFactor	.9
+TreeAllocFactor	100.9
 
 %Gravitational force accuracy
 
@@ -66,7 +66,7 @@ NumFilesWrittenInParallel	1
 
 %Unit system
 
-UnitVelocity_in_cm_per_s	5021819
+UnitVelocity_in_cm_per_s	2979000
 UnitLength_in_cm	1.496e13
 UnitMass_in_g	1.989e33
 GravityConstantInternal	0
