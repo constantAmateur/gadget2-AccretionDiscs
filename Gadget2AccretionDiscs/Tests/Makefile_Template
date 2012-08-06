@@ -121,7 +121,7 @@ MPICHLIB =  -lmpich
 #SYSTYPE="IoA_FFTW"
 #SYSTYPE="Darwin"
 SYSTYPE="Ubuntu"
-
+#SYSTYPE="PLX"
 
 #--------------------------------------- Adjust settings for target computer
 ifeq ($(SYSTYPE),"Ubuntu")
@@ -136,6 +136,17 @@ HDF5INCL =
 HDF5LIB  =  
 endif
 
+ifeq ($(SYSTYPE),"PLX")
+CC       =  mpicc   
+OPTIMIZE =  -O3 -Wall
+GSL_INCL =  -I/cineca/prod/libraries/gsl/1.14/gnu--4.1.2/include
+GSL_LIBS =  -L/cineca/prod/libraries/gsl/1.14/gnu--4.1.2/lib
+FFTW_INCL=  -I/cineca/prod/libraries/fftw/2.1.5/openmpi--1.3.3--gnu--4.1.2/include
+FFTW_LIBS=  -L/cineca/prod/libraries/fftw/2.1.5/openmpi--1.3.3--gnu--4.1.2/lib
+MPICHLIB =  -L/cineca/prod/compilers/openmpi/1.3.3/gnu--4.1.2/lib
+HDF5INCL =  
+HDF5LIB  =  
+endif
 
 
 ifeq ($(SYSTYPE),"IoA")

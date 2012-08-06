@@ -1,6 +1,6 @@
 #This is the header file!
 #particles
-100280	0	0	0	0	0
+100281	0	0	0	0	0
 #MassArray
 0	0	0	0	0	0
 #time
@@ -12,7 +12,7 @@
 #feedbackFlag
 0
 #totalParticles
-100280	0	0	0	0	0
+100281	0	0	0	0	0
 #coolingFlag
 0
 #numFiles
