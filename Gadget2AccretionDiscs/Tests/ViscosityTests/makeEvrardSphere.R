@@ -68,8 +68,6 @@ stop=dim(allBoxes)[1]/14
 a=matrix(rep(c(t(base)),stop),ncol=3,byrow=TRUE)
 final=a+allBoxes
 lat=final[!duplicated(final),]
-#Scale up so all points are >1 or 0
-lat=lat*10
 #Get the point closest to the middle
 mid=c(max(x)/2,max(y)/2,max(z)/2)
 tmp=lat-mid

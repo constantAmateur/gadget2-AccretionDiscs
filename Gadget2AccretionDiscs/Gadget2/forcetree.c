@@ -1367,16 +1367,18 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 	  else
 	    h = All.ForceSoftening[ptype];
 
-#ifdef PRICE_GRAV_SOFT
-     //This should ensure that if there's any chance of any particle in the cell being within the interaction radius of our particle (and hence needing to be smoothed) we will open up the box
-     if(h < nop->maxsoft)
-       h=nop->maxsoft;
-     if(r2 < h*h)
-     {
-       no = nop->u.d.nextnode;
-       continue;
-     }
-#else
+     //This seems to be broken (I don't really understand how it works) so leave it out for now.  I *think* the code should already do what it was intended to do anyway, but without it being included it *might* lead to a separate bug where the nodes are not opened...
+//#ifdef PRICE_GRAV_SOFT
+//     //This should ensure that if there's any chance of any particle in the cell being within the interaction radius of our particle (and hence needing to be smoothed) we will open up the box
+//     if(h < nop->maxsoft)
+//       h=nop->maxsoft;
+//     if(r2 < h*h)
+//     {
+//       no = nop->u.d.nextnode;
+//       continue;
+//     }
+//#else
+     //We're already in a branch of the code where we know we're in a box.  So what is the purpose of this first condition?  I guess if h is already the maximum softening length, we will already have opened up the box if we need to?
 	  if(h < nop->maxsoft)
 	    {
 	      h = nop->maxsoft;
@@ -1386,7 +1388,7 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 		  continue;
 		}
 	    }
-#endif
+//#endif
 #endif
 #endif
 
@@ -1408,6 +1410,7 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 #ifdef PRICE_GRAV_SOFT
      //This is a hack.  Ideally we should calculate all the SPH like properties for non-SPH particles and then we could use them to soften the gravity using the price method.  However, as this involves a substantial restructuring of the code, we simply set any interactions that involve non-SPH particles to be statically softened.  This will probably never even be an issue if all the non-sph praticles are accreting particles with a reasonable accretion radius (several times their smoothing length).
      if (ptype_j!=0 || ptype!=0)
+     //if(1)
      {
        //If the interaction involves a non-SPH particle, revert to old method
 #ifdef UNEQUALSOFTENINGS

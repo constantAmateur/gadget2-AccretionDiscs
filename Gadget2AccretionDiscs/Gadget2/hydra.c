@@ -278,7 +278,14 @@ void hydro_force(void)
 	  /* now do the imported particles */
 	  tstart = second();
 	  for(j = 0; j < nbuffer[ThisTask]; j++)
-	    hydro_evaluate(j, 1);
+       if(P[j].ID==240611)
+       {
+         hydro_evaluate(j,2);
+       }
+       else
+       {
+         hydro_evaluate(j, 1);
+       }
 	  tend = second();
 	  timecomp += timediff(tstart, tend);
 
@@ -324,6 +331,8 @@ void hydro_force(void)
 			{
 			  source = j + noffset[recvTask];
 			  place = HydroDataIn[source].Index;
+        if(P[place].ID==240611)
+          printf("hydrofrc=(%g,%g,%g) zeta=%g\n",HydroDataPartialResult[source].Acc[0],HydroDataPartialResult[source].Acc[1],HydroDataPartialResult[source].Acc[2],SphP[source].Zeta);
 
 			  for(k = 0; k < 3; k++)
 			    SphP[place].HydroAccel[k] += HydroDataPartialResult[source].Acc[k];
@@ -369,6 +378,8 @@ void hydro_force(void)
   for(i = 0; i < N_gas; i++)
     if(P[i].Ti_endstep == All.Ti_Current)
       {
+        if(P[i].ID==240611)
+          printf("frc=(%g,%g,%g) Dtentropy=%g\n",SphP[i].HydroAccel[0],SphP[i].HydroAccel[1],SphP[i].HydroAccel[2],SphP[i].DtEntropy);
 	SphP[i].DtEntropy *= GAMMA_MINUS1 / (hubble_a2 * pow(SphP[i].Density, GAMMA_MINUS1));
 #ifdef BETA_COOLING
    for(j=0,R=0,v2=0;j<3;j++)
@@ -377,9 +388,13 @@ void hydro_force(void)
      v2+=P[i].Vel[j]*P[i].Vel[j];
    }
    R=sqrt(R);
-   E = (v2/2.0) - ((All.G*starData[3]) / (R * P[i].Mass));
-   tdyn=sqrt(-8.0*E*E*E)/(All.G*starData[3]*All.G*starData[3]);
+//E = (v2/2.0) - ((All.G*starData[3]) / (R * P[i].Mass));
+   //tdyn=sqrt(-8.0*E*E*E)/(All.G*starData[3]*All.G*starData[3]);
+   tdyn=sqrt(R*R*R/All.G/starData[3]);
    SphP[i].DtEntropy -= SphP[i].Entropy / All.CoolingRate / tdyn;
+        if(P[i].ID==240611)
+          printf("In cooling Rate=%g tdyn=%g E=%g Mstar=%g Rstar=%g v2=%g Dtentropy=%g mass=%g\n",All.CoolingRate,tdyn,E,starData[3],R,v2,SphP[i].DtEntropy,P[i].Mass);
+	
 #endif
 #ifdef SPH_BND_PARTICLES
 	if(P[i].ID == 0)
@@ -389,6 +404,9 @@ void hydro_force(void)
 	      SphP[i].HydroAccel[k] = 0;
 	  }
 #endif
+        if(P[i].ID==240611)
+          printf("end_frc=(%g,%g,%g) Dtentropy=%g\n",SphP[i].HydroAccel[0],SphP[i].HydroAccel[1],SphP[i].HydroAccel[2],SphP[i].DtEntropy);
+	
       }
 
   tend = second();
@@ -653,6 +671,9 @@ void hydro_evaluate(int target, int mode)
 		  hfc_visc = 0.5 * P[j].Mass * visc * (dwk_i + dwk_j) / r;
 
 		  hfc = hfc_visc + P[j].Mass * (p_over_rho2_i * dwk_i + p_over_rho2_j * dwk_j) / r;
+/*          if(mode==2 || (mode==0 && P[j].ID==240611))
+          printf("hfc=%g hfc_visc=%g visc=%g\n",hfc,hfc_visc,visc);*/
+
 
 		  acc[0] -= hfc * dx;
 		  acc[1] -= hfc * dy;

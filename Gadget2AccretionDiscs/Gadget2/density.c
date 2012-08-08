@@ -310,6 +310,8 @@ void density(void)
 		  1 / (1 + SphP[i].Hsml * SphP[i].DhsmlDensityFactor / (NUMDIMS * SphP[i].Density));
 #ifdef PRICE_GRAV_SOFT
       SphP[i].Zeta = -SphP[i].Hsml * SphP[i].Zeta / ( NUMDIMS * SphP[i].Density);
+      if(P[i].ID==240611)
+        printf("Zeta is %g and the relative contribution is %g\n",SphP[i].Zeta,2*SphP[i].Density/All.G/SphP[i].Zeta/SphP[i].Density/SphP[i].Density);
 #endif
 
 		SphP[i].CurlVel = sqrt(SphP[i].Rot[0] * SphP[i].Rot[0] +
@@ -353,6 +355,8 @@ void density(void)
 
 		SphP[i].Pressure =
 		  (SphP[i].Entropy + SphP[i].DtEntropy * dt_entr) * pow(SphP[i].Density, GAMMA);
+      if(P[i].ID==240611)
+        printf("Pressure = %g Entropy=%g DtEntroy=%g\n",SphP[i].Pressure,SphP[i].Entropy,SphP[i].DtEntropy);
 	      }
 
 

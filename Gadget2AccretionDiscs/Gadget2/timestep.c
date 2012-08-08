@@ -355,6 +355,9 @@ void advance_and_find_timesteps(void)
 	      dt_entr = ti_step / 2 * All.Timebase_interval;
 	      if(SphP[i].Entropy + SphP[i].DtEntropy * dt_entr < 0.5 * SphP[i].Entropy)
 		SphP[i].DtEntropy = -0.5 * SphP[i].Entropy / dt_entr;
+        if(P[i].ID==240611)
+          printf("At end of timestep frc=(%g,%g,%g) Dtentropy=%g\n",SphP[i].HydroAccel[0],SphP[i].HydroAccel[1],SphP[i].HydroAccel[2],SphP[i].DtEntropy);
+	
 	    }
 
 
@@ -578,7 +581,7 @@ int get_timestep(int p,		/*!< particle index */
       printf("pm_force=(%g|%g|%g)\n", P[p].GravPM[0], P[p].GravPM[1], P[p].GravPM[2]);
 #endif
       if(P[p].Type == 0)
-	printf("hydro-frc=(%g|%g|%g)\n", SphP[p].HydroAccel[0], SphP[p].HydroAccel[1], SphP[p].HydroAccel[2]);
+	printf("hydro-frc=(%g|%g|%g) h=%g density=%g Entropy=%g DtEntropy=%g Pressure=%g DivVel=%g CurlVel=%g\n", SphP[p].HydroAccel[0], SphP[p].HydroAccel[1], SphP[p].HydroAccel[2],SphP[p].Hsml,SphP[p].Density,SphP[p].Entropy,SphP[p].DtEntropy,SphP[p].Pressure,SphP[p].DivVel,SphP[p].CurlVel);
 
       fflush(stdout);
       endrun(818);

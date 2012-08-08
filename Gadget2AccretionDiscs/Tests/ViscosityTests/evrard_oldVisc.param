@@ -38,7 +38,7 @@ OmegaBaryon	0.04
 
 BufferSize	1024
 PartAllocFactor	2.5
-TreeAllocFactor	100.9
+TreeAllocFactor	0.9
 
 %Gravitational force accuracy
 
