@@ -1,6 +1,0 @@
-Header	/home/myoung/Projects/gadget2-AccretionDiscs/Gadget2AccretionDiscs/Tests/TimingTests/Build/Header.txt
-Pos	/home/myoung/Projects/gadget2-AccretionDiscs/Gadget2AccretionDiscs/Tests/TimingTests/Build/Position.txt
-Vel	/home/myoung/Projects/gadget2-AccretionDiscs/Gadget2AccretionDiscs/Tests/TimingTests/Build/Velocity.txt
-ID	/home/myoung/Projects/gadget2-AccretionDiscs/Gadget2AccretionDiscs/Tests/TimingTests/Build/ID.txt
-Mass	/home/myoung/Projects/gadget2-AccretionDiscs/Gadget2AccretionDiscs/Tests/TimingTests/Build/Masses.txt
-InternalEnergy	/home/myoung/Projects/gadget2-AccretionDiscs/Gadget2AccretionDiscs/Tests/TimingTests/Build/Energy.txt
