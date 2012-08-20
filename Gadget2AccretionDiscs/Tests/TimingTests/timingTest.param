@@ -1,9 +1,10 @@
 %Filenames and file formats
 
 %InitCondFile ../Tests/TimingTests/timingTest.IC
-InitCondFile	/home/myoung/Output/Tests/TimingTests/timingTest/badDisc
+InitCondFile ../Tests/TimingTests/evolved1.IC
+%InitCondFile	/home/myoung/Output/Tests/TimingTests/timingTest/badDisc2
 OutputDir	/home/myoung/Output/Tests/TimingTests/timingTest/
-SnapshotFileBase	500kDisc_crash
+SnapshotFileBase	noPrice_round2
 SnapFormat	1
 NumFilesPerSnapshot	1
 ICFormat	1
@@ -15,7 +16,7 @@ EnergyFile	energy.txt
 
 %CPU-time limit and restart options
 
-TimeLimitCPU	400000.0
+TimeLimitCPU	40000000.0
 ResubmitCommand	xyz
 ResubmitOn	0
 CpuTimeBetRestartFile	7200
@@ -24,7 +25,7 @@ CpuTimeBetRestartFile	7200
 
 %One cooling time at R_out
 TimeBegin	0.0
-TimeMax	750.00
+TimeMax	7500.00
 BoxSize	6.0
 PeriodicBoundariesOn	0
 ComovingIntegrationOn	0
@@ -94,12 +95,12 @@ VariableViscDecayLength  .1
 
 %Gravitational Softening
 
-SofteningGas	.07
-SofteningHalo	.07
-SofteningDisk	.07
-SofteningBulge	.07
-SofteningStars	.07
-SofteningBndry	.07
+SofteningGas	.25
+SofteningHalo	.25
+SofteningDisk	.25
+SofteningBulge	.25
+SofteningStars	.25
+SofteningBndry	.25
 SofteningGasMaxPhys	0
 SofteningHaloMaxPhys	0
 SofteningDiskMaxPhys	0

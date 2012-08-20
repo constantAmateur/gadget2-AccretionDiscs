@@ -355,8 +355,6 @@ void advance_and_find_timesteps(void)
 	      dt_entr = ti_step / 2 * All.Timebase_interval;
 	      if(SphP[i].Entropy + SphP[i].DtEntropy * dt_entr < 0.5 * SphP[i].Entropy)
 		SphP[i].DtEntropy = -0.5 * SphP[i].Entropy / dt_entr;
-        if(P[i].ID==240611)
-          printf("At end of timestep frc=(%g,%g,%g) Dtentropy=%g\n",SphP[i].HydroAccel[0],SphP[i].HydroAccel[1],SphP[i].HydroAccel[2],SphP[i].DtEntropy);
 	
 	    }
 

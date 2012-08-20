@@ -173,7 +173,7 @@ void identify_doomed_particles(void)
   FLOAT *pos, *vel;
   FLOAT Postemp[3], Veltemp[3];
   
-  printf("starting accretion, rank %d, %d accretors\n",ThisTask,NumPart-N_gas);
+  //printf("starting accretion, rank %d, %d accretors\n",ThisTask,NumPart-N_gas);
   AccNum = 0;
     
   numsinks = NumPart - N_gas;
