@@ -14,3 +14,8 @@
 #Parameter files from runs
 *.*-usedvalues
 Gadget2AccretionDiscs/Gadget2/Gadget2
+#Things that are too big to upload all the time
+Gadget2AccretionDiscs/Tests/TimingTests/initDisc5e5.IC
+Gadget2AccretionDiscs/Tests/TimingTests/initDisc5e6.IC
+Gadget2AccretionDiscs/Tests/TimingTests/initDisc5e7.IC
+
