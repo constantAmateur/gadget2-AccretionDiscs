@@ -743,10 +743,6 @@ extern struct gravdata_in
   FLOAT Soft;
 #endif
 #endif
-#ifdef PRICE_GRAV_SOFT
-  FLOAT Zeta;
-  FLOAT DhsmlDensityFactor;
-#endif
   union
   {
     FLOAT OldAcc;

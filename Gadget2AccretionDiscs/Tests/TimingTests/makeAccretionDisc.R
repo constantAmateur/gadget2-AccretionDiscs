@@ -19,7 +19,7 @@ q=.1
 #density_power = Power law index for the surface density profile.  i.e. Sigma ~ R^density_power
 density_power=-1.0
 #Number of particles...
-Npart = 5e7
+Npart = 1e5
 
 ### ARBITRARY PARAMETERS  ###
 
