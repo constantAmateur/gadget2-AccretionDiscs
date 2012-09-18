@@ -1362,6 +1362,12 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
      //If the "j" particle isn't a particle but a big blob, set the smoothing length to the maximum of the smoothing lengths in this blob...
 #ifdef PRICE_GRAV_SOFT
      h_j = nop->maxsoft;
+     //Shouldn't ever happen, but it does.  Weird.
+     if(h_j==0)
+     {
+       //printf("weirdness in force routine\n");
+       h_j=h;
+     }
 #endif
 
      //This seems to be broken (I don't really understand how it works) so leave it out for now.  I *think* the code should already do what it was intended to do anyway, but without it being included it *might* lead to a separate bug where the nodes are not opened...
@@ -1428,7 +1434,8 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
      if(h_j==0)
      {
        h_j=h_i;
-       printf("This should never happen!\n");
+       printf("This should never happen! In the force calc.\n");
+       exit(0);
      }
      if(r >= h_j)
        fac += mass / (r2*r*2.0);
@@ -2256,7 +2263,7 @@ void force_treeevaluate_potential(int target, int mode)
 	  if(P[no].Type == 0)
 	    {
 #ifdef PRICE_GRAV_SOFT
-         h_j = SphP[no.Hsml];
+         h_j = SphP[no].Hsml;
 #endif
 	      if(h < SphP[no].Hsml)
 		h = SphP[no].Hsml;
@@ -2355,6 +2362,12 @@ void force_treeevaluate_potential(int target, int mode)
 	    h = All.ForceSoftening[ptype];
 #ifdef PRICE_GRAV_SOFT
      h_j = nop->maxsoft;
+     //This is weird, I don't know why it should be 0 ever, but if it is, set it to the source pcle value
+     if(h_j==0)
+     {
+       //printf("weirdness in potential routine\n");
+       h_j = h;
+     }
 #endif
 
 	  if(h < nop->maxsoft)
@@ -2407,6 +2420,7 @@ void force_treeevaluate_potential(int target, int mode)
       if(h_j==0)
       {
         printf("THIS SHOULD NEVER HAPPEN!\n");
+        exit(0);
         h_j=h_i;
       }
       h=h_j;

@@ -1,8 +1,8 @@
 %Filenames and file formats
 
-InitCondFile ../Tests/TimingTests/initDisc5e7.IC
-OutputDir	/home/myoung/Output/Tests/TimingTests/InitDisc5e7/
-SnapshotFileBase	idealized_init
+InitCondFile ../Tests/TimingTests/initDisc1e5.IC
+OutputDir	/home/myoung/Output/Tests/Debug/price1e5/
+SnapshotFileBase	quasi_stable_1e5
 SnapFormat	1
 NumFilesPerSnapshot	1
 ICFormat	1
@@ -15,7 +15,7 @@ EnergyFile	energy.txt
 %CPU-time limit and restart options
 
 %This is WALL time, not CPU time, in seconds
-TimeLimitCPU	3600.0
+TimeLimitCPU	36000000000.0
 ResubmitCommand	xyz
 ResubmitOn	0
 CpuTimeBetRestartFile	7200
@@ -24,7 +24,7 @@ CpuTimeBetRestartFile	7200
 
 %One cooling time at R_out
 TimeBegin	0.0
-TimeMax	0.22
+TimeMax	7500
 BoxSize	6.0
 PeriodicBoundariesOn	0
 ComovingIntegrationOn	0
@@ -39,8 +39,8 @@ OmegaBaryon	0.04
 %Memory allocation
 
 BufferSize	100
-PartAllocFactor	3.0
-TreeAllocFactor	0.8
+PartAllocFactor	2.5
+TreeAllocFactor	0.9
 
 %Gravitational force accuracy
 
@@ -62,9 +62,9 @@ MaxRMSDisplacementFac	0.25
 
 OutputListOn	0
 OutputListFilename	output_times.txt
-TimeOfFirstSnapshot	5.1
-TimeBetSnapshot	5.1
-TimeBetStatistics	5.1
+TimeOfFirstSnapshot	0
+TimeBetSnapshot	10
+TimeBetStatistics	10
 NumFilesWrittenInParallel	1
 
 %Unit system

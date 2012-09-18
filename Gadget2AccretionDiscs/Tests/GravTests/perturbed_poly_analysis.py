@@ -9,6 +9,6 @@ plt.plot(fixed[:,0],fixed[:,1]+fixed[:,2]+fixed[:,3])
 plt.xlabel("Time")
 plt.ylabel("Total Energy")
 plt.title("Total energy for N=1.5 perturbed polytrope")
-plt.legend(("Adaptive gravitational softening with correction terms","Adaptive gravitational softening without correction terms"))
+plt.legend(("Adaptive gravitational softening with correction terms","Adaptive gravitational softening without correction terms","Fixed softening"))
 
 

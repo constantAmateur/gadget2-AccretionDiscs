@@ -10,13 +10,13 @@
 
 #--------------------------------------- Basic operation mode of code
 #OPT   +=  -DPERIODIC 
-#OPT   +=  -DUNEQUALSOFTENINGS
+OPT   +=  -DUNEQUALSOFTENINGS
 
 
 #--------------------------------------- Things that are always recommended
 OPT   +=  -DPEANOHILBERT
 OPT   +=  -DWALLCLOCK   
-#OPT   +=  -DPRICE_GRAV_SOFT
+OPT   +=  -DPRICE_GRAV_SOFT
 #OPT   +=  -DALT_DIVV
 
 
@@ -44,10 +44,10 @@ OPT   +=  -DSYNCHRONIZATION
 #--------------------------------------- Output 
 #OPT   +=  -DHAVE_HDF5  
 OPT   +=  -DOUTPUTPOTENTIAL
-#OPT   +=  -DOUTPUTACCELERATION
-#OPT   +=  -DOUTPUTCHANGEOFENTROPY
-#OPT   +=  -DOUTPUTTIMESTEP
-#OPT   +=  -DOUTPUTALPHA
+OPT   +=  -DOUTPUTACCELERATION
+OPT   +=  -DOUTPUTCHANGEOFENTROPY
+OPT   +=  -DOUTPUTTIMESTEP
+OPT   +=  -DOUTPUTALPHA
 
 
 #--------------------------------------- Things for special behaviour
@@ -63,17 +63,18 @@ OPT   +=  -DOUTPUTPOTENTIAL
 OPT   +=  -DCOMPUTE_POTENTIAL_ENERGY
 #OPT   +=  -DLONGIDS
 #OPT   +=  -DISOTHERM_EQS
-#OPT   +=  -DADAPTIVE_GRAVSOFT_FORGAS
+OPT   +=  -DADAPTIVE_GRAVSOFT_FORGAS
 #OPT   +=  -DSELECTIVE_NO_GRAVITY=2+4+8+16
 #OPT   +=  -DNOFFTWINSTALLED
 #OPT   +=  -DADD_CENTRAL_GRAVITY
+OPT   +=  -DBETA_COOLING
 
 #--------------------------------------- Sink particle options
-#OPT   +=  -DSINK_PARTICLES
+OPT   +=  -DSINK_PARTICLES
 #OPT   +=  -DNO_ACC_TEST
 
 #--------------------------------------- Variable viscosity options
-#OPT   +=  -DVARIABLE_VISC_CONST
+OPT   +=  -DVARIABLE_VISC_CONST
 
 
 #--------------------------------------- Testing and Debugging options

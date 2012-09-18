@@ -13,18 +13,18 @@ source("~/Projects/Common/Rinit.R")
 ### SCALE FREE PARAMETERS ###
 
 #r=R_{outer}/R_{inner} the ratio of the outer to inner radii
-r=100
+r=5
 #q=M_{disc}/M_* the mass ratio
-q=.1
+q=.2
 #density_power = Power law index for the surface density profile.  i.e. Sigma ~ R^density_power
-density_power=-1.0
+density_power=-2.0
 #Number of particles...
-Npart = 1e5
+Npart = 5e7
 
 ### ARBITRARY PARAMETERS  ###
 
 #Inner radius (in units given below)
-R_i = .25
+R_i = 10
 #Mass of star (in units given below)
 M = 1.0
 #Initial value of Q (Q is constructed to be constant initally)
