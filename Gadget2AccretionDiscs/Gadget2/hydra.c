@@ -67,6 +67,10 @@ void hydro_force(void)
 #if defined BETA_COOLING || defined NK_AV
   int numsinks,root,globalroot;
 #endif
+#ifdef CDAV_DRIFTUPDATE
+  double divv,diva,xi,A,fac;
+  double Tinv[9],V[9];
+#endif
 
 #ifdef PERIODIC
   boxSize = All.BoxSize;
@@ -193,14 +197,27 @@ void hydro_force(void)
 
 		    /* calculation of F1 */
 		    soundspeed_i = sqrt(GAMMA * SphP[i].Pressure / SphP[i].Density);
+#ifdef NOBALSARA
+          HydroDataIn[nexport].F1 = 1.0;
+#else
 		    HydroDataIn[nexport].F1 = fabs(SphP[i].DivVel) /
 		      (fabs(SphP[i].DivVel) + SphP[i].CurlVel +
 		       0.0001 * soundspeed_i / SphP[i].Hsml / fac_mu);
+#endif
+#ifdef CDAV_DRIFTUPDATE
+          HydroDataIn[nexport].oldAccel[0] = SphP[i].oldAccel[0];
+          HydroDataIn[nexport].oldAccel[1] = SphP[i].oldAccel[1];
+          HydroDataIn[nexport].oldAccel[2] = SphP[i].oldAccel[2];
+          HyrdoDataIn[nexport].divvsign = (SphP[i].DivVel >0) - (SphP[i].DivVel<0);
+          HydroDataIn[nexport].gradRho[0] = SphP[i].gradRho[0];
+          HydroDataIn[nexport].gradRho[1] = SphP[i].gradRho[1];
+          HydroDataIn[nexport].gradRho[2] = SphP[i].gradRho[2];
+#endif
 
 		    HydroDataIn[nexport].Index = i;
 		    HydroDataIn[nexport].Task = j;
         
-#ifdef VARIABLE_VISC_CONST
+#if defined MMAV_DRIFTUPDATE || defined MMAV || defined CDAV || defined CDAV_DRIFTUPDATE
         HydroDataIn[nexport].Alpha = SphP[i].Alpha;
 #endif
 #ifdef SINK_PARTICLES
@@ -336,6 +353,19 @@ void hydro_force(void)
            SphP[place].NumNK += HydroDataPartialResult[source].NumNK;
            SphP[place].NumN += HydroDataPartialResult[source].NumN;
 #endif
+#ifdef CDAV_DRIFTUPDATE
+           for(k=0;k<9;k++)
+           {
+             SphP[place].T[k]+=HydroDataPartialResult[source].T[k];
+             SphP[place].D[k]+=HydroDataPartialResult[source].D[k];
+             SphP[place].E[k]+=HydroDataPartialResult[source].E[k];
+           }
+           SphP[place].R+=HydroDataPartialResult[source].R;
+           if(HydroDataPartialResult[source].CDAVSignalVel > SphP[place].CDAVSignalVel)
+           {
+             SphP[place].CDAVSignalVel = HydroDataPartialResult[source].CDAVSignalVel;
+           }
+#endif
 			}
 		    }
 		}
@@ -374,7 +404,7 @@ void hydro_force(void)
    for(j=0,R=0,v2=0;j<3;j++)
    {
      R+=(P[i].Pos[j]-starData[j])*(P[i].Pos[j]-starData[j]);
-     v2+=P[i].Vel[j]*P[i].Vel[j];
+     v2+=SphP[i].VelPred[j]*SphP[i].VelPred[j];
    }
    R=sqrt(R);
 //E = (v2/2.0) - ((All.G*starData[3]) / (R * P[i].Mass));
@@ -391,7 +421,54 @@ void hydro_force(void)
 	      SphP[i].HydroAccel[k] = 0;
 	  }
 #endif
-	
+#ifdef CDAV_DRIFTUPDATE
+   SphP[i].R /= SphP[i].Density;
+   //Invert T
+   fac = 1/(SphP[i].T[0]*(SphP[i].T[4]*SphP[i].T[8]-SphP[i].T[5]*SphP[i].T[7])-SphP[i].T[1]*(SphP[i].T[8]*SphP[i].T[3]-SphP[i].T[5]*SphP[i].T[6])+SphP[i].T[2](SphP[i].T[3]*SphP[i].T[7]-SphP[i].T[4]*SphP[i].T[6]));
+   Tinv[0]=fac*(SphP[i].T[4]*SphP[i].T[8]-SphP[i].T[5]*SphP[i].T[7]);
+   Tinv[1]=fac*(SphP[i].T[5]*SphP[i].T[6]-SphP[i].T[3]*SphP[i].T[8]);
+   Tinv[2]=fac*(SphP[i].T[3]*SphP[i].T[7]-SphP[i].T[4]*SphP[i].T[6]);
+   Tinv[3]=fac*(SphP[i].T[2]*SphP[i].T[7]-SphP[i].T[1]*SphP[i].T[8]);
+   Tinv[4]=fac*(SphP[i].T[0]*SphP[i].T[8]-SphP[i].T[2]*SphP[i].T[6]);
+   Tinv[5]=fac*(SphP[i].T[6]*SphP[i].T[1]-SphP[i].T[0]*SphP[i].T[7]);
+   Tinv[6]=fac*(SphP[i].T[1]*SphP[i].T[5]-SphP[i].T[2]*SphP[i].T[4]);
+   Tinv[7]=fac*(SphP[i].T[2]*SphP[i].T[3]-SphP[i].T[0]*SphP[i].T[5]);
+   Tinv[8]=fac*(SphP[i].T[0]*SphP[i].T[4]-SphP[i].T[1]*SphP[i].T[3]);
+   //Multiply D by Tinv to calculate V
+   V[0]=SphP[i].D[0]*Tinv[0]+SphP[i].D[1]*Tinv[3]+SphP[i].D[2]*Tinv[6];
+   V[1]=SphP[i].D[0]*Tinv[1]+SphP[i].D[1]*Tinv[4]+SphP[i].D[2]*Tinv[7];
+   V[2]=SphP[i].D[0]*Tinv[2]+SphP[i].D[1]*Tinv[5]+SphP[i].D[2]*Tinv[8];
+   V[3]=SphP[i].D[3]*Tinv[0]+SphP[i].D[4]*Tinv[3]+SphP[i].D[5]*Tinv[6];
+   V[4]=SphP[i].D[3]*Tinv[1]+SphP[i].D[4]*Tinv[4]+SphP[i].D[5]*Tinv[7];
+   V[5]=SphP[i].D[3]*Tinv[2]+SphP[i].D[4]*Tinv[5]+SphP[i].D[5]*Tinv[8];
+   V[6]=SphP[i].D[6]*Tinv[0]+SphP[i].D[7]*Tinv[3]+SphP[i].D[8]*Tinv[6];
+   V[7]=SphP[i].D[6]*Tinv[1]+SphP[i].D[7]*Tinv[4]+SphP[i].D[8]*Tinv[7];
+   V[8]=SphP[i].D[6]*Tinv[2]+SphP[i].D[7]*Tinv[5]+SphP[i].D[8]*Tinv[8];
+   //Now we can calculate DivVel
+   divv = V[0] + V[4] + V[8];
+   if(ThisTask==1)
+   {
+     printf("The ratio of the old to the new divv is %g for pcl %d\n",SphP[i].DivVel/divv,i);
+   }
+   //Next, calculate Div acceleration = tr(E.T^-1)-tr(V^2)
+   diva = SphP[i].E[0]*Tinv[0]+SphP[i].E[1]*Tinv[3]+SphP[i].E[2]*Tinv[6] + 
+     SphP[i].E[3]*Tinv[1]+SphP[i].E[4]*Tinv[4]+SphP[i].E[5]*Tinv[7] + 
+     SphP[i].E[6]*Tinv[2]+SphP[i].E[7]*Tinv[5]+SphP[i].E[8]*Tinv[8];
+   //Subtract the V^2 part
+   diva -= V[0]*V[0]+V[4]*V[4]+V[8]*V[8]+2*(V[1]*V[3]+V[2]*V[6]+V[5]*V[7]);
+   //Calculate xi
+   xi=2*(1-SphP[i].R)*(1-SphP[i].R)*(1-SphP[i].R)*(1-SphP[i].R)*divv;
+   xi *= xi;
+   //The added bit is tr(S.S^T)
+   xi /= xi + V[0]*V[0]+V[4]*V[4]+V[8]*V[8] + 
+        0.5*((V[1]+V[3])*(V[1]+V[3])+(V[2]+V[6])*(V[2]+V[6])+(V[5]+V[7])*(V[5]+V[7])) -
+        divv*divv/3;
+   //Now calculate A_i
+   A=xi*dmax(0,-1*diva);
+   //Calculate alpha_loc, store it in DtAlpha
+   SphP[i].DtAlpha = SphP[i].CDAVSignalVel*SphP[i].CDAVSignalVel + SphP[i].Hsml*SphP[i].Hsml*A;
+   SphP[i].DtAlpha = All.ArtBulkViscConst*SphP[i].Hsml*SphP[i].Hsml*A/SphP[i].DtAlpha;
+#endif
       }
 
   tend = second();
@@ -421,19 +498,24 @@ void hydro_evaluate(int target, int mode)
   int j, k, n, timestep, startnode, numngb;
   FLOAT *pos, *vel;
   FLOAT mass, h_i, dhsmlDensityFactor, rho, pressure, f1, alpha_visc;
-#ifdef VARIABLE_VISC_CONST
+#if defined MMAV_DRIFTUPDATE || defined MMAV || defined CDAV || defined CDAV_DRIFTUPDATE
   FLOAT alpha_visc_j;
 #else
   FLOAT f2;
   alpha_visc = All.ArtBulkViscConst;
 #endif
+#ifdef CDAV_DRIFTUPDATE
+  FLOAT *oldacc,*gradRho;
+  FLOAT divvsign;
+  double tmp,fac_1,fac_2,R,T[9],D[9],E[9],vsig,wk_i;
+#endif
+
   double acc[3], dtEntropy, maxSignalVel;
   double dx, dy, dz, dvx, dvy, dvz;
   double h_i2, hinv, hinv4;
   double p_over_rho2_i, p_over_rho2_j, soundspeed_i, soundspeed_j;
   double hfc, dwk_i, vdotr, vdotr2, visc, mu_ij, rho_ij, vsig;
   double h_j, dwk_j, r, r2, u, hfc_visc;
-
 #ifndef NOVISCOSITYLIMITER
   double dt;
 #endif
@@ -449,6 +531,11 @@ void hydro_evaluate(int target, int mode)
     {
       pos = P[target].Pos;
       vel = SphP[target].VelPred;
+#ifdef CDAV_DRIFTUPDATE
+      oldacc = SphP[target].oldAccel;
+      divvsign = (SphP[target].DivVel>0) - (SphP[target].DivVel<0);
+      gradRho = SphP[target].gradRho;
+#endif
       h_i = SphP[target].Hsml;
       mass = P[target].Mass;
       dhsmlDensityFactor = SphP[target].DhsmlDensityFactor;
@@ -456,12 +543,15 @@ void hydro_evaluate(int target, int mode)
       pressure = SphP[target].Pressure;
       timestep = P[target].Ti_endstep - P[target].Ti_begstep;
       soundspeed_i = sqrt(GAMMA * pressure / rho);
-#ifdef VARIABLE_VISC_CONST
+#if defined MMAV_DRIFTUPDATE || defined MMAV || defined CDAV || defined CDAV_DRIFTUPDATE
       alpha_visc = SphP[target].Alpha;
-#else
+#endif
 #ifdef PRICE_GRAV_SOFT
       zeta = SphP[target].Zeta;
 #endif
+#ifdef NOBALSARA
+      f1 = 1.0;
+#else
       f1 = fabs(SphP[target].DivVel) /
 	(fabs(SphP[target].DivVel) + SphP[target].CurlVel +
 	 0.0001 * soundspeed_i / SphP[target].Hsml / fac_mu);
@@ -471,6 +561,11 @@ void hydro_evaluate(int target, int mode)
     {
       pos = HydroDataGet[target].Pos;
       vel = HydroDataGet[target].Vel;
+#ifdef CDAV_DRIFTUPDATE
+      oldacc = HydroDataGet[target].oldAccel;
+      divvsign = HydroDataGet[target].divvsign;
+      gradRho = HydroDataGet[target].gradRho;
+#endif
       h_i = HydroDataGet[target].Hsml;
       mass = HydroDataGet[target].Mass;
       dhsmlDensityFactor = HydroDataGet[target].DhsmlDensityFactor;
@@ -479,7 +574,7 @@ void hydro_evaluate(int target, int mode)
       timestep = HydroDataGet[target].Timestep;
       soundspeed_i = sqrt(GAMMA * pressure / rho);
       f1 = HydroDataGet[target].F1;
-#ifdef VARIABLE_VISC_CONST
+#if defined MMAV_DRIFTUPDATE || defined MMAV || defined CDAV || defined CDAV_DRIFTUPDATE
       alpha_visc = HydroDataGet[target].Alpha;
 #endif
 #ifdef PRICE_GRAV_SOFT
@@ -504,6 +599,15 @@ void hydro_evaluate(int target, int mode)
   numN=numNK=0;
 #endif
 
+#ifdef CDAV_DRIFTUPDATE
+  vsig=0;
+  R=0;
+  for(k=0;k<9;k++)
+  {
+    E[k]=D[k]=T[k]=0;
+  }
+#endif
+
 
   /* Now start the actual SPH computation for this particle */
   startnode = All.MaxPart;
@@ -519,7 +623,7 @@ void hydro_evaluate(int target, int mode)
 	  dy = pos[1] - P[j].Pos[1];
 	  dz = pos[2] - P[j].Pos[2];
 
-#ifdef VARIABLE_VISC_CONST
+#if defined MMAV_DRIFTUPDATE || defined MMAV || defined CDAV || defined CDAV_DRIFTUPDATE
      alpha_visc_j = SphP[j].Alpha;
 #endif
 
@@ -585,16 +689,74 @@ void hydro_evaluate(int target, int mode)
 		      if(u < 0.5)
             {
 			     dwk_i = hinv4 * u * (KERNEL_COEFF_3 * u - KERNEL_COEFF_4);
+#ifdef CDAV_DRIFTUPDATE
+              wk_i = hinv*hinv*hinv*(KERNEL_COEFF_1+KERNEL_COEFF_2 * (u-1)*u*u);
+#endif
             }
 		      else
             {
 			     dwk_i = hinv4 * KERNEL_COEFF_6 * (1.0 - u) * (1.0 - u);
+#ifdef CDAV_DRIFTUPDATE
+              wk_i = hinv*hinv*hinv*KERNEL_COEFF_5*(1.0 -u)*(1.0-u)*(1.0-u);
+#endif
             }
 		    }
 		  else
 		    {
 		      dwk_i = 0;
+#ifdef CDAV_DRIFTUPDATE
+            wk_i = 0;
+#endif
 		    }
+#ifdef CDAV_DRIFTUPDATE
+        fac_1 = mass_j * dwk_i / r;
+        fac_2 = mass_j * (1/rho)* ((dwk_i *r/NUMDIMS)+wk_i);
+        dax = acc[0] - SphP[j].oldAccel[0];
+        day = acc[1] - SphP[j].oldAccel[1];
+        daz = acc[2] - SphP[j].oldAccel[2];
+
+        D[0] += dvx * (fac_1 * dx + fac_2 * gradRho[0]);
+        D[1] += dvx * (fac_1 * dy + fac_2 * gradRho[1]);
+        D[2] += dvx * (fac_1 * dz + fac_2 * gradRho[2]);
+        D[3] += dvy * (fac_1 * dx + fac_2 * gradRho[0]);
+        D[4] += dvy * (fac_1 * dy + fac_2 * gradRho[1]);
+        D[5] += dvy * (fac_1 * dz + fac_2 * gradRho[2]);
+        D[6] += dvz * (fac_1 * dx + fac_2 * gradRho[0]);
+        D[7] += dvz * (fac_1 * dy + fac_2 * gradRho[1]);
+        D[8] += dvz * (fac_1 * dz + fac_2 * gradRho[2]);
+
+        E[0] += dax * (fac_1 * dx  +fac_2 * gradRho[0]);
+        E[1] += dax * (fac_1 * dy  +fac_2 * gradRho[1]);
+        E[2] += dax * (fac_1 * dz  +fac_2 * gradRho[2]);
+        E[3] += day * (fac_1 * dx  +fac_2 * gradRho[0]);
+        E[4] += day * (fac_1 * dy + fac_2 * gradRho[1]);
+        E[5] += day * (fac_1 * dz + fac_2 * gradRho[2]);
+        E[6] += daz * (fac_1 * dx + fac_2 * gradRho[0]);
+        E[7] += daz * (fac_1 * dy + fac_2 * gradRho[1]);
+        E[8] += daz * (fac_1 * dz + fac_2 * gradRho[2]);
+
+        T[0] += dx * (fac_1 * dx + fac_2 * gradRho[0]);
+        T[1] += dx * (fac_1 * dy + fac_2 * gradRho[1]);
+        T[2] += dx * (fac_1 * dz + fac_2 * gradRho[2]);
+        T[3] += dy * (fac_1 * dx + fac_2 * gradRho[0]);
+        T[4] += dy * (fac_1 * dy + fac_2 * gradRho[1]);
+        T[5] += dy * (fac_1 * dz + fac_2 * gradRho[2]);
+        T[6] += dz * (fac_1 * dx + fac_2 * gradRho[0]);
+        T[7] += dz * (fac_1 * dy + fac_2 * gradRho[1]);
+        T[8] += dz * (fac_1 * dz + fac_2 * gradRho[2]);
+
+        //This "divv" is the only part of the whole business which is not exact...
+        R += divvsign * mass_j * wk_i;
+        //Calculate the signal velocity, only want to do this for things local to i...
+        if(dwk_i!=0)
+        {
+          tmp=0.5*(soundspeed_i+soundspeed_j)-dmax(0,dx*dvx+dy*dvy+dz*dvz);
+          if(tmp > vsig)
+          {
+            vsig=tmp;
+          }
+        }
+#endif
 
 		  if(r2 < h_j * h_j)
 		    {
@@ -628,15 +790,28 @@ void hydro_evaluate(int target, int mode)
 			maxSignalVel = vsig;
 
 		      rho_ij = 0.5 * (rho + SphP[j].Density);
-#ifdef VARIABLE_VISC_CONST		      
+#if defined MMAV_DRIFTUPDATE || defined MMAV
             //The balsara switch is added to the source term if alpha is per particle...
           visc = 0.25 * (alpha_visc + alpha_visc_j) * vsig * (-mu_ij) / rho_ij;
+#else
+#if defined CDAV || defined CDAV_DRIFTUPDATE
+          //We are explicitly putting in the form of the C&D paper...
+            mu_ij = 4*vdotr2*h_j*h_j/r/(h_i+h_j)/(h_i*h_i+h_j*h_j)/(h_i*h_i+h_j*h_j);
+            mu_ij = -mu_ij*(0.5*(soundspeed_i+soundspeed_j)-All.ArtViscPropConst*mu_ij);
+            hfc = 0.5*P[j].Mass*mu_ij*(alpha_visc*dhsmlDensityFactor*dwk_i/rho+alpha_visc_j*SphP[j].DhsmlDensityFactor*dwk_j/SphP[j].Density)/r;
+            hfc_visc = P[j].Mass*mu_ij*alpha_visc*dhsmlDensityFactor*dwk_i/rho/r;
+#else
+            //The standard thing...
+#ifdef NOBALSARA
+            f2=1.0;
 #else
           f2 =
           fabs(SphP[j].DivVel) / (fabs(SphP[j].DivVel) + SphP[j].CurlVel +
                                   0.0001 * soundspeed_j / fac_mu / SphP[j].Hsml);
+#endif
           visc = 0.25 * alpha_visc * vsig * (-mu_ij) / rho_ij * (f1 + f2);
 #endif	
+#endif
 		      /* .... end artificial viscosity evaluation */
 #ifndef NOVISCOSITYLIMITER
 		      /* make sure that viscous acceleration is not too large */
@@ -653,10 +828,18 @@ void hydro_evaluate(int target, int mode)
 
 		  p_over_rho2_j *= SphP[j].DhsmlDensityFactor;
 
+#if defined CDAV || defined CDAV_DRIFTUPDATE
+        if(visc==0)
+        {
+          hfc=0;
+          hfc_visc=0;
+        }
+        hfc += P[j].Mass * (p_over_rho2_i * dwk_i + p_over_rho2_j * dwk_j) /r;
+#else
 		  hfc_visc = 0.5 * P[j].Mass * visc * (dwk_i + dwk_j) / r;
 
 		  hfc = hfc_visc + P[j].Mass * (p_over_rho2_i * dwk_i + p_over_rho2_j * dwk_j) / r;
-
+#endif
 
 		  acc[0] -= hfc * dx;
 		  acc[1] -= hfc * dy;
@@ -679,6 +862,16 @@ void hydro_evaluate(int target, int mode)
       SphP[target].NumNK = numNK;
       SphP[target].NumN = numN;
 #endif
+#ifdef CDAV_DRIFTUPDATE
+      for(k=0;k<9;k++)
+      {
+        SphP[target].T[k]=T[k];
+        SphP[target].D[k]=D[k];
+        SphP[target].E[k]=E[k];
+      }
+      SphP[target].R=R;
+      SphP[target].CDAVSignalVel=vsig;
+#endif
     }
   else
     {
@@ -689,6 +882,16 @@ void hydro_evaluate(int target, int mode)
 #ifdef NK_AV
       HydroDataResult[target].NumNK = numNK;
       HydroDataResult[target].NumN = numN;
+#endif
+#ifdef CDAV_DRIFTUPDATE
+      for(k=0;k<9;k++)
+      {
+        HydroDataResult[target].T[k]=T[k];
+        HydroDataResult[target].D[k]=D[k];
+        HydroDataResult[target].E[k]=E[k];
+      }
+      HydroDataResult[target].R=R;
+      HydroDataResult[target].CDAVSignalVel=vsig;
 #endif
     }
 }

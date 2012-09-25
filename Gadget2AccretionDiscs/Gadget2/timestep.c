@@ -41,7 +41,7 @@ void advance_and_find_timesteps(void)
 #ifdef MAKEGLASS
   double disp, dispmax, globmax, dmean, fac, disp2sum, globdisp2sum;
 #endif
-#ifdef VARIABLE_VISC_CONST
+#ifdef MMAV_DRIFTUPDATE
   double soundspeed, tau, f_fac,fac_mu;
 #endif
 
@@ -267,7 +267,7 @@ void advance_and_find_timesteps(void)
 	      dt_hydrokick = get_hydrokick_factor(tstart, tend);
 	      dt_gravkick2 = get_gravkick_factor(P[i].Ti_endstep, tend);
 	      dt_hydrokick2 = get_hydrokick_factor(P[i].Ti_endstep, tend);
-#ifdef VARIABLE_VISC_CONST
+#ifdef MMAV_DRIFTUPDATE
          fac_mu= pow(All.Time, 3 * (GAMMA -1 )/2) /All.Time;
 #endif
 	    }
@@ -275,7 +275,7 @@ void advance_and_find_timesteps(void)
 	    {
 	      dt_entr = dt_gravkick = dt_hydrokick = (tend - tstart) * All.Timebase_interval;
 	      dt_gravkick2 = dt_hydrokick2 = dt_entr2 = (tend - P[i].Ti_endstep) * All.Timebase_interval;
-#ifdef VARIABLE_VISC_CONST
+#ifdef MMAV_DRIFTUPDATE
          fac_mu=1.0;
 #endif
 	    }
@@ -294,11 +294,15 @@ void advance_and_find_timesteps(void)
 
 	  if(P[i].Type == 0)	/* SPH stuff */
 	    {
-#ifdef VARIABLE_VISC_CONST
+#ifdef MMAV_DRIFTUPDATE
 	      soundspeed  = sqrt(GAMMA * SphP[i].Pressure / SphP[i].Density);
 #ifndef NK_AV
+#ifdef NOBALSARA
+         f_fac = 1.0;
+#else
 	      f_fac = fabs(SphP[i].DivVel) / (fabs(SphP[i].DivVel) + SphP[i].CurlVel +
                                         0.0001 * soundspeed / SphP[i].Hsml/fac_mu);
+#endif
 #else
          f_fac = (( 1.0 / SphP[i].NumN) * SphP[i].NumNK);
 #endif

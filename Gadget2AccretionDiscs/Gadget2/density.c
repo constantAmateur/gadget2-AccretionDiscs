@@ -63,9 +63,10 @@ void density(void)
   double sumt, sumcomm, timengb, sumtimengb;
   double timecomp = 0, timeimbalance = 0, timecommsumm = 0, sumimbalance;
   MPI_Status status;
-#ifdef ALT_DIVV
+#ifdef CDAV
   int k;
-  double Tinv[9],V[9],fac;
+  double Tinv[6],V[9],fac,dtalpha,alphaloc;
+  double divv,diva,xi,A;
 #endif
 
 #ifdef PERIODIC
@@ -95,6 +96,9 @@ void density(void)
   for(n = 0, NumSphUpdate = 0; n < N_gas; n++)
     {
       SphP[n].Left = SphP[n].Right = 0;
+#if defined CDAV || defined MMAV
+      SphP[n].AlphaOld=-1;
+#endif
 
       if(P[n].Ti_endstep == All.Ti_Current)
 	NumSphUpdate++;
@@ -143,6 +147,13 @@ void density(void)
 			DensDataIn[nexport].Vel[0] = SphP[i].VelPred[0];
 			DensDataIn[nexport].Vel[1] = SphP[i].VelPred[1];
 			DensDataIn[nexport].Vel[2] = SphP[i].VelPred[2];
+#ifdef CDAV
+         DensDataIn[nexport].Accel[0] = SphP[i].HydroAccel[0]+P[i].GravAccel[0];
+         DensDataIn[nexport].Accel[1] = SphP[i].HydroAccel[1]+P[i].GravAccel[1];
+         DensDataIn[nexport].Accel[2] = SphP[i].HydroAccel[2]+P[i].GravAccel[2];
+         DensDataIn[nexport].DivVelSign = (SphP[i].DivVel >0) - (SphP[i].DivVel<0);
+         DensDataIn[nexport].ci = GAMMA*SphP[i].Pressure / SphP[i].Density;
+#endif
 			DensDataIn[nexport].Hsml = SphP[i].Hsml;
 			DensDataIn[nexport].Index = i;
 			DensDataIn[nexport].Task = j;
@@ -268,11 +279,26 @@ void density(void)
 #ifdef PRICE_GRAV_SOFT
                SphP[place].Zeta += DensDataPartialResult[source].Zeta;
 #endif
-#ifdef ALT_DIVV
+#ifdef CDAV
                for(k=0;k<9;k++)
                {
+                 if(k<6)
+                 {
+                   SphP[place].T[k] += DensDataPartialResult[source].T[k];
+                 }
                  SphP[place].D[k] += DensDataPartialResult[source].D[k];
-                 SphP[place].T[k] += DensDataPartialResult[source].T[k];
+                 SphP[place].E[k] += DensDataPartialResult[source].E[k];
+               }
+               SphP[place].R += DensDataPartialResult[source].R;
+               if(DensDataPartialResult[source].MaxSignalVel > SphP[place].MaxSignalVel)
+               {
+                 SphP[place].MaxSignalVel = DensDataPartialResult[source].MaxSignalVel;
+               }
+#endif
+#ifdef CDAV_DRIFTUPDATE
+               for(k=0;k<3;k++)
+               {
+                 SphP[place].gradRho[k] += DensDataPartialResult[source].gradRho[k];
                }
 #endif
 			      SphP[place].Rot[0] += DensDataPartialResult[source].Rot[0];
@@ -308,6 +334,14 @@ void density(void)
 	      {
 		SphP[i].DhsmlDensityFactor =
 		  1 / (1 + SphP[i].Hsml * SphP[i].DhsmlDensityFactor / (NUMDIMS * SphP[i].Density));
+#ifdef CDAV_DRIFTUPDATE
+      for(k=0;k<3;k++)
+      {
+        SphP[i].gradRho[k] *= SphP[i].DhsmlDensityFactor;
+        //Need to store this to calculate E in the next loop
+        SphP[i].oldAccel[k] = SphP[i].HydroAccel[k]+SphP[i].GravAccel[k];
+      }
+#endif
 #ifdef PRICE_GRAV_SOFT
       SphP[i].Zeta = -SphP[i].Hsml * SphP[i].Zeta / ( NUMDIMS * SphP[i].Density);
 #endif
@@ -317,42 +351,109 @@ void density(void)
 				       SphP[i].Rot[2] * SphP[i].Rot[2]) / SphP[i].Density;
 
 		SphP[i].DivVel /= SphP[i].Density;
-#ifdef ALT_DIVV
-      fac = SphP[i].T[0]*(SphP[i].T[4]*SphP[i].T[8]-SphP[i].T[5]*SphP[i].T[7])+SphP[i].T[1]*(SphP[i].T[5]*SphP[i].T[6]-SphP[i].T[8]*SphP[i].T[3])+SphP[i].T[2]*(SphP[i].T[3]*SphP[i].T[7]-SphP[i].T[4]*SphP[i].T[6]);
-      Tinv[0]=(SphP[i].T[4]*SphP[i].T[8]-SphP[i].T[5]*SphP[i].T[7])/fac;
-      Tinv[1]=(SphP[i].T[2]*SphP[i].T[7]-SphP[i].T[1]*SphP[i].T[8])/fac;
-      Tinv[2]=(SphP[i].T[1]*SphP[i].T[5]-SphP[i].T[2]*SphP[i].T[4])/fac;
-      Tinv[3]=(SphP[i].T[5]*SphP[i].T[6]-SphP[i].T[3]*SphP[i].T[8])/fac;
-      Tinv[4]=(SphP[i].T[0]*SphP[i].T[8]-SphP[i].T[2]*SphP[i].T[6])/fac;
-      Tinv[5]=(SphP[i].T[2]*SphP[i].T[3]-SphP[i].T[0]*SphP[i].T[5])/fac;
-      Tinv[6]=(SphP[i].T[3]*SphP[i].T[7]-SphP[i].T[4]*SphP[i].T[6])/fac;
-      Tinv[7]=(SphP[i].T[6]*SphP[i].T[1]-SphP[i].T[0]*SphP[i].T[7])/fac;
-      Tinv[8]=(SphP[i].T[0]*SphP[i].T[4]-SphP[i].T[1]*SphP[i].T[3])/fac;
-      //Estimate the velocity matrix as D.T^-1
-      V[0]=SphP[i].D[0]*Tinv[0]+SphP[i].D[1]*Tinv[3]+SphP[i].D[2]*Tinv[6];
-      V[1]=SphP[i].D[0]*Tinv[1]+SphP[i].D[1]*Tinv[4]+SphP[i].D[2]*Tinv[7];
-      V[2]=SphP[i].D[0]*Tinv[2]+SphP[i].D[1]*Tinv[5]+SphP[i].D[2]*Tinv[8];
-      V[3]=SphP[i].D[3]*Tinv[0]+SphP[i].D[4]*Tinv[3]+SphP[i].D[5]*Tinv[6];
-      V[4]=SphP[i].D[3]*Tinv[1]+SphP[i].D[4]*Tinv[4]+SphP[i].D[5]*Tinv[7];
-      V[5]=SphP[i].D[3]*Tinv[2]+SphP[i].D[4]*Tinv[5]+SphP[i].D[5]*Tinv[8];
-      V[6]=SphP[i].D[6]*Tinv[0]+SphP[i].D[7]*Tinv[3]+SphP[i].D[8]*Tinv[6];
-      V[7]=SphP[i].D[6]*Tinv[1]+SphP[i].D[7]*Tinv[4]+SphP[i].D[8]*Tinv[7];
-      V[8]=SphP[i].D[6]*Tinv[2]+SphP[i].D[7]*Tinv[5]+SphP[i].D[8]*Tinv[8];
-      //Add in the factors of 1/rho_i to T and D.  Note this does not change the estimate of V as they cancel in D.T^-1
-      for(k=0;k<9;k++){
-        Tinv[k] *= SphP[i].Density;
-        SphP[i].T[k] /= SphP[i].Density;
-        SphP[i].D[k] /= SphP[i].Density;
+#ifdef CDAV
+      SphP[i].R /= SphP[i].Density;
+      //Inverse of determinate of T
+      fac = 1/(SphP[i].T[0]*(SphP[i].T[3]*SphP[i].T[5]-SphP[i].T[4]*SphP[i].T[4]) +
+        SphP[i].T[1]*(SphP[i].T[2]*SphP[i].T[4]-SphP[i].T[1]*SphP[i].T[5]) +
+        SphP[i].T[2]*(SphP[i].T[1]*SphP[i].T[4]-SphP[i].T[2]*SphP[i].T[3]));
+      //The inverse of the matrix T
+      Tinv[0]=fac*(SphP[i].T[3]*SphP[i].T[5]-SphP[i].T[4]*SphP[i].T[4]);
+      Tinv[1]=fac*(SphP[i].T[2]*SphP[i].T[4]-SphP[i].T[1]*SphP[i].T[5]);
+      Tinv[2]=fac*(SphP[i].T[1]*SphP[i].T[4]-SphP[i].T[2]*SphP[i].T[3]);
+      Tinv[3]=fac*(SphP[i].T[0]*SphP[i].T[5]-SphP[i].T[2]*SphP[i].T[2]);
+      Tinv[4]=fac*(SphP[i].T[1]*SphP[i].T[2]-SphP[i].T[0]*SphP[i].T[4]);
+      Tinv[5]=fac*(SphP[i].T[0]*SphP[i].T[3]-SphP[i].T[1]*SphP[i].T[1]);
+      //The velocity matrix D
+      V[0]=SphP[i].D[0]*Tinv[0]+SphP[i].D[1]*Tinv[1]+SphP[i].D[2]*Tinv[2];
+      V[1]=SphP[i].D[0]*Tinv[1]+SphP[i].D[1]*Tinv[3]+SphP[i].D[2]*Tinv[4];
+      V[2]=SphP[i].D[0]*Tinv[2]+SphP[i].D[1]*Tinv[4]+SphP[i].D[2]*Tinv[5];
+      V[3]=SphP[i].D[3]*Tinv[0]+SphP[i].D[4]*Tinv[1]+SphP[i].D[5]*Tinv[2];
+      V[4]=SphP[i].D[3]*Tinv[1]+SphP[i].D[4]*Tinv[3]+SphP[i].D[5]*Tinv[4];
+      V[5]=SphP[i].D[3]*Tinv[2]+SphP[i].D[4]*Tinv[4]+SphP[i].D[5]*Tinv[5];
+      V[6]=SphP[i].D[6]*Tinv[0]+SphP[i].D[7]*Tinv[1]+SphP[i].D[8]*Tinv[2];
+      V[7]=SphP[i].D[6]*Tinv[1]+SphP[i].D[7]*Tinv[3]+SphP[i].D[8]*Tinv[4];
+      V[7]=SphP[i].D[6]*Tinv[2]+SphP[i].D[7]*Tinv[4]+SphP[i].D[8]*Tinv[5];
+      //DivVel is now trivially estimated
+      divv = V[0]+V[4]+V[8];
+      if(ThisTask==1)
+      {
+        printf("The ratio of the old to the new divv is %g for pcl %d\n",SphP[i].DivVel/divv,i);
       }
-      //If we wanted to save Tinv or V, do it here...
-      //Calculate the new estimate...
-      SphP[i].DivVel = SphP[i].D[0]*Tinv[0]+SphP[i].D[1]*Tinv[3]+SphP[i].D[2]*Tinv[6]+SphP[i].D[3]*Tinv[1]+SphP[i].D[4]*Tinv[4]+SphP[i].D[5]*Tinv[7]+SphP[i].D[6]*Tinv[2]+SphP[i].D[7]*Tinv[5]+SphP[i].D[8]*Tinv[8];
+      //DivAccel = tr(E.T^-1)-tr(V^2)
+      //This is the first part
+      diva = (SphP[i].E[1]+SphP.E[3])*Tinv[1]+(SphP[i].E[2]+SphP[i].E[6])*Tinv[2]
+        +(SphP[i].E[5]+SphP[i].E[7])*Tinv[4] + SphP[i].E[0]*Tinv[0] + SphP[i].E[4]*Tinv[3]
+        +SphP[i].E[8]*Tinv[5];
+      //now subtract the second part...
+      diva -= V[0]*V[0]+V[4]*V[4]+V[8]*V[8]+2*(V[1]*V[3]+V[2]*V[6]+V[5]*V[7]);
+      //Now calculate xi
+      xi=2*(1-SphP[i].R)*(1-SphP[i].R)*(1-SphP[i].R)*(1-SphP[i].R)*divv;
+      xi *= xi;
+      //The added bit is tr(S.S^T)
+      xi /= xi + V[0]*V[0]+V[4]*V[4]+V[8]*V[8] + 
+        0.5*((V[1]+V[3])*(V[1]+V[3])+(V[2]+V[6])*(V[2]+V[6])+(V[5]+V[7])*(V[5]+V[7])) -
+        divv*divv/3;
+      //Now calculate A_i
+      A=dmax(0,-1*diva)*xi;
+      //Now want to adapt alpha.  Need to be careful here as there is a possibility
+      //that this entire loop will have to repeat itself, in which case we want this
+      //adaption step to see the same current alpha every time.  This is the purpose
+      //of "alphaold" which is initialised to 0 at the start of each particle.
+      alphaloc = SphP[i].MaxSignalVel*SphP[i].MaxSignalVel + 
+        SphP[i].Hsml*SphP[i].Hsml*A;
+      alphaloc = All.ArtBulkViscConst*SphP[i].Hsml*SphP[i].Hsml*A/alphaloc;
+      if(SphP[i].AlphaOld==-1)
+      {
+        SphP[i].AlphaOld=SphP[i].Alpha;
+      }
+      else
+      {
+        SphP[i].Alpha=SphP[i].AlphaOld;
+      }
+      //Finally, advance the artificial viscosity value to the new value
+      if(SphP[i].Alpha < alphaloc)
+      {
+        SphP[i].Alpha = alphaloc;
+      }
+      else
+      {
+        dt_alpha = (All.Ti_Current - (P[i].Ti_begstep + P[i].Ti_endstep) /2 ) *All.Timebase_interval;
+        SphP[i].Alpha = alphaloc +(SphP[i].Alpha-alphaloc)*exp(-2*All.VariableViscDecayLength*SphP[i].MaxSignalVel*dt_alpha/SphP[i].Hsml);
+      }
 #endif
 
 		dt_entr = (All.Ti_Current - (P[i].Ti_begstep + P[i].Ti_endstep) / 2) * All.Timebase_interval;
 
 		SphP[i].Pressure =
 		  (SphP[i].Entropy + SphP[i].DtEntropy * dt_entr) * pow(SphP[i].Density, GAMMA);
+#ifdef MMAV
+	   soundspeed  = sqrt(GAMMA * SphP[i].Pressure / SphP[i].Density);
+#ifdef NOBALSARA
+      f_fac = 1.0;
+#else
+	   f_fac = fabs(SphP[i].DivVel) / (fabs(SphP[i].DivVel) + SphP[i].CurlVel +
+                                        0.0001 * soundspeed / SphP[i].Hsml);
+#endif
+      //Soundspeed being 0 really screws up everything...
+      if(soundspeed==0 && SphP[i].DivVel==0 && SphP[i].CurlVel==0)
+      {
+        f_fac=0.0;
+      }
+      //Move the factor of 1/soundspped into the asignment of dtalpha in case it's 0
+	   tau = 0.5 * SphP[i].Hsml / All.VariableViscDecayLength;
+      //If this isn't the first time we're doing this loop for this particle...
+      if(SphP[i].AlphaOld==-1)
+      {
+        SphP[i].AlphaOld=SphP[i].Alpha;
+      }
+      else
+      {
+        SphP[i].Alpha=SphP[i].AlphaOld;
+      }
+      //Advance immediately in time
+      SphP[i].Alpha += dt_entr*f_fac*dmax(-SphP[i].DivVel, 0) * (All.ArtBulkViscConst - SphP[i].Alpha) - (soundspeed*(SphP[i].Alpha - All.VariableViscAlphaMin))/tau;
+#endif
 	      }
 
 
@@ -522,9 +623,15 @@ void density_evaluate(int target, int mode)
 #ifdef PRICE_GRAV_SOFT
   double zeta,dphi,hinv2;
 #endif
-#ifdef ALT_DIVV
+#ifdef CDAV
   int i;
-  double D[9],T[9],hi5;
+  double D[9],E[9],T[6];
+  double acc[3],dax,day,daz;
+  double R,divvsign;
+  double vsig,ci,tmp;
+#endif
+#ifdef CDAV_DRIFTUPDATE
+  double gradRho[3];
 #endif
   FLOAT *pos, *vel;
 
@@ -533,18 +640,29 @@ void density_evaluate(int target, int mode)
       pos = P[target].Pos;
       vel = SphP[target].VelPred;
       h = SphP[target].Hsml;
+#ifdef CDAV
+      acc = SphP[target].HydroAccel;
+      for(i=0,i<3,i++)
+      {
+        acc[i] += P[target].GravAccel[i];
+      }
+      divvsign = (SphP[target].DivVel > 0) - (SphP[target].DivVel < 0);
+      ci = sqrt(GAMMA*SphP[i].Pressure/SphP[i].Density);
+#endif
     }
   else
     {
       pos = DensDataGet[target].Pos;
       vel = DensDataGet[target].Vel;
       h = DensDataGet[target].Hsml;
+#ifdef CDAV
+      acc = DensDataGet[target].Accel;
+      divvsign = DensDataGet[target].DivVelSign;
+      ci = DensDataGet[target].ci;
+#endif
     }
 
   h2 = h * h;
-#ifdef ALT_DIVV
-  hi5 = h2 * h2 * h;
-#endif
   hinv = 1.0 / h;
 #ifdef PRICE_GRAV_SOFT
   hinv2 = hinv * hinv;
@@ -562,11 +680,17 @@ void density_evaluate(int target, int mode)
 #ifdef PRICE_GRAV_SOFT
   zeta = 0;
 #endif
-#ifdef ALT_DIVV
+#ifdef CDAV
   for(i=0;i<9;i++)
   {
-    D[i]=T[i]=0;
+    if(i<6)
+    {
+      T[i]=0;
+    }
+    E[i]=D[i]=0;
   }
+  R=0;
+  vsig=0;
 #endif
 
   startnode = All.MaxPart;
@@ -644,16 +768,22 @@ void density_evaluate(int target, int mode)
 		  dvx = vel[0] - SphP[j].VelPred[0];
 		  dvy = vel[1] - SphP[j].VelPred[1];
 		  dvz = vel[2] - SphP[j].VelPred[2];
-
 		  divv -= fac * (dx * dvx + dy * dvy + dz * dvz);
 
 		  rotv[0] += fac * (dz * dvy - dy * dvz);
 		  rotv[1] += fac * (dx * dvz - dz * dvx);
 		  rotv[2] += fac * (dy * dvx - dx * dvy);
+#ifdef CDAV_DRIFTUPDATE
+        gradRho[0] += fac *dx;
+        gradRho[1] += fac *dy;
+        gradRho[2] += fac *dz;
+#endif
 
-#ifdef ALT_DIVV
-        //This should really be devided by rho_j, but so should the GADGET estimator, so we'll do the same thing they do and divide by rho_i at the end instead
-        fac = hi5*mass_j * dwk / r;
+#ifdef CDAV
+        dax = acc[0] - SphP[j].HydroAccel[0]-P[j].GravAccel[0];
+        day = acc[1] - SphP[j].HydroAccel[1]-P[j].GravAccel[1];
+        daz = acc[2] - SphP[j].HydroAccel[2]-P[j].GravAccel[2];
+        //The factors of h are irrelevant as they appear in both D and T and so will cancel each other out
         D[0] += fac * (dvx*dx);
         D[1] += fac * (dvx*dy);
         D[2] += fac * (dvx*dz);
@@ -664,15 +794,30 @@ void density_evaluate(int target, int mode)
         D[7] += fac * (dvz*dy);
         D[8] += fac * (dvz*dz);
 
+        E[0] += fac * (dax*dx);
+        E[1] += fac * (dax*dy);
+        E[2] += fac * (dax*dz);
+        E[3] += fac * (day*dx);
+        E[4] += fac * (day*dy);
+        E[5] += fac * (day*dz);
+        E[6] += fac * (daz*dx);
+        E[7] += fac * (daz*dy);
+        E[8] += fac * (daz*dz);
+
         T[0] += fac * (dx*dx);
         T[1] += fac * (dx*dy);
         T[2] += fac * (dx*dz);
-        T[3] += fac * (dy*dx);
-        T[4] += fac * (dy*dy);
-        T[5] += fac * (dy*dz);
-        T[6] += fac * (dz*dx);
-        T[7] += fac * (dz*dy);
-        T[8] += fac * (dz*dz);
+        T[3] += fac * (dy*dy);
+        T[4] += fac * (dy*dz);
+        T[5] += fac * (dz*dz);
+
+        R += divvsign * mass_j * wk;
+        //Estimate the signal velocity using predicted sound speed
+        tmp = 0.5*(ci + (GAMMA*SphP[j].Pressure/SphP[j].Density))-(1/r) * ((dx * dvx + dy*dvy+dz * dvz)<0)*(dx*dvx + dy * dvy + dz * dvz);
+        if(tmp > vsig)
+        {
+          vsig = tmp;
+        }
 #endif
 
 		}
@@ -693,31 +838,56 @@ void density_evaluate(int target, int mode)
 #ifdef PRICE_GRAV_SOFT
       SphP[target].Zeta = zeta;
 #endif
-#ifdef ALT_DIVV
+#ifdef CDAV
       for(i=0;i<9;i++)
       {
+        if(i<6)
+        {
+          SphP[target].T[i]=T[i];
+
+        }
         SphP[target].D[i]=D[i];
-        SphP[target].T[i]=T[i];
+        SphP[target].E[i]=E[i];
+      }
+      SphP[target].R=R;
+      SphP[target].MaxSignalVel=vsig;
+#endif
+#ifdef CDAV_DRIFTUPDATE
+      for(i=0;i<3;i++)
+      {
+        SphP[target].gradRho[i]=gradRho[i];
       }
 #endif
     }
   else
     {
       DensDataResult[target].Rho = rho;
-      DensDataResult[target].Div = divv;
       DensDataResult[target].Ngb = weighted_numngb;
       DensDataResult[target].DhsmlDensity = dhsmlrho;
+      DensDataResult[target].Div = divv;
       DensDataResult[target].Rot[0] = rotv[0];
       DensDataResult[target].Rot[1] = rotv[1];
       DensDataResult[target].Rot[2] = rotv[2];
 #ifdef PRICE_GRAV_SOFT
       DensDataResult[target].Zeta = zeta;
 #endif
-#ifdef ALT_DIVV
+#ifdef CDAV
       for(i=0; i<9; i++)
       {
+        if(i<6)
+        {
+          DensDataResult[target].T[i]=T[i];
+        }
         DensDataResult[target].D[i]=D[i];
-        DensDataResult[target].T[i]=T[i];
+        DensDataResult[target].E[i]=E[i];
+      }
+      DensDataResult[target].R = R;
+      DensDataResult[target].MaxSignalVel = vsig;
+#endif
+#ifdef CDAV_DRIFTUPDATE
+      for(i=0;i<3;i++)
+      {
+        DensDataResult[target].gradRho[i]=gradRho[i];
       }
 #endif
     }

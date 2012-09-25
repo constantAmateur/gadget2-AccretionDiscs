@@ -167,8 +167,14 @@ void init(void)
 #ifdef SINK_PARTICLES
       SphP[i].AccretionTarget = 0; 
 #endif
-#ifdef VARIABLE_VISC_CONST
+#if defined MMAV_DRIFTUPDATE || defined MMAV
       SphP[i].Alpha=All.VariableViscAlphaMin;
+#endif
+#if defined CDAV_DRIFTUPDATE || defined CDAV
+      SphP[i].Alpha=0;
+#endif
+#if defined MMAV_DRIFTUPDATE || defined CDAV_DRIFTUPDATE
+      SphP[i].DtAlpha=0;
 #endif
       if(RestartFlag == 0)
 	{

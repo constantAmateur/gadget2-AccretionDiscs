@@ -290,8 +290,10 @@ extern struct global_data_all_processes
 
   double ArtBulkViscConst;      /*!< Sets the parameter \f$\alpha\f$ of the artificial viscosity.  When variable artificial viscosity is on, this is AlphaMax */
   double ArtViscPropConst;      /* In the artificial viscosity formulation beta /prop alpha, this is the constant of proportionality.  Set to 3/2 in the original code */
-#ifdef VARIABLE_VISC_CONST
+#if defined MMAV || defined MMAV_DRIFTUPDATE || defined CDAV || defined CDAV_DRIFTUPDATE
   double VariableViscDecayLength;  /* The "l" value which sets how quickly the artificial viscosity decays back to zero in the absence of any source terms.  Can be thought of as the number of smoothing lengths over which Art Visc decays.  Typically .1*/
+#endif
+#if defined MMAV || defined MMAV_DRIFTUPDATE
   double VariableViscAlphaMin;   /* Minimum value of artificial viscosity */
 #endif
 #if defined BETA_COOLING || defined NK_AV || defined ADD_CENTRAL_GRAVITY
@@ -575,17 +577,33 @@ extern struct sph_particle_data
 #ifdef SINK_PARTICLES  
   int   AccretionTarget;        /*!< flag for accretion. equal to the index of the sink particle it's going to merge with. */
 #endif
-#ifdef VARIABLE_VISC_CONST
+#if defined MMAV_DRIFTUPDATE || defined CDAV_DRIFTUPDATE
   FLOAT Alpha;		        /*!< viscosity coefficient */
   FLOAT DtAlpha;       		/*!< time rate of change of viscosity coefficient */
+#endif
+#if defined MMAV || defined CDAV
+  Float Alpha;
 #endif
 #ifdef PRICE_GRAV_SOFT
   FLOAT Zeta;             /* The factor needed to calculate the grav softening correction */
 #endif
-#ifdef ALT_DIVV
+#ifdef CDAV
   FLOAT D[9];
-  FLOAT T[9];             /* The two matrices needed for the more advanced estimation */
+  FLOAT E[9];
+  FLOAT T[6];             /* The three matrices needed for the more advanced estimation */
+  FLOAT R;                /* For calculating the limiter... */
+  FLOAT AlphaOld;         /* Needed to ensure alpha is adapted proporely */
 #endif
+#ifdef CDAV_DRIFTUPDATE
+  FLOAT gradRho[3];
+  FLOAT D[9];
+  FLOAT E[9];
+  FLOAT T[9];
+  FLOAT oldAccel[3];
+  FLOAT R;
+  FLOAT CDAVSignalVel;
+#endif
+  
 #ifdef NK_AV
   int NumN,NumNK;         //Counters for the number of neighbours and non-keplerian neighbours
 #endif
@@ -772,6 +790,11 @@ extern struct densdata_in
   FLOAT Hsml;
   int Index;
   int Task;
+#ifdef CDAV
+  FLOAT Accel[3];
+  FLOAT DivVelSign;
+  FLOAT ci;
+#endif
 }
  *DensDataIn,                   /*!< holds particle data for SPH density computation to be exported to other processors */
  *DensDataGet;                  /*!< holds imported particle data for SPH density computation */
@@ -785,9 +808,15 @@ extern struct densdata_out
 #ifdef PRICE_GRAV_SOFT
   FLOAT Zeta;
 #endif
-#ifdef ALT_DIVV
+#ifdef CDAV
   FLOAT D[9];
-  FLOAT T[9];
+  FLOAT E[9];
+  FLOAT T[6];
+  FLOAT R;
+  FLOAT MaxSignalVel;
+#endif
+#ifdef CDAV_DRIFTUPDATE
+  FLOAT gradRho[3];
 #endif
 }
  *DensDataResult,               /*!< stores the locally computed SPH density results for imported particles */
@@ -808,8 +837,13 @@ extern struct hydrodata_in
   int   Timestep;
   int   Task;
   int   Index;
-#ifdef VARIABLE_VISC_CONST
+#if defined MMAV || defined CDAV || defined CDAV_DRIFTUPDATE || defined MMAV_DRIFTUPDATE
   FLOAT Alpha;
+#endif
+#ifdef CDAV_DRIFTUPDATE
+  FLOAT oldAccel[3];
+  FLOAT divvsign;
+  FLOAT gradRho[3];
 #endif
 #ifdef SINK_PARTICLES
   int AccretionTarget;
@@ -828,6 +862,13 @@ extern struct hydrodata_out
   FLOAT MaxSignalVel;
 #ifdef NK_AV
   int NumN,NumNK;         //Counters for the number of neighbours and non-keplerian neighbours
+#endif
+#ifdef CDAV_DRIFTUPDATE
+  FLOAT T[9];
+  FLOAT D[9];
+  FLOAT E[9];
+  FLOAT R;
+  FLOAT CDAVSignalVel;
 #endif
 }
  *HydroDataResult,              /*!< stores the locally computed SPH hydro results for imported particles */
