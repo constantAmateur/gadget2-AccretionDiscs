@@ -582,7 +582,7 @@ extern struct sph_particle_data
   FLOAT DtAlpha;       		/*!< time rate of change of viscosity coefficient */
 #endif
 #if defined MMAV || defined CDAV
-  Float Alpha;
+  FLOAT Alpha;
 #endif
 #ifdef PRICE_GRAV_SOFT
   FLOAT Zeta;             /* The factor needed to calculate the grav softening correction */
@@ -592,6 +592,8 @@ extern struct sph_particle_data
   FLOAT E[9];
   FLOAT T[6];             /* The three matrices needed for the more advanced estimation */
   FLOAT R;                /* For calculating the limiter... */
+#endif
+#if defined CDAV || defined MMAV
   FLOAT AlphaOld;         /* Needed to ensure alpha is adapted proporely */
 #endif
 #ifdef CDAV_DRIFTUPDATE

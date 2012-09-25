@@ -208,7 +208,7 @@ void hydro_force(void)
           HydroDataIn[nexport].oldAccel[0] = SphP[i].oldAccel[0];
           HydroDataIn[nexport].oldAccel[1] = SphP[i].oldAccel[1];
           HydroDataIn[nexport].oldAccel[2] = SphP[i].oldAccel[2];
-          HyrdoDataIn[nexport].divvsign = (SphP[i].DivVel >0) - (SphP[i].DivVel<0);
+          HydroDataIn[nexport].divvsign = (SphP[i].DivVel >0) - (SphP[i].DivVel<0);
           HydroDataIn[nexport].gradRho[0] = SphP[i].gradRho[0];
           HydroDataIn[nexport].gradRho[1] = SphP[i].gradRho[1];
           HydroDataIn[nexport].gradRho[2] = SphP[i].gradRho[2];
@@ -424,7 +424,7 @@ void hydro_force(void)
 #ifdef CDAV_DRIFTUPDATE
    SphP[i].R /= SphP[i].Density;
    //Invert T
-   fac = 1/(SphP[i].T[0]*(SphP[i].T[4]*SphP[i].T[8]-SphP[i].T[5]*SphP[i].T[7])-SphP[i].T[1]*(SphP[i].T[8]*SphP[i].T[3]-SphP[i].T[5]*SphP[i].T[6])+SphP[i].T[2](SphP[i].T[3]*SphP[i].T[7]-SphP[i].T[4]*SphP[i].T[6]));
+   fac = 1/(SphP[i].T[0]*(SphP[i].T[4]*SphP[i].T[8]-SphP[i].T[5]*SphP[i].T[7])-SphP[i].T[1]*(SphP[i].T[8]*SphP[i].T[3]-SphP[i].T[5]*SphP[i].T[6])+SphP[i].T[2]*(SphP[i].T[3]*SphP[i].T[7]-SphP[i].T[4]*SphP[i].T[6]));
    Tinv[0]=fac*(SphP[i].T[4]*SphP[i].T[8]-SphP[i].T[5]*SphP[i].T[7]);
    Tinv[1]=fac*(SphP[i].T[5]*SphP[i].T[6]-SphP[i].T[3]*SphP[i].T[8]);
    Tinv[2]=fac*(SphP[i].T[3]*SphP[i].T[7]-SphP[i].T[4]*SphP[i].T[6]);
@@ -507,7 +507,7 @@ void hydro_evaluate(int target, int mode)
 #ifdef CDAV_DRIFTUPDATE
   FLOAT *oldacc,*gradRho;
   FLOAT divvsign;
-  double tmp,fac_1,fac_2,R,T[9],D[9],E[9],vsig,wk_i;
+  double tmp,fac_1,fac_2,R,T[9],D[9],E[9],CDAVvsig,wk_i,mass_j,dax,day,daz;
 #endif
 
   double acc[3], dtEntropy, maxSignalVel;
@@ -600,7 +600,7 @@ void hydro_evaluate(int target, int mode)
 #endif
 
 #ifdef CDAV_DRIFTUPDATE
-  vsig=0;
+  CDAVvsig=0;
   R=0;
   for(k=0;k<9;k++)
   {
@@ -709,6 +709,7 @@ void hydro_evaluate(int target, int mode)
 #endif
 		    }
 #ifdef CDAV_DRIFTUPDATE
+        mass_j = P[j].Mass;
         fac_1 = mass_j * dwk_i / r;
         fac_2 = mass_j * (1/rho)* ((dwk_i *r/NUMDIMS)+wk_i);
         dax = acc[0] - SphP[j].oldAccel[0];
@@ -751,9 +752,9 @@ void hydro_evaluate(int target, int mode)
         if(dwk_i!=0)
         {
           tmp=0.5*(soundspeed_i+soundspeed_j)-dmax(0,dx*dvx+dy*dvy+dz*dvz);
-          if(tmp > vsig)
+          if(tmp > CDAVvsig)
           {
-            vsig=tmp;
+            CDAVvsig=tmp;
           }
         }
 #endif
@@ -824,16 +825,17 @@ void hydro_evaluate(int target, int mode)
 #endif
 		    }
 		  else
+        {
 		    visc = 0;
+#if defined CDAV || defined CDAV_DRIFTUPDATE
+          hfc=0;
+          hfc_visc=0;
+#endif
+        }
 
 		  p_over_rho2_j *= SphP[j].DhsmlDensityFactor;
 
 #if defined CDAV || defined CDAV_DRIFTUPDATE
-        if(visc==0)
-        {
-          hfc=0;
-          hfc_visc=0;
-        }
         hfc += P[j].Mass * (p_over_rho2_i * dwk_i + p_over_rho2_j * dwk_j) /r;
 #else
 		  hfc_visc = 0.5 * P[j].Mass * visc * (dwk_i + dwk_j) / r;
@@ -870,7 +872,7 @@ void hydro_evaluate(int target, int mode)
         SphP[target].E[k]=E[k];
       }
       SphP[target].R=R;
-      SphP[target].CDAVSignalVel=vsig;
+      SphP[target].CDAVSignalVel=CDAVvsig;
 #endif
     }
   else
@@ -891,7 +893,7 @@ void hydro_evaluate(int target, int mode)
         HydroDataResult[target].E[k]=E[k];
       }
       HydroDataResult[target].R=R;
-      HydroDataResult[target].CDAVSignalVel=vsig;
+      HydroDataResult[target].CDAVSignalVel=CDAVvsig;
 #endif
     }
 }

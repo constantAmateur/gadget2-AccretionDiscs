@@ -16,8 +16,7 @@ OPT   +=  -DUNEQUALSOFTENINGS
 #--------------------------------------- Things that are always recommended
 OPT   +=  -DPEANOHILBERT
 OPT   +=  -DWALLCLOCK   
-OPT   +=  -DPRICE_GRAV_SOFT
-#OPT   +=  -DALT_DIVV
+OPT   +=  -DPRICE_GRAV_SOFT              #Can only be used with unequalsoftenings and adaptive_grav_soft_for_gas
 
 
 #--------------------------------------- TreePM Options
@@ -73,8 +72,12 @@ OPT   +=  -DBETA_COOLING
 OPT   +=  -DSINK_PARTICLES
 #OPT   +=  -DNO_ACC_TEST
 
-#--------------------------------------- Variable viscosity options
-OPT   +=  -DVARIABLE_VISC_CONST
+#----------------------------------------Artificial viscosity prescriptions, selecting none will give constant AV (Monaghan 92).  Only one should be chosen at any given time.
+OPT   +=  -DMMAV
+#OPT   +=  -DMMAV_DRIFTUPDATE
+#OPT   +=  -DCDAV
+#OPT   +=  -DCDAV_DRIFTUPDATE
+OPT   +=  -DNOBALSARA
 
 
 #--------------------------------------- Testing and Debugging options

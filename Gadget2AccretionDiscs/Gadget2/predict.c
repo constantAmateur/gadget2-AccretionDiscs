@@ -92,7 +92,7 @@ void move_particles(int time0, int time1)
     //Do the "replacement" step here, alpha_loc in DtAlpha
     if(SphP[i].Alpha < SphP[i].DtAlpha)
     {
-      SphP[i].Alpha = SphP[i].DtAlpha
+      SphP[i].Alpha = SphP[i].DtAlpha;
     }
     else
     {

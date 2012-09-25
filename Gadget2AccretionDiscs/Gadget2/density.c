@@ -65,8 +65,14 @@ void density(void)
   MPI_Status status;
 #ifdef CDAV
   int k;
-  double Tinv[6],V[9],fac,dtalpha,alphaloc;
+  double Tinv[6],V[9],fac,dt_alpha,alphaloc;
   double divv,diva,xi,A;
+#endif
+#ifdef CDAV_DRIFTUPDATE
+  int k;
+#endif
+#ifdef MMAV
+  double soundspeed,f_fac,tau;
 #endif
 
 #ifdef PERIODIC
@@ -339,7 +345,7 @@ void density(void)
       {
         SphP[i].gradRho[k] *= SphP[i].DhsmlDensityFactor;
         //Need to store this to calculate E in the next loop
-        SphP[i].oldAccel[k] = SphP[i].HydroAccel[k]+SphP[i].GravAccel[k];
+        SphP[i].oldAccel[k] = SphP[i].HydroAccel[k]+P[i].GravAccel[k];
       }
 #endif
 #ifdef PRICE_GRAV_SOFT
@@ -373,7 +379,7 @@ void density(void)
       V[5]=SphP[i].D[3]*Tinv[2]+SphP[i].D[4]*Tinv[4]+SphP[i].D[5]*Tinv[5];
       V[6]=SphP[i].D[6]*Tinv[0]+SphP[i].D[7]*Tinv[1]+SphP[i].D[8]*Tinv[2];
       V[7]=SphP[i].D[6]*Tinv[1]+SphP[i].D[7]*Tinv[3]+SphP[i].D[8]*Tinv[4];
-      V[7]=SphP[i].D[6]*Tinv[2]+SphP[i].D[7]*Tinv[4]+SphP[i].D[8]*Tinv[5];
+      V[8]=SphP[i].D[6]*Tinv[2]+SphP[i].D[7]*Tinv[4]+SphP[i].D[8]*Tinv[5];
       //DivVel is now trivially estimated
       divv = V[0]+V[4]+V[8];
       if(ThisTask==1)
@@ -382,9 +388,9 @@ void density(void)
       }
       //DivAccel = tr(E.T^-1)-tr(V^2)
       //This is the first part
-      diva = (SphP[i].E[1]+SphP.E[3])*Tinv[1]+(SphP[i].E[2]+SphP[i].E[6])*Tinv[2]
-        +(SphP[i].E[5]+SphP[i].E[7])*Tinv[4] + SphP[i].E[0]*Tinv[0] + SphP[i].E[4]*Tinv[3]
-        +SphP[i].E[8]*Tinv[5];
+      diva = (SphP[i].E[1]+SphP[i].E[3])*Tinv[1]+(SphP[i].E[2]+SphP[i].E[6])*Tinv[2]+
+        (SphP[i].E[5]+SphP[i].E[7])*Tinv[4] + SphP[i].E[0]*Tinv[0] + 
+        SphP[i].E[4]*Tinv[3]+SphP[i].E[8]*Tinv[5];
       //now subtract the second part...
       diva -= V[0]*V[0]+V[4]*V[4]+V[8]*V[8]+2*(V[1]*V[3]+V[2]*V[6]+V[5]*V[7]);
       //Now calculate xi
@@ -626,11 +632,13 @@ void density_evaluate(int target, int mode)
 #ifdef CDAV
   int i;
   double D[9],E[9],T[6];
-  double acc[3],dax,day,daz;
+  double dax,day,daz;
   double R,divvsign;
   double vsig,ci,tmp;
+  FLOAT *acc;
 #endif
 #ifdef CDAV_DRIFTUPDATE
+  int i;
   double gradRho[3];
 #endif
   FLOAT *pos, *vel;
@@ -642,7 +650,7 @@ void density_evaluate(int target, int mode)
       h = SphP[target].Hsml;
 #ifdef CDAV
       acc = SphP[target].HydroAccel;
-      for(i=0,i<3,i++)
+      for(i=0;i<3;i++)
       {
         acc[i] += P[target].GravAccel[i];
       }
