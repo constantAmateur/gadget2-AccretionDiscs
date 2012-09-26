@@ -1,7 +1,7 @@
 import os
 import re
 #Parameters
-base="/home/myoung/Output/Tests/Scaling/r5"
+base="/home/myoung/Output/Tests/Scaling/r5noPH"
 timename="cpu.txt"
 #Load information for all runs...
 dat=[]
@@ -19,16 +19,16 @@ dat=[]
 #folders=["60CPU_5e7","120CPU_5e7","240CPU_5e7","480CPU_5e7"]
 #dat.append([50000000,folders])
 #These are the new runs with r=5...
-folders=["1CPU_1e5","2CPU_1e5","4CPU_1e5","12CPU_1e5","24CPU_1e5","48CPU_1e5"]#,"96CPU_1e5","192CPU_1e5"]
+folders=["1CPU_1e5","2CPU_1e5","4CPU_1e5","12CPU_1e5"]#,"24CPU_1e5","48CPU_1e5"]#,"96CPU_1e5","192CPU_1e5"]
 dat.append([100000,folders])
-folders=["1CPU_5e5","2CPU_5e5","4CPU_5e5","12CPU_5e5","24CPU_5e5","48CPU_5e5","96CPU_5e5"]#,"192CPU_5e5"]
+folders=["1CPU_5e5","2CPU_5e5","4CPU_5e5","12CPU_5e5"]#,"24CPU_5e5","48CPU_5e5","96CPU_5e5"]#,"192CPU_5e5"]
 dat.append([500000,folders])
-folders=["1CPU_1e6","2CPU_1e6","4CPU_1e6","12CPU_1e6","24CPU_1e6","48CPU_1e6","96CPU_1e6"]#,"192CPU_1e6"]
+folders=["1CPU_1e6","2CPU_1e6","4CPU_1e6","12CPU_1e6"]#,"24CPU_1e6","48CPU_1e6","96CPU_1e6"]#,"192CPU_1e6"]
 dat.append([1000000,folders])
-folders=["1CPU_5e6","2CPU_5e6","4CPU_5e6","12CPU_5e6","24CPU_5e6","48CPU_5e6","96CPU_5e6","192CPU_5e6"]
-dat.append([5000000,folders])
-folders=["1CPU_1e7","2CPU_1e7","4CPU_1e7","12CPU_1e7","24CPU_1e7","48CPU_1e7","96CPU_1e7"]
-dat.append([10000000,folders])
+#folders=["1CPU_5e6","2CPU_5e6","4CPU_5e6","12CPU_5e6","24CPU_5e6","48CPU_5e6","96CPU_5e6","192CPU_5e6"]
+#dat.append([5000000,folders])
+#folders=["1CPU_1e7","2CPU_1e7","4CPU_1e7","12CPU_1e7","24CPU_1e7","48CPU_1e7","96CPU_1e7"]
+#dat.append([10000000,folders])
 #Load all information at once...
 for i in xrange(len(dat)):
   folders=dat[i][1]
@@ -69,7 +69,7 @@ for i in xrange(len(dat)):
     t=x[0][:mm,1]
     first=(x[0][:mm,what])
     gs=(dat[i][3][cind][0][:mm,what])
-    speedup=speedup*np.median(gs/first)
+    speedup=speedup*np.min(gs/first)
     datx.append(x[1])
     daty.append(speedup)
   plotDat.append([datx,daty,dat[i][0]])

@@ -74,6 +74,7 @@ OPT   +=  -DSINK_PARTICLES
 
 #--------------------------------------- Variable viscosity options
 #OPT   +=  -DVARIABLE_VISC_CONST
+OPT   +=  -DCDAV_DRIFTUPDATE
 
 
 #--------------------------------------- Testing and Debugging options
