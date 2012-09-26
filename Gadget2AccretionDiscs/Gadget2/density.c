@@ -384,7 +384,7 @@ void density(void)
       divv = V[0]+V[4]+V[8];
       if(ThisTask==1)
       {
-        printf("The ratio of the old to the new divv is %g for pcl %d\n",SphP[i].DivVel/divv,i);
+        //printf("The ratio of the old to the new divv is %g for pcl %d\n",SphP[i].DivVel/divv,i);
       }
       //DivAccel = tr(E.T^-1)-tr(V^2)
       //This is the first part
@@ -397,9 +397,14 @@ void density(void)
       xi=2*(1-SphP[i].R)*(1-SphP[i].R)*(1-SphP[i].R)*(1-SphP[i].R)*divv;
       xi *= xi;
       //The added bit is tr(S.S^T)
-      xi /= xi + V[0]*V[0]+V[4]*V[4]+V[8]*V[8] + 
+      //This is just a temp variable, not really A
+      A=V[0]*V[0]+V[4]*V[4]+V[8]*V[8] + 
         0.5*((V[1]+V[3])*(V[1]+V[3])+(V[2]+V[6])*(V[2]+V[6])+(V[5]+V[7])*(V[5]+V[7])) -
         divv*divv/3;
+      if(xi+A!=0)
+      {
+        xi /= xi+A;
+      }
       //Now calculate A_i
       A=dmax(0,-1*diva)*xi;
       //Now want to adapt alpha.  Need to be careful here as there is a possibility
@@ -408,7 +413,15 @@ void density(void)
       //of "alphaold" which is initialised to 0 at the start of each particle.
       alphaloc = SphP[i].MaxSignalVel*SphP[i].MaxSignalVel + 
         SphP[i].Hsml*SphP[i].Hsml*A;
-      alphaloc = All.ArtBulkViscConst*SphP[i].Hsml*SphP[i].Hsml*A/alphaloc;
+      //If everything is zero, leave alpha at 0
+      if(alphaloc!=0)
+      {
+        alphaloc = All.ArtBulkViscConst*SphP[i].Hsml*SphP[i].Hsml*A/alphaloc;
+      }
+      if(ThisTask==1)
+      {
+        //printf("We calculated divv=%g,diva=%g,alpha_loc=%g,xi=%g,R=%g,vsig=%g\n",divv,diva,alphaloc,xi,SphP[i].R,SphP[i].MaxSignalVel);
+      }
       if(SphP[i].AlphaOld==-1)
       {
         SphP[i].AlphaOld=SphP[i].Alpha;
@@ -424,7 +437,8 @@ void density(void)
       }
       else
       {
-        dt_alpha = (All.Ti_Current - (P[i].Ti_begstep + P[i].Ti_endstep) /2 ) *All.Timebase_interval;
+        //dt_alpha = (All.Ti_Current - (P[i].Ti_begstep + P[i].Ti_endstep) /2 ) *All.Timebase_interval;
+        dt_alpha = SphP[i].DtDrift;
         SphP[i].Alpha = alphaloc +(SphP[i].Alpha-alphaloc)*exp(-2*All.VariableViscDecayLength*SphP[i].MaxSignalVel*dt_alpha/SphP[i].Hsml);
       }
 #endif
@@ -456,9 +470,14 @@ void density(void)
       else
       {
         SphP[i].Alpha=SphP[i].AlphaOld;
+        //printf("Redoing the loop! Resetting alpha to %g from %g.\n",SphP[i].AlphaOld,SphP[i].Alpha);
       }
       //Advance immediately in time
-      SphP[i].Alpha += dt_entr*f_fac*dmax(-SphP[i].DivVel, 0) * (All.ArtBulkViscConst - SphP[i].Alpha) - (soundspeed*(SphP[i].Alpha - All.VariableViscAlphaMin))/tau;
+      SphP[i].Alpha += SphP[i].DtDrift*(f_fac*dmax(-SphP[i].DivVel, 0) * (All.ArtBulkViscConst - SphP[i].Alpha) - (soundspeed*(SphP[i].Alpha - All.VariableViscAlphaMin))/tau);
+      if(SphP[i].Alpha < All.VariableViscAlphaMin)
+      {
+        printf("New alpha is %g.  Used dt=%g,f_fac=%g,divv=%g,alpha=%g,c=%g,tau=%g\n",SphP[i].Alpha,SphP[i].DtDrift,f_fac,SphP[i].DivVel,SphP[i].AlphaOld,soundspeed,tau);
+      }
 #endif
 	      }
 
@@ -818,6 +837,10 @@ void density_evaluate(int target, int mode)
         T[3] += fac * (dy*dy);
         T[4] += fac * (dy*dz);
         T[5] += fac * (dz*dz);
+        if(ThisTask==1)
+        {
+          //printf("T(0,1,2) = (%g,%g,%g).\n",T[0],T[1],T[2]);
+        }
 
         R += divvsign * mass_j * wk;
         //Estimate the signal velocity using predicted sound speed

@@ -448,7 +448,7 @@ void hydro_force(void)
    divv = V[0] + V[4] + V[8];
    if(ThisTask==1)
    {
-     printf("The ratio of the old to the new divv is %g for pcl %d\n",SphP[i].DivVel/divv,i);
+     //printf("The ratio of the old to the new divv is %g for pcl %d\n",SphP[i].DivVel/divv,i);
    }
    //Next, calculate Div acceleration = tr(E.T^-1)-tr(V^2)
    diva = SphP[i].E[0]*Tinv[0]+SphP[i].E[1]*Tinv[3]+SphP[i].E[2]*Tinv[6] + 
@@ -460,14 +460,22 @@ void hydro_force(void)
    xi=2*(1-SphP[i].R)*(1-SphP[i].R)*(1-SphP[i].R)*(1-SphP[i].R)*divv;
    xi *= xi;
    //The added bit is tr(S.S^T)
-   xi /= xi + V[0]*V[0]+V[4]*V[4]+V[8]*V[8] + 
+   //A here is a temporary variable
+   A=V[0]*V[0]+V[4]*V[4]+V[8]*V[8] + 
         0.5*((V[1]+V[3])*(V[1]+V[3])+(V[2]+V[6])*(V[2]+V[6])+(V[5]+V[7])*(V[5]+V[7])) -
         divv*divv/3;
+   if(xi+A!=0)
+   {
+     xi /=xi+A;
+   }
    //Now calculate A_i
    A=xi*dmax(0,-1*diva);
    //Calculate alpha_loc, store it in DtAlpha
    SphP[i].DtAlpha = SphP[i].CDAVSignalVel*SphP[i].CDAVSignalVel + SphP[i].Hsml*SphP[i].Hsml*A;
-   SphP[i].DtAlpha = All.ArtBulkViscConst*SphP[i].Hsml*SphP[i].Hsml*A/SphP[i].DtAlpha;
+   if(SphP[i].DtAlpha!=0)
+   {
+     SphP[i].DtAlpha = All.ArtBulkViscConst*SphP[i].Hsml*SphP[i].Hsml*A/SphP[i].DtAlpha;
+   }
 #endif
       }
 

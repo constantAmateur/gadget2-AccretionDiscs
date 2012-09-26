@@ -583,6 +583,7 @@ extern struct sph_particle_data
 #endif
 #if defined MMAV || defined CDAV
   FLOAT Alpha;
+  FLOAT DtDrift;
 #endif
 #ifdef PRICE_GRAV_SOFT
   FLOAT Zeta;             /* The factor needed to calculate the grav softening correction */

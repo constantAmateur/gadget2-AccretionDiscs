@@ -9,14 +9,14 @@
 
 
 #--------------------------------------- Basic operation mode of code
-#OPT   +=  -DPERIODIC 
-OPT   +=  -DUNEQUALSOFTENINGS
+OPT   +=  -DPERIODIC 
+#OPT   +=  -DUNEQUALSOFTENINGS
 
 
 #--------------------------------------- Things that are always recommended
 OPT   +=  -DPEANOHILBERT
 OPT   +=  -DWALLCLOCK   
-OPT   +=  -DPRICE_GRAV_SOFT              #Can only be used with unequalsoftenings and adaptive_grav_soft_for_gas
+#OPT   +=  -DPRICE_GRAV_SOFT
 
 
 #--------------------------------------- TreePM Options
@@ -42,15 +42,16 @@ OPT   +=  -DSYNCHRONIZATION
 
 #--------------------------------------- Output 
 #OPT   +=  -DHAVE_HDF5  
-OPT   +=  -DOUTPUTPOTENTIAL
+#OPT   +=  -DOUTPUTPOTENTIAL
 OPT   +=  -DOUTPUTACCELERATION
 OPT   +=  -DOUTPUTCHANGEOFENTROPY
 OPT   +=  -DOUTPUTTIMESTEP
 OPT   +=  -DOUTPUTALPHA
+OPT   +=  -DCDAV_DRIFTUPDATE
 
 
 #--------------------------------------- Things for special behaviour
-#OPT   +=  -DNOGRAVITY     
+OPT   +=  -DNOGRAVITY     
 #OPT   +=  -DNOTREERND 
 #OPT   +=  -DNOTYPEPREFIX_FFTW
 #OPT   +=  -DLONG_X=60
@@ -59,25 +60,20 @@ OPT   +=  -DOUTPUTALPHA
 #OPT   +=  -DTWODIMS
 #OPT   +=  -DSPH_BND_PARTICLES
 #OPT   +=  -DNOVISCOSITYLIMITER
-OPT   +=  -DCOMPUTE_POTENTIAL_ENERGY
+#OPT   +=  -DCOMPUTE_POTENTIAL_ENERGY
 #OPT   +=  -DLONGIDS
 #OPT   +=  -DISOTHERM_EQS
-OPT   +=  -DADAPTIVE_GRAVSOFT_FORGAS
+#OPT   +=  -DADAPTIVE_GRAVSOFT_FORGAS
 #OPT   +=  -DSELECTIVE_NO_GRAVITY=2+4+8+16
 #OPT   +=  -DNOFFTWINSTALLED
 #OPT   +=  -DADD_CENTRAL_GRAVITY
-OPT   +=  -DBETA_COOLING
 
 #--------------------------------------- Sink particle options
-OPT   +=  -DSINK_PARTICLES
+#OPT   +=  -DSINK_PARTICLES
 #OPT   +=  -DNO_ACC_TEST
 
-#----------------------------------------Artificial viscosity prescriptions, selecting none will give constant AV (Monaghan 92).  Only one should be chosen at any given time.
-OPT   +=  -DMMAV
-#OPT   +=  -DMMAV_DRIFTUPDATE
-#OPT   +=  -DCDAV
-#OPT   +=  -DCDAV_DRIFTUPDATE
-OPT   +=  -DNOBALSARA
+#--------------------------------------- Variable viscosity options
+#OPT   +=  -DVARIABLE_VISC_CONST
 
 
 #--------------------------------------- Testing and Debugging options
