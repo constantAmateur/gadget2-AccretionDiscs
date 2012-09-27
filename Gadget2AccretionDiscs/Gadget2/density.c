@@ -357,6 +357,11 @@ void density(void)
 				       SphP[i].Rot[2] * SphP[i].Rot[2]) / SphP[i].Density;
 
 		SphP[i].DivVel /= SphP[i].Density;
+		dt_entr = (All.Ti_Current - (P[i].Ti_begstep + P[i].Ti_endstep) / 2) * All.Timebase_interval;
+
+		SphP[i].Pressure =
+		  (SphP[i].Entropy + SphP[i].DtEntropy * dt_entr) * pow(SphP[i].Density, GAMMA);
+
 #ifdef CDAV
       SphP[i].R /= SphP[i].Density;
       //Inverse of determinate of T
@@ -382,17 +387,30 @@ void density(void)
       V[8]=SphP[i].D[6]*Tinv[2]+SphP[i].D[7]*Tinv[4]+SphP[i].D[8]*Tinv[5];
       //DivVel is now trivially estimated
       divv = V[0]+V[4]+V[8];
-      if(ThisTask==1)
-      {
-        //printf("The ratio of the old to the new divv is %g for pcl %d\n",SphP[i].DivVel/divv,i);
-      }
       //DivAccel = tr(E.T^-1)-tr(V^2)
       //This is the first part
       diva = (SphP[i].E[1]+SphP[i].E[3])*Tinv[1]+(SphP[i].E[2]+SphP[i].E[6])*Tinv[2]+
         (SphP[i].E[5]+SphP[i].E[7])*Tinv[4] + SphP[i].E[0]*Tinv[0] + 
         SphP[i].E[4]*Tinv[3]+SphP[i].E[8]*Tinv[5];
       //now subtract the second part...
-      diva -= V[0]*V[0]+V[4]*V[4]+V[8]*V[8]+2*(V[1]*V[3]+V[2]*V[6]+V[5]*V[7]);
+      diva =diva-(V[0]*V[0]+V[4]*V[4]+V[8]*V[8]+2*(V[1]*V[3]+V[2]*V[6]+V[5]*V[7]));
+      if(ThisTask==1)
+      {
+        //printf("old/new divv = %g, diva = %g.\n",SphP[i].DivVel/divv,((divv-SphP[i].oldDivVel)/SphP[i].DtDrift)/diva);
+      }
+      //if(SphP[i].DtDrift==0 || SphP[i].oldDivVel==0)
+      //{
+      //  diva=0;
+      //}
+      //else
+      //{
+      //  diva=((divv-SphP[i].oldDivVel)/SphP[i].DtDrift);
+      //}
+      SphP[i].DivVel = divv;
+      SphP[i].oldDivVel = divv;
+      //diva=divv;
+      //printf("diva = %g,divvold=%g, dt=%g\n",divv,A,SphP[i].DtDrift);
+
       //Now calculate xi
       xi=2*(1-SphP[i].R)*(1-SphP[i].R)*(1-SphP[i].R)*(1-SphP[i].R)*divv;
       xi *= xi;
@@ -418,9 +436,10 @@ void density(void)
       {
         alphaloc = All.ArtBulkViscConst*SphP[i].Hsml*SphP[i].Hsml*A/alphaloc;
       }
-      if(ThisTask==1)
+      if(ThisTask==1 && diva<0)
       {
         //printf("We calculated divv=%g,diva=%g,alpha_loc=%g,xi=%g,R=%g,vsig=%g\n",divv,diva,alphaloc,xi,SphP[i].R,SphP[i].MaxSignalVel);
+        //printf("Setting alpha.  diva=%g, xi=%g, vsig=%g, c=%g,h=%g,(vsig/h)^2=%g alphaloc=%g\n",diva,xi,SphP[i].MaxSignalVel,sqrt(GAMMA * SphP[i].Pressure / SphP[i].Density),SphP[i].Hsml,(SphP[i].MaxSignalVel*SphP[i].MaxSignalVel)/(SphP[i].Hsml*SphP[i].Hsml),alphaloc);
       }
       if(SphP[i].AlphaOld==-1)
       {
@@ -443,10 +462,6 @@ void density(void)
       }
 #endif
 
-		dt_entr = (All.Ti_Current - (P[i].Ti_begstep + P[i].Ti_endstep) / 2) * All.Timebase_interval;
-
-		SphP[i].Pressure =
-		  (SphP[i].Entropy + SphP[i].DtEntropy * dt_entr) * pow(SphP[i].Density, GAMMA);
 #ifdef MMAV
 	   soundspeed  = sqrt(GAMMA * SphP[i].Pressure / SphP[i].Density);
 #ifdef NOBALSARA

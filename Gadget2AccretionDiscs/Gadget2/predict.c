@@ -86,7 +86,7 @@ void move_particles(int time0, int time1)
 	  SphP[i].Pressure = (SphP[i].Entropy + SphP[i].DtEntropy * dt_entr) * pow(SphP[i].Density, GAMMA);
    
      //Save the "correct" timestep for use in the density loop.
-#if defined MMAV || defined CDAV
+#if defined MMAV || defined CDAV || defined CDAV_DRIFTUPDATE
     SphP[i].DtDrift = dt_drift;
 #endif
 #ifdef MMAV_DRIFTUPDATE

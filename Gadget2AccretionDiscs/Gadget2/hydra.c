@@ -455,7 +455,18 @@ void hydro_force(void)
      SphP[i].E[3]*Tinv[1]+SphP[i].E[4]*Tinv[4]+SphP[i].E[5]*Tinv[7] + 
      SphP[i].E[6]*Tinv[2]+SphP[i].E[7]*Tinv[5]+SphP[i].E[8]*Tinv[8];
    //Subtract the V^2 part
-   diva -= V[0]*V[0]+V[4]*V[4]+V[8]*V[8]+2*(V[1]*V[3]+V[2]*V[6]+V[5]*V[7]);
+   diva = diva-(V[0]*V[0]+V[4]*V[4]+V[8]*V[8]+2*(V[1]*V[3]+V[2]*V[6]+V[5]*V[7]));
+   //Alternative way of calculating it...
+   //if(SphP[i].DtDrift==0 || SphP[i].oldDivVel==0)
+   //{
+   //  diva=0;
+   //}
+   //else
+   //{
+   //  diva=((divv-SphP[i].oldDivVel)/SphP[i].DtDrift);
+   //}
+   //SphP[i].DivVel=divv;
+   SphP[i].oldDivVel=divv;
    //Calculate xi
    xi=2*(1-SphP[i].R)*(1-SphP[i].R)*(1-SphP[i].R)*(1-SphP[i].R)*divv;
    xi *= xi;
@@ -469,7 +480,7 @@ void hydro_force(void)
      xi /=xi+A;
    }
    //Now calculate A_i
-   A=xi*dmax(0,-1*diva);
+   A=xi*dmax(-diva,0);
    //Calculate alpha_loc, store it in DtAlpha
    SphP[i].DtAlpha = SphP[i].CDAVSignalVel*SphP[i].CDAVSignalVel + SphP[i].Hsml*SphP[i].Hsml*A;
    if(SphP[i].DtAlpha!=0)

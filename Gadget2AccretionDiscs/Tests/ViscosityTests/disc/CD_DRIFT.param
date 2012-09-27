@@ -63,8 +63,8 @@ MaxRMSDisplacementFac	0.25
 OutputListOn	0
 OutputListFilename	output_times.txt
 TimeOfFirstSnapshot	0
-TimeBetSnapshot	30
-TimeBetStatistics	30
+TimeBetSnapshot	10
+TimeBetStatistics	10
 NumFilesWrittenInParallel	1
 
 %Unit system

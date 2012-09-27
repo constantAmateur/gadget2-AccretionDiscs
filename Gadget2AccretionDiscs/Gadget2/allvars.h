@@ -593,6 +593,7 @@ extern struct sph_particle_data
   FLOAT E[9];
   FLOAT T[6];             /* The three matrices needed for the more advanced estimation */
   FLOAT R;                /* For calculating the limiter... */
+  FLOAT oldDivVel;
 #endif
 #if defined CDAV || defined MMAV
   FLOAT AlphaOld;         /* Needed to ensure alpha is adapted proporely */
@@ -603,7 +604,9 @@ extern struct sph_particle_data
   FLOAT E[9];
   FLOAT T[9];
   FLOAT oldAccel[3];
+  FLOAT oldDivVel;
   FLOAT R;
+  FLOAT DtDrift;
   FLOAT CDAVSignalVel;
 #endif
   
