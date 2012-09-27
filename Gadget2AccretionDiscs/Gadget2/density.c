@@ -138,6 +138,15 @@ void density(void)
 	      {
 		ndone++;
 
+#ifdef CDAV
+      //Update the Pressure as soon as possible because we need a good guess for calculating the sound speed
+      dt_entr = (All.Ti_Current - (P[i].Ti_begstep + P[i].Ti_endstep) / 2) * All.Timebase_interval;
+      SphP[i].Pressure =
+		  (SphP[i].Entropy + SphP[i].DtEntropy * dt_entr) * pow(SphP[i].Density, GAMMA);
+#endif
+
+
+
 		for(j = 0; j < NTask; j++)
 		  Exportflag[j] = 0;
 
@@ -158,7 +167,7 @@ void density(void)
          DensDataIn[nexport].Accel[1] = SphP[i].HydroAccel[1]+P[i].GravAccel[1];
          DensDataIn[nexport].Accel[2] = SphP[i].HydroAccel[2]+P[i].GravAccel[2];
          DensDataIn[nexport].DivVelSign = (SphP[i].DivVel >0) - (SphP[i].DivVel<0);
-         DensDataIn[nexport].ci = GAMMA*SphP[i].Pressure / SphP[i].Density;
+         DensDataIn[nexport].ci = sqrt(GAMMA*SphP[i].Pressure / SphP[i].Density);
 #endif
 			DensDataIn[nexport].Hsml = SphP[i].Hsml;
 			DensDataIn[nexport].Index = i;
@@ -859,7 +868,7 @@ void density_evaluate(int target, int mode)
 
         R += divvsign * mass_j * wk;
         //Estimate the signal velocity using predicted sound speed
-        tmp = 0.5*(ci + (GAMMA*SphP[j].Pressure/SphP[j].Density))-(1/r) * ((dx * dvx + dy*dvy+dz * dvz)<0)*(dx*dvx + dy * dvy + dz * dvz);
+        tmp = 0.5*(ci + sqrt(GAMMA*SphP[j].Pressure/SphP[j].Density))-(1/r) * dmax(0,(dx * dvx + dy*dvy+dz * dvz));
         if(tmp > vsig)
         {
           vsig = tmp;
