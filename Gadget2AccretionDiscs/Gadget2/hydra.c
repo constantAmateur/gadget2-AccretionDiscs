@@ -479,6 +479,9 @@ void hydro_force(void)
    {
      xi /=xi+A;
    }
+#ifdef NOBALSARA
+   xi=1;
+#endif
    //Now calculate A_i
    A=xi*dmax(-diva,0);
    //Calculate alpha_loc, store it in DtAlpha
@@ -770,7 +773,7 @@ void hydro_evaluate(int target, int mode)
         //Calculate the signal velocity, only want to do this for things local to i...
         if(dwk_i!=0)
         {
-          tmp=0.5*(soundspeed_i+soundspeed_j)-dmax(0,dx*dvx+dy*dvy+dz*dvz);
+          tmp=0.5*(soundspeed_i+soundspeed_j)-(1/r)*dmin(0,dx*dvx+dy*dvy+dz*dvz);
           if(tmp > CDAVvsig)
           {
             CDAVvsig=tmp;
@@ -804,24 +807,29 @@ void hydro_evaluate(int target, int mode)
 		      mu_ij = fac_mu * vdotr2 / r;	/* note: this is negative! */
 
             //ArtViscPropConst is 3/2 in original implementation...
-                      vsig = soundspeed_i + soundspeed_j - All.ArtViscPropConst*2.0 * mu_ij;
+            vsig = soundspeed_i + soundspeed_j - All.ArtViscPropConst*2.0 * mu_ij;
+//#if defined CDAV || defined CDAV_DRIFTUPDATE
+//            //Alternative signal velocity definition...
+//            vsig = .5*(soundspeed_i+soundspeed_j) - dmin(0,mu_ij);
+//#endif
 
 		      if(vsig > maxSignalVel)
 			maxSignalVel = vsig;
 
 		      rho_ij = 0.5 * (rho + SphP[j].Density);
-#if defined MMAV_DRIFTUPDATE || defined MMAV
+#if defined MMAV_DRIFTUPDATE || defined MMAV || defined CDAV || defined CDAV_DRIFTUPDATE
             //The balsara switch is added to the source term if alpha is per particle...
           visc = 0.25 * (alpha_visc + alpha_visc_j) * vsig * (-mu_ij) / rho_ij;
 #else
-#if defined CDAV || defined CDAV_DRIFTUPDATE
-          //We are explicitly putting in the form of the C&D paper...
-            mu_ij = 4*vdotr2*h_j*h_j/r/(h_i+h_j)/(h_i*h_i+h_j*h_j)/(h_i*h_i+h_j*h_j);
-            mu_ij = -mu_ij*(0.5*(soundspeed_i+soundspeed_j)-All.ArtViscPropConst*mu_ij);
-            hfc = 0.5*P[j].Mass*mu_ij*(alpha_visc*dhsmlDensityFactor*dwk_i/rho+alpha_visc_j*SphP[j].DhsmlDensityFactor*dwk_j/SphP[j].Density)/r;
-            hfc_visc = P[j].Mass*mu_ij*alpha_visc*dhsmlDensityFactor*dwk_i/rho/r;
-#else
-            //The standard thing...
+          //Comment this out to use the explicit form of the AV used in the paper
+//#if defined CDAV || defined CDAV_DRIFTUPDATE
+//          //We are explicitly putting in the form of the C&D paper...
+//            mu_ij = 4*vdotr2*h_j*h_j/r/(h_i+h_j)/(h_i*h_i+h_j*h_j)/(h_i*h_i+h_j*h_j);
+//            mu_ij = -mu_ij*(0.5*(soundspeed_i+soundspeed_j)-All.ArtViscPropConst*mu_ij);
+//            hfc = 0.5*P[j].Mass*mu_ij*(alpha_visc*dhsmlDensityFactor*dwk_i/rho+alpha_visc_j*SphP[j].DhsmlDensityFactor*dwk_j/SphP[j].Density)/r;
+//            hfc_visc = P[j].Mass*mu_ij*alpha_visc*dhsmlDensityFactor*dwk_i/rho/r;
+//#else
+//            //The standard thing...
 #ifdef NOBALSARA
             f2=1.0;
 #else
@@ -830,7 +838,7 @@ void hydro_evaluate(int target, int mode)
                                   0.0001 * soundspeed_j / fac_mu / SphP[j].Hsml);
 #endif
           visc = 0.25 * alpha_visc * vsig * (-mu_ij) / rho_ij * (f1 + f2);
-#endif	
+//#endif	
 #endif
 		      /* .... end artificial viscosity evaluation */
 #ifndef NOVISCOSITYLIMITER
@@ -846,21 +854,21 @@ void hydro_evaluate(int target, int mode)
 		  else
         {
 		    visc = 0;
-#if defined CDAV || defined CDAV_DRIFTUPDATE
-          hfc=0;
-          hfc_visc=0;
-#endif
+//#if defined CDAV || defined CDAV_DRIFTUPDATE
+//          hfc=0;
+//          hfc_visc=0;
+//#endif
         }
 
 		  p_over_rho2_j *= SphP[j].DhsmlDensityFactor;
 
-#if defined CDAV || defined CDAV_DRIFTUPDATE
-        hfc += P[j].Mass * (p_over_rho2_i * dwk_i + p_over_rho2_j * dwk_j) /r;
-#else
+//#if defined CDAV || defined CDAV_DRIFTUPDATE
+//        hfc += P[j].Mass * (p_over_rho2_i * dwk_i + p_over_rho2_j * dwk_j) /r;
+//#else
 		  hfc_visc = 0.5 * P[j].Mass * visc * (dwk_i + dwk_j) / r;
 
 		  hfc = hfc_visc + P[j].Mass * (p_over_rho2_i * dwk_i + p_over_rho2_j * dwk_j) / r;
-#endif
+//#endif
 
 		  acc[0] -= hfc * dx;
 		  acc[1] -= hfc * dy;

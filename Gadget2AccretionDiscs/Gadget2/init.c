@@ -173,6 +173,7 @@ void init(void)
 #if defined CDAV_DRIFTUPDATE || defined CDAV
       SphP[i].Alpha=0;
       SphP[i].oldDivVel=0;
+      SphP[i].MaxSignalVel=0;
 #endif
 #if defined MMAV_DRIFTUPDATE || defined CDAV_DRIFTUPDATE
       SphP[i].DtAlpha=0;

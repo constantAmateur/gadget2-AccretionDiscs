@@ -384,15 +384,15 @@ void density(void)
       Tinv[3]=fac*(SphP[i].T[0]*SphP[i].T[5]-SphP[i].T[2]*SphP[i].T[2]);
       Tinv[4]=fac*(SphP[i].T[1]*SphP[i].T[2]-SphP[i].T[0]*SphP[i].T[4]);
       Tinv[5]=fac*(SphP[i].T[0]*SphP[i].T[3]-SphP[i].T[1]*SphP[i].T[1]);
-      //The velocity matrix D
+      //The velocity matrix D.  There's actually a mistake in the paper.  D.Tinv = V^t not V
       V[0]=SphP[i].D[0]*Tinv[0]+SphP[i].D[1]*Tinv[1]+SphP[i].D[2]*Tinv[2];
-      V[1]=SphP[i].D[0]*Tinv[1]+SphP[i].D[1]*Tinv[3]+SphP[i].D[2]*Tinv[4];
-      V[2]=SphP[i].D[0]*Tinv[2]+SphP[i].D[1]*Tinv[4]+SphP[i].D[2]*Tinv[5];
-      V[3]=SphP[i].D[3]*Tinv[0]+SphP[i].D[4]*Tinv[1]+SphP[i].D[5]*Tinv[2];
+      V[3]=SphP[i].D[0]*Tinv[1]+SphP[i].D[1]*Tinv[3]+SphP[i].D[2]*Tinv[4];
+      V[6]=SphP[i].D[0]*Tinv[2]+SphP[i].D[1]*Tinv[4]+SphP[i].D[2]*Tinv[5];
+      V[1]=SphP[i].D[3]*Tinv[0]+SphP[i].D[4]*Tinv[1]+SphP[i].D[5]*Tinv[2];
       V[4]=SphP[i].D[3]*Tinv[1]+SphP[i].D[4]*Tinv[3]+SphP[i].D[5]*Tinv[4];
-      V[5]=SphP[i].D[3]*Tinv[2]+SphP[i].D[4]*Tinv[4]+SphP[i].D[5]*Tinv[5];
-      V[6]=SphP[i].D[6]*Tinv[0]+SphP[i].D[7]*Tinv[1]+SphP[i].D[8]*Tinv[2];
-      V[7]=SphP[i].D[6]*Tinv[1]+SphP[i].D[7]*Tinv[3]+SphP[i].D[8]*Tinv[4];
+      V[7]=SphP[i].D[3]*Tinv[2]+SphP[i].D[4]*Tinv[4]+SphP[i].D[5]*Tinv[5];
+      V[2]=SphP[i].D[6]*Tinv[0]+SphP[i].D[7]*Tinv[1]+SphP[i].D[8]*Tinv[2];
+      V[5]=SphP[i].D[6]*Tinv[1]+SphP[i].D[7]*Tinv[3]+SphP[i].D[8]*Tinv[4];
       V[8]=SphP[i].D[6]*Tinv[2]+SphP[i].D[7]*Tinv[4]+SphP[i].D[8]*Tinv[5];
       //DivVel is now trivially estimated
       divv = V[0]+V[4]+V[8];
@@ -428,10 +428,19 @@ void density(void)
       A=V[0]*V[0]+V[4]*V[4]+V[8]*V[8] + 
         0.5*((V[1]+V[3])*(V[1]+V[3])+(V[2]+V[6])*(V[2]+V[6])+(V[5]+V[7])*(V[5]+V[7])) -
         divv*divv/3;
+      if(ThisTask==1)
+      {
+        //printf("|curl(v)|=%g tr(S.S^t)=%g  |curl(v)|^2/tr(S.S^t) = %g\n",SphP[i].CurlVel,A,SphP[i].CurlVel*SphP[i].CurlVel/A);
+        //printf("curl[0]/curl[0] = %g, 1/1=%g, 2/2=%g\n",SphP[i].Rot[0]/(V[5]-V[7])/SphP[i].Density,SphP[i].Rot[1]/(V[6]-V[2])/SphP[i].Density,SphP[i].Rot[2]/(V[1]-V[3])/SphP[i].Density);
+      }
+      //A=SphP[i].CurlVel*SphP[i].CurlVel;
       if(xi+A!=0)
       {
         xi /= xi+A;
       }
+#ifdef NOBALSARA
+      xi=1;
+#endif
       //Now calculate A_i
       A=dmax(0,-1*diva)*xi;
       //Now want to adapt alpha.  Need to be careful here as there is a possibility
@@ -443,12 +452,13 @@ void density(void)
       //If everything is zero, leave alpha at 0
       if(alphaloc!=0)
       {
-        alphaloc = All.ArtBulkViscConst*SphP[i].Hsml*SphP[i].Hsml*A/alphaloc;
+        alphaloc = (All.ArtBulkViscConst*SphP[i].Hsml*SphP[i].Hsml*A)/alphaloc;
       }
       if(ThisTask==1 && diva<0)
       {
         //printf("We calculated divv=%g,diva=%g,alpha_loc=%g,xi=%g,R=%g,vsig=%g\n",divv,diva,alphaloc,xi,SphP[i].R,SphP[i].MaxSignalVel);
         //printf("Setting alpha.  diva=%g, xi=%g, vsig=%g, c=%g,h=%g,(vsig/h)^2=%g alphaloc=%g\n",diva,xi,SphP[i].MaxSignalVel,sqrt(GAMMA * SphP[i].Pressure / SphP[i].Density),SphP[i].Hsml,(SphP[i].MaxSignalVel*SphP[i].MaxSignalVel)/(SphP[i].Hsml*SphP[i].Hsml),alphaloc);
+        //printf("alpha_loc = %g, vsig^2 = %g, h^2A = %g, xi = %g, c=%g\n",alphaloc,SphP[i].MaxSignalVel*SphP[i].MaxSignalVel,SphP[i].Hsml*SphP[i].Hsml*A,xi,(GAMMA*SphP[i].Pressure/SphP[i].Density));
       }
       if(SphP[i].AlphaOld==-1)
       {
@@ -868,7 +878,7 @@ void density_evaluate(int target, int mode)
 
         R += divvsign * mass_j * wk;
         //Estimate the signal velocity using predicted sound speed
-        tmp = 0.5*(ci + sqrt(GAMMA*SphP[j].Pressure/SphP[j].Density))-(1/r) * dmax(0,(dx * dvx + dy*dvy+dz * dvz));
+        tmp = 0.5*(ci + sqrt(GAMMA*SphP[j].Pressure/SphP[j].Density))-(1/r) * dmin(0,(dx * dvx + dy*dvy+dz * dvz));
         if(tmp > vsig)
         {
           vsig = tmp;
@@ -905,7 +915,8 @@ void density_evaluate(int target, int mode)
         SphP[target].E[i]=E[i];
       }
       SphP[target].R=R;
-      SphP[target].MaxSignalVel=vsig;
+      //We'll just use the MaxSignalVel estimated in the previous timestep instead...
+      //SphP[target].MaxSignalVel=vsig;
 #endif
 #ifdef CDAV_DRIFTUPDATE
       for(i=0;i<3;i++)
@@ -937,7 +948,9 @@ void density_evaluate(int target, int mode)
         DensDataResult[target].E[i]=E[i];
       }
       DensDataResult[target].R = R;
-      DensDataResult[target].MaxSignalVel = vsig;
+      //We'll just use the MaxSignalVel estimated in the previous timestep instead...
+      //DensDataResult[target].MaxSignalVel = vsig;
+      DensDataResult[target].MaxSignalVel = 0;
 #endif
 #ifdef CDAV_DRIFTUPDATE
       for(i=0;i<3;i++)
