@@ -505,7 +505,7 @@ void hydro_force(void)
    SphP[i].htest_t *= SphP[i].Hsml*SphP[i].DhsmlDensityFactor/(NUMDIMS*SphP[i].Density*SphP[i].Density);
    if(ThisTask==1)
    {
-     //printf("The relative contribution of the extra term (term/div.v) to div.v is %g\n",SphP[i].htest_t/SphP[i].DivVel);
+     printf("The relative contribution of the extra term (term/div.v) to div.v is %g\n",SphP[i].htest_t/SphP[i].DivVel);
    }
 #endif
       }

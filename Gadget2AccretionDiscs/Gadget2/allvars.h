@@ -803,7 +803,6 @@ extern struct densdata_in
   int Task;
 #ifdef CDAV
   FLOAT Accel[3];
-  FLOAT DivVelSign;
   FLOAT ci;
 #endif
 }

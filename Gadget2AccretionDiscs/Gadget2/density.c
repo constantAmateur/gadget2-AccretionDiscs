@@ -464,7 +464,7 @@ void density(void)
       {
         //printf("We calculated divv=%g,diva=%g,alpha_loc=%g,xi=%g,R=%g,vsig=%g\n",divv,diva,alphaloc,xi,SphP[i].R,SphP[i].MaxSignalVel);
         //printf("Setting alpha.  diva=%g, xi=%g, vsig=%g, c=%g,h=%g,(vsig/h)^2=%g alphaloc=%g\n",diva,xi,SphP[i].MaxSignalVel,sqrt(GAMMA * SphP[i].Pressure / SphP[i].Density),SphP[i].Hsml,(SphP[i].MaxSignalVel*SphP[i].MaxSignalVel)/(SphP[i].Hsml*SphP[i].Hsml),alphaloc);
-        printf("alpha_loc = %g, vsig^2 = %g, h^2A = %g, xi = %g, R=%g, DivVel=%g\n",alphaloc,SphP[i].MaxSignalVel*SphP[i].MaxSignalVel,SphP[i].Hsml*SphP[i].Hsml*A,xi,SphP[i].R,SphP[i].DivVel);
+        //printf("alpha_loc = %g, vsig^2 = %g, h^2A = %g, xi = %g, R=%g, DivVel=%g\n",alphaloc,SphP[i].MaxSignalVel*SphP[i].MaxSignalVel,SphP[i].Hsml*SphP[i].Hsml*A,xi,SphP[i].R,SphP[i].DivVel);
       }
       if(SphP[i].AlphaOld==-1)
       {
