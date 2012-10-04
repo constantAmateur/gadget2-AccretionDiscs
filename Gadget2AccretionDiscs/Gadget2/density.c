@@ -166,7 +166,6 @@ void density(void)
          DensDataIn[nexport].Accel[0] = SphP[i].HydroAccel[0]+P[i].GravAccel[0];
          DensDataIn[nexport].Accel[1] = SphP[i].HydroAccel[1]+P[i].GravAccel[1];
          DensDataIn[nexport].Accel[2] = SphP[i].HydroAccel[2]+P[i].GravAccel[2];
-         DensDataIn[nexport].DivVelSign = (SphP[i].DivVel >0) - (SphP[i].DivVel<0);
          DensDataIn[nexport].ci = sqrt(GAMMA*SphP[i].Pressure / SphP[i].Density);
 #endif
 			DensDataIn[nexport].Hsml = SphP[i].Hsml;
@@ -316,6 +315,13 @@ void density(void)
                  SphP[place].gradRho[k] += DensDataPartialResult[source].gradRho[k];
                }
 #endif
+#ifdef VAR_H_TEST
+               for(k=0;k<3;k++)
+               {
+                 SphP[place].htest_f[k] += DensDataPartialResult[source].htest_f[k];
+               }
+               SphP[place].htest_g += DensDataPartialResult[source].htest_g;
+#endif
 			      SphP[place].Rot[0] += DensDataPartialResult[source].Rot[0];
 			      SphP[place].Rot[1] += DensDataPartialResult[source].Rot[1];
 			      SphP[place].Rot[2] += DensDataPartialResult[source].Rot[2];
@@ -458,7 +464,7 @@ void density(void)
       {
         //printf("We calculated divv=%g,diva=%g,alpha_loc=%g,xi=%g,R=%g,vsig=%g\n",divv,diva,alphaloc,xi,SphP[i].R,SphP[i].MaxSignalVel);
         //printf("Setting alpha.  diva=%g, xi=%g, vsig=%g, c=%g,h=%g,(vsig/h)^2=%g alphaloc=%g\n",diva,xi,SphP[i].MaxSignalVel,sqrt(GAMMA * SphP[i].Pressure / SphP[i].Density),SphP[i].Hsml,(SphP[i].MaxSignalVel*SphP[i].MaxSignalVel)/(SphP[i].Hsml*SphP[i].Hsml),alphaloc);
-        //printf("alpha_loc = %g, vsig^2 = %g, h^2A = %g, xi = %g, c=%g\n",alphaloc,SphP[i].MaxSignalVel*SphP[i].MaxSignalVel,SphP[i].Hsml*SphP[i].Hsml*A,xi,(GAMMA*SphP[i].Pressure/SphP[i].Density));
+        printf("alpha_loc = %g, vsig^2 = %g, h^2A = %g, xi = %g, R=%g, DivVel=%g\n",alphaloc,SphP[i].MaxSignalVel*SphP[i].MaxSignalVel,SphP[i].Hsml*SphP[i].Hsml*A,xi,SphP[i].R,SphP[i].DivVel);
       }
       if(SphP[i].AlphaOld==-1)
       {
@@ -694,6 +700,9 @@ void density_evaluate(int target, int mode)
   int i;
   double gradRho[3];
 #endif
+#ifdef VAR_H_TEST
+  double htest_f[3],htest_g;
+#endif
   FLOAT *pos, *vel;
 
   if(mode == 0)
@@ -707,7 +716,6 @@ void density_evaluate(int target, int mode)
       {
         acc[i] += P[target].GravAccel[i];
       }
-      divvsign = (SphP[target].DivVel > 0) - (SphP[target].DivVel < 0);
       ci = sqrt(GAMMA*SphP[i].Pressure/SphP[i].Density);
 #endif
     }
@@ -718,7 +726,6 @@ void density_evaluate(int target, int mode)
       h = DensDataGet[target].Hsml;
 #ifdef CDAV
       acc = DensDataGet[target].Accel;
-      divvsign = DensDataGet[target].DivVelSign;
       ci = DensDataGet[target].ci;
 #endif
     }
@@ -752,6 +759,9 @@ void density_evaluate(int target, int mode)
   }
   R=0;
   vsig=0;
+#endif
+#ifdef VAR_H_TEST
+  htest_f[0]=htest_f[1]=htest_f[2]=htest_g=0;
 #endif
 
   startnode = All.MaxPart;
@@ -816,6 +826,32 @@ void density_evaluate(int target, int mode)
 	      weighted_numngb += NORM_COEFF * wk / hinv3;
 
 	      dhsmlrho += -mass_j * (NUMDIMS * hinv * wk + u * dwk);
+#ifdef CDAV
+         if(P[j].Type==0)
+         {
+           divvsign=0;
+           if(SphP[j].DivVel>0)
+           {
+             divvsign=1;
+           }
+           if(SphP[j].DivVel<0)
+           {
+             divvsign=-1;
+           }
+         }
+         R += divvsign * mass_j * wk;
+#endif
+#ifdef VAR_H_TEST
+         htest_g -= mass_j *NUMDIMS*wk*hinv;
+         if(r>0)
+         {
+           htest_g -= mass_j * dwk * u;
+           fac = mass_j * dwk /r;
+           htest_f[0] += fac *dx;
+           htest_f[1] += fac *dy;
+           htest_f[2] += fac *dz;
+         }
+#endif
 
 #ifdef PRICE_GRAV_SOFT
          zeta += mass_j * dphi;
@@ -876,7 +912,7 @@ void density_evaluate(int target, int mode)
           //printf("T(0,1,2) = (%g,%g,%g).\n",T[0],T[1],T[2]);
         }
 
-        R += divvsign * mass_j * wk;
+        //This should be removed since we now use the signal velocity from the previous timestep instead
         //Estimate the signal velocity using predicted sound speed
         tmp = 0.5*(ci + sqrt(GAMMA*SphP[j].Pressure/SphP[j].Density))-(1/r) * dmin(0,(dx * dvx + dy*dvy+dz * dvz));
         if(tmp > vsig)
@@ -924,6 +960,13 @@ void density_evaluate(int target, int mode)
         SphP[target].gradRho[i]=gradRho[i];
       }
 #endif
+#ifdef VAR_H_TEST
+      for(i=0;i<3;i++)
+      {
+        SphP[target].htest_f[i]=htest_f[i];
+      }
+      SphP[target].htest_g=htest_g;
+#endif
     }
   else
     {
@@ -957,6 +1000,13 @@ void density_evaluate(int target, int mode)
       {
         DensDataResult[target].gradRho[i]=gradRho[i];
       }
+#endif
+#ifdef VAR_H_TEST
+      for(i=0;i<3;i++)
+      {
+        SphP[target].htest_f[i]=htest_f[i];
+      }
+      SphP[target].htest_g=htest_g;
 #endif
     }
 }

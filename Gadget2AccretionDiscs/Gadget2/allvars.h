@@ -613,6 +613,11 @@ extern struct sph_particle_data
 #ifdef NK_AV
   int NumN,NumNK;         //Counters for the number of neighbours and non-keplerian neighbours
 #endif
+#ifdef VAR_H_TEST
+  FLOAT htest_f[3];
+  FLOAT htest_t;
+  FLOAT htest_g;
+#endif
 }
  *SphP,                        	/*!< holds SPH particle data on local processor */
  *DomainSphBuf;                 /*!< buffer for SPH particle data in domain decomposition */
@@ -824,6 +829,10 @@ extern struct densdata_out
 #ifdef CDAV_DRIFTUPDATE
   FLOAT gradRho[3];
 #endif
+#ifdef VAR_H_TEST
+  FLOAT htest_f[3];
+  FLOAT htest_g;
+#endif
 }
  *DensDataResult,               /*!< stores the locally computed SPH density results for imported particles */
  *DensDataPartialResult;        /*!< imported partial SPH density results from other processors */
@@ -857,6 +866,10 @@ extern struct hydrodata_in
 #ifdef PRICE_GRAV_SOFT
   FLOAT Zeta;
 #endif
+#ifdef VAR_H_TEST
+  FLOAT htest_f[3];
+  FLOAT htest_g;
+#endif
 }
  *HydroDataIn,                  /*!< holds particle data for SPH hydro-force computation to be exported to other processors */
  *HydroDataGet;                 /*!< holds imported particle data for SPH hydro-force computation */
@@ -875,6 +888,9 @@ extern struct hydrodata_out
   FLOAT E[9];
   FLOAT R;
   FLOAT CDAVSignalVel;
+#endif
+#ifdef VAR_H_TEST
+  FLOAT htest_t;
 #endif
 }
  *HydroDataResult,              /*!< stores the locally computed SPH hydro results for imported particles */

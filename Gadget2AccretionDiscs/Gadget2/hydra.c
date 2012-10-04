@@ -213,6 +213,12 @@ void hydro_force(void)
           HydroDataIn[nexport].gradRho[1] = SphP[i].gradRho[1];
           HydroDataIn[nexport].gradRho[2] = SphP[i].gradRho[2];
 #endif
+#ifdef VAR_H_TEST
+          HydroDataIn[nexport].htest_f[0] = SphP[i].htest_f[0];
+          HydroDataIn[nexport].htest_f[1] = SphP[i].htest_f[1];
+          HydroDataIn[nexport].htest_f[2] = SphP[i].htest_f[2];
+          HydroDataIn[nexport].htest_g = SphP[i].htest_g;
+#endif
 
 		    HydroDataIn[nexport].Index = i;
 		    HydroDataIn[nexport].Task = j;
@@ -366,6 +372,9 @@ void hydro_force(void)
              SphP[place].CDAVSignalVel = HydroDataPartialResult[source].CDAVSignalVel;
            }
 #endif
+#ifdef VAR_H_TEST
+           SphP[place].htest_t += HydroDataPartialResult[source].htest_t;
+#endif
 			}
 		    }
 		}
@@ -491,6 +500,14 @@ void hydro_force(void)
      SphP[i].DtAlpha = All.ArtBulkViscConst*SphP[i].Hsml*SphP[i].Hsml*A/SphP[i].DtAlpha;
    }
 #endif
+#ifdef VAR_H_TEST
+   //Multiply by the final factors
+   SphP[i].htest_t *= SphP[i].Hsml*SphP[i].DhsmlDensityFactor/(NUMDIMS*SphP[i].Density*SphP[i].Density);
+   if(ThisTask==1)
+   {
+     //printf("The relative contribution of the extra term (term/div.v) to div.v is %g\n",SphP[i].htest_t/SphP[i].DivVel);
+   }
+#endif
       }
 
   tend = second();
@@ -530,6 +547,11 @@ void hydro_evaluate(int target, int mode)
   FLOAT *oldacc,*gradRho;
   FLOAT divvsign;
   double tmp,fac_1,fac_2,R,T[9],D[9],E[9],CDAVvsig,wk_i,mass_j,dax,day,daz;
+#endif
+#ifdef VAR_H_TEST
+  double wk_i,rinv,htest_term[3],htest_t;
+  FLOAT *htest_f;
+  FLOAT htest_g;
 #endif
 
   double acc[3], dtEntropy, maxSignalVel;
@@ -578,6 +600,10 @@ void hydro_evaluate(int target, int mode)
 	(fabs(SphP[target].DivVel) + SphP[target].CurlVel +
 	 0.0001 * soundspeed_i / SphP[target].Hsml / fac_mu);
 #endif
+#ifdef VAR_H_TEST
+      htest_f = SphP[target].htest_f;
+      htest_g = SphP[target].htest_g;
+#endif
     }
   else
     {
@@ -601,6 +627,10 @@ void hydro_evaluate(int target, int mode)
 #endif
 #ifdef PRICE_GRAV_SOFT
       zeta = HydroDataGet[target].Zeta;
+#endif
+#ifdef VAR_H_TEST
+      htest_f = HydroDataGet[target].htest_f;
+      htest_g = HydroDataGet[target].htest_g;
 #endif
     }
 
@@ -630,6 +660,9 @@ void hydro_evaluate(int target, int mode)
   }
 #endif
 
+#ifdef VAR_H_TEST
+  htest_t=0;
+#endif
 
   /* Now start the actual SPH computation for this particle */
   startnode = All.MaxPart;
@@ -711,14 +744,14 @@ void hydro_evaluate(int target, int mode)
 		      if(u < 0.5)
             {
 			     dwk_i = hinv4 * u * (KERNEL_COEFF_3 * u - KERNEL_COEFF_4);
-#ifdef CDAV_DRIFTUPDATE
+#if defined CDAV_DRIFTUPDATE || defined VAR_H_TEST
               wk_i = hinv*hinv*hinv*(KERNEL_COEFF_1+KERNEL_COEFF_2 * (u-1)*u*u);
 #endif
             }
 		      else
             {
 			     dwk_i = hinv4 * KERNEL_COEFF_6 * (1.0 - u) * (1.0 - u);
-#ifdef CDAV_DRIFTUPDATE
+#if defined CDAV_DRIFTUPDATE || defined VAR_H_TEST
               wk_i = hinv*hinv*hinv*KERNEL_COEFF_5*(1.0 -u)*(1.0-u)*(1.0-u);
 #endif
             }
@@ -726,7 +759,7 @@ void hydro_evaluate(int target, int mode)
 		  else
 		    {
 		      dwk_i = 0;
-#ifdef CDAV_DRIFTUPDATE
+#if defined VAR_H_TEST || defined CDAV_DRIFTUPDATE 
             wk_i = 0;
 #endif
 		    }
@@ -769,6 +802,7 @@ void hydro_evaluate(int target, int mode)
         T[8] += dz * (fac_1 * dz + fac_2 * gradRho[2]);
 
         //This "divv" is the only part of the whole business which is not exact...
+        //This misses out on the r=0 contribution...
         R += divvsign * mass_j * wk_i;
         //Calculate the signal velocity, only want to do this for things local to i...
         if(dwk_i!=0)
@@ -778,6 +812,21 @@ void hydro_evaluate(int target, int mode)
           {
             CDAVvsig=tmp;
           }
+        }
+#endif
+#ifdef VAR_H_TEST
+        rinv=1/r;
+        hinv=1/h_i;
+        u=r*hinv;
+        htest_term[0]=-htest_f[0]*((NUMDIMS*wk_i*hinv)+htest_g*dwk_i*dx*rinv);
+        htest_term[1]=-htest_f[1]*((NUMDIMS*wk_i*hinv)+htest_g*dwk_i*dy*rinv);
+        htest_term[2]=-htest_f[2]*((NUMDIMS*wk_i*hinv)+htest_g*dwk_i*dz*rinv);
+        htest_t -= P[j].Mass*htest_g*dwk_i*rinv*(dvx*dx+dvy*dy+dvz*dz);
+        htest_t -= P[j].Mass*(dvx*htest_f[0]+dvy*htest_f[1]+dvz*htest_f[2])*(NUMDIMS*wk_i*hinv+dwk_i*u);
+        //htest_t += P[j].Mass*(htest_term[0]*dvx + htest_term[1]*dvy+htest_term[2]*dvz);
+        if(ThisTask==1)
+        {
+          //printf("Term_ab ~ (%g,%g,%g)\n",htest_term[0],htest_term[1],htest_term[2]);
         }
 #endif
 
@@ -901,6 +950,9 @@ void hydro_evaluate(int target, int mode)
       SphP[target].R=R;
       SphP[target].CDAVSignalVel=CDAVvsig;
 #endif
+#ifdef VAR_H_TEST
+      SphP[target].htest_t =htest_t;
+#endif
     }
   else
     {
@@ -921,6 +973,9 @@ void hydro_evaluate(int target, int mode)
       }
       HydroDataResult[target].R=R;
       HydroDataResult[target].CDAVSignalVel=CDAVvsig;
+#endif
+#ifdef VAR_H_TEST
+      HydroDataResult[target].htest_t = htest_t;
 #endif
     }
 }
