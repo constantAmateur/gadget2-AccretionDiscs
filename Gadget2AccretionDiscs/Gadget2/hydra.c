@@ -445,13 +445,13 @@ void hydro_force(void)
    Tinv[8]=fac*(SphP[i].T[0]*SphP[i].T[4]-SphP[i].T[1]*SphP[i].T[3]);
    //Multiply D by Tinv to calculate V
    V[0]=SphP[i].D[0]*Tinv[0]+SphP[i].D[1]*Tinv[3]+SphP[i].D[2]*Tinv[6];
-   V[1]=SphP[i].D[0]*Tinv[1]+SphP[i].D[1]*Tinv[4]+SphP[i].D[2]*Tinv[7];
-   V[2]=SphP[i].D[0]*Tinv[2]+SphP[i].D[1]*Tinv[5]+SphP[i].D[2]*Tinv[8];
-   V[3]=SphP[i].D[3]*Tinv[0]+SphP[i].D[4]*Tinv[3]+SphP[i].D[5]*Tinv[6];
+   V[3]=SphP[i].D[0]*Tinv[1]+SphP[i].D[1]*Tinv[4]+SphP[i].D[2]*Tinv[7];
+   V[6]=SphP[i].D[0]*Tinv[2]+SphP[i].D[1]*Tinv[5]+SphP[i].D[2]*Tinv[8];
+   V[1]=SphP[i].D[3]*Tinv[0]+SphP[i].D[4]*Tinv[3]+SphP[i].D[5]*Tinv[6];
    V[4]=SphP[i].D[3]*Tinv[1]+SphP[i].D[4]*Tinv[4]+SphP[i].D[5]*Tinv[7];
-   V[5]=SphP[i].D[3]*Tinv[2]+SphP[i].D[4]*Tinv[5]+SphP[i].D[5]*Tinv[8];
-   V[6]=SphP[i].D[6]*Tinv[0]+SphP[i].D[7]*Tinv[3]+SphP[i].D[8]*Tinv[6];
-   V[7]=SphP[i].D[6]*Tinv[1]+SphP[i].D[7]*Tinv[4]+SphP[i].D[8]*Tinv[7];
+   V[7]=SphP[i].D[3]*Tinv[2]+SphP[i].D[4]*Tinv[5]+SphP[i].D[5]*Tinv[8];
+   V[2]=SphP[i].D[6]*Tinv[0]+SphP[i].D[7]*Tinv[3]+SphP[i].D[8]*Tinv[6];
+   V[5]=SphP[i].D[6]*Tinv[1]+SphP[i].D[7]*Tinv[4]+SphP[i].D[8]*Tinv[7];
    V[8]=SphP[i].D[6]*Tinv[2]+SphP[i].D[7]*Tinv[5]+SphP[i].D[8]*Tinv[8];
    //Now we can calculate DivVel
    divv = V[0] + V[4] + V[8];
@@ -653,7 +653,8 @@ void hydro_evaluate(int target, int mode)
 
 #ifdef CDAV_DRIFTUPDATE
   CDAVvsig=0;
-  R=0;
+  //Need to include the self-reference (i.e. b=a) in this calculation
+  R=divvsign*mass*KERNEL_COEFF_1/(h_i*h_i*h_i);
   for(k=0;k<9;k++)
   {
     E[k]=D[k]=T[k]=0;
@@ -765,8 +766,10 @@ void hydro_evaluate(int target, int mode)
 		    }
 #ifdef CDAV_DRIFTUPDATE
         mass_j = P[j].Mass;
+        hinv=1/h_i;
+        u=r*hinv;
         fac_1 = mass_j * dwk_i / r;
-        fac_2 = mass_j * (1/rho)* ((dwk_i *r/NUMDIMS)+wk_i);
+        fac_2 = mass_j * (1/rho)* (((dwk_i *r*h_i)/NUMDIMS)+wk_i);
         dax = acc[0] - SphP[j].oldAccel[0];
         day = acc[1] - SphP[j].oldAccel[1];
         daz = acc[2] - SphP[j].oldAccel[2];
@@ -803,6 +806,21 @@ void hydro_evaluate(int target, int mode)
 
         //This "divv" is the only part of the whole business which is not exact...
         //This misses out on the r=0 contribution...
+        if(P[j].Type==0)
+        {
+          divvsign=0;
+          if(SphP[j].DivVel>0)
+          {
+            divvsign=1;
+          }
+          else
+          {
+            if(SphP[j].DivVel<0)
+            {
+              divvsign=-1;
+            }
+          }
+        }
         R += divvsign * mass_j * wk_i;
         //Calculate the signal velocity, only want to do this for things local to i...
         if(dwk_i!=0)
