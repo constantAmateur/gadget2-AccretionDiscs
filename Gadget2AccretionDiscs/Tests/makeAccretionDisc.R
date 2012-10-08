@@ -19,12 +19,14 @@ q=.2
 #density_power = Power law index for the surface density profile.  i.e. Sigma ~ R^density_power
 density_power=-2.0
 #Number of particles...
-Npart = 1e8
+Npart = 1e6
+#Fraction of the mass that should be in the exponential decay
+epsilon = .01
 
 ### ARBITRARY PARAMETERS  ###
 
 #Inner radius (in units given below)
-R_i = 10
+R_i = 1
 #Mass of star (in units given below)
 M = 1.0
 #Initial value of Q (Q is constructed to be constant initally)
@@ -92,14 +94,95 @@ outputdir=paste(getwd(),"Build/",sep='/')
 # BUILD INITIAL CONDITIONS  #
 #############################
 
-
-#We want Sigma (the surface density) to go like R^density_power, so we have to pick the density of R values to go like R^density_power+1
-tmp=runif(Npart)
-if(density_power==-2.0){
-  radi = R_i * exp(tmp*log(r))
-}else{
-  radi = ((R_o^(2+density_power)-R_i^(2+density_power))*tmp+R_i^(2+density_power))^(1/(2+density_power))
+#The error function
+erf=function(x)
+{
+  return(2*pnorm(x*sqrt(2))-1)
 }
+
+#We need to pick the exponential decay in such a way that the surface density remains continuous, its 1st derivative remains continuous and the mass enclosed is equal to epsilon*M.  The root to the following function are what are needed to meet these requirements
+outpeach = function(b,eps,Ri,r,alpha=density_power)
+{
+  return(Ri*(Ri-b)*(1/alpha)*(exp((alpha*(Ri-b))/(2*Ri))-exp(-(alpha*b^2)/(2*Ri*(b-Ri))))+b*sqrt((pi*Ri*(b-Ri))/(2*alpha))*(erf(sqrt(((b-Ri)*alpha*.5)/Ri))-erf(sqrt((alpha*b^2)/(2*Ri*(b-Ri)))))+(eps*Ri^(-alpha)*log(r)*exp((alpha*.5*(Ri-b))/Ri))/(1-eps))
+}
+#Determine where to look for root
+samp=R_i*(0:1000)/1000
+samp=samp[which(samp!=1)]
+tmp=outpeach(samp,eps=epsilon,Ri=R_i,r=r,alpha=density_power)
+lower=samp[max(which(tmp<0))]
+print(paste("searching for root above R=",lower))
+#The mean of the distribution
+b=uniroot(outpeach,eps=epsilon,Ri=R_i,r=r,alpha=density_power,lower=lower,upper=R_i,f.upper=(R_i^(-density_power)*epsilon*log(r))/(1-epsilon))
+b=b$root
+#it's standard deviation
+c=sqrt(R_i*(b-R_i)/density_power)
+print(paste("Root finder settled on standard deviation =",c,"mean=",b))
+#Not really needed, but for completeness...
+#needs updating...
+a=((1-epsilon)*M_disc*R_i^density_power*exp((b-R_i)^2/(2*c*c)))/(2*pi*log(r))
+pdf=function(R)
+{
+  ret=(a*R*exp(-(R-b)^2/(2*c^2)))
+  ret[R>=R_i]=(((1-epsilon)*M_disc*R^(density_power+1))/(2*pi*log(r)))[R>=R_i]
+  return(ret)
+}
+rejectionSample = function(no,pdf,xmin=0,xmax=1,ymin=NULL,ymax=NULL,sample=100,safteyFact=2)
+{
+  if(is.null(ymin) || is.null(ymax))
+  {
+    samp=(xmax-xmin)*(0:sample)/sample+xmin
+    tmp=pdf(samp)
+    ymin=min(tmp)/safteyFact
+    ymax=max(tmp)*safteyFact
+  }
+  res=vector()
+  #Keep sampling till we have enough points
+  while(length(res)<no)
+  {
+    #We'll make too many this way, but who cares...
+    tmp_x=(xmax-xmin)*runif(no)+xmin
+    tmp_y=(ymax-ymin)*runif(no)+ymin
+    true_y=pdf(tmp_x)
+    res=c(res,tmp_x[tmp_y<true_y])
+  }
+  #Only keep the first no
+  res=res[1:no]
+  return(res)
+}
+   
+
+
+
+#Rejection sample the distribution...
+radi = rejectionSample(Npart,pdf,xmax=R_o)
+
+#First pick a random set of seeds which determines if the particle should go in the disc or in the exponential decay
+#seed=runif(Npart)
+#epart=which(seed<epsilon)
+#print(paste("Assigning",length(epart),"particles to the exponential decay."))
+#
+##We want Sigma (the surface density) to go like R^density_power, so we have to pick the density of R values to go like R^density_power+1
+#tmp=runif(Npart)
+#if(density_power==-2.0){
+#  radi = R_i * exp(tmp*log(r))
+#}else{
+#  radi = ((R_o^(2+density_power)-R_i^(2+density_power))*tmp+R_i^(2+density_power))^(1/(2+density_power))
+#}
+##Need to select radii for the exponential decay particles from the gaussian a*exp(-(R-b)^2/2c^2)
+#tmp=rnorm(length(epart),mean=b,sd=c)
+#rejectionSample(length(epart),pdf,xmax=R_i)
+#tmp[tmp>R_i]=2*R_i-tmp[tmp>R_i]
+##tmp[tmp>=R_i]=-1
+##Shouldn't really be any of these I would hope...
+#if(sum(tmp<=0))
+#  print(paste("There were",sum(tmp<=0),"particles that were too close to the star and were accreted."))
+#tmp[tmp<=0]=-1
+#radi[epart]=tmp
+##If there are any bad ones, accrete them
+#M=M+(M_disc/Npart)*sum(radi<0)
+#radi=radi[radi>0]
+#Npart=length(radi)
+
 #Theta probably should never be anything but uniform...
 theta= runif(Npart,0,2*pi)
 #The temperature
@@ -120,7 +203,6 @@ z= rnorm(Npart)*scale_H
 mass=rep(M_disc/Npart,Npart)
 #We've calculated everything, now put it in the final variables which are cartesian...
 pos=cyl2cart(cbind(radi,theta,z))
-#The 1/r is to convert vphi to an angular velocity (i.e. dtheta/dt)
 vel=cbind(-pos[,2]*vphi,pos[,1]*vphi,0)
 #We need to convert the temperature to internal energy per unit mass
 u=temp*k_b/(mu*m_H*(gamma-1))
