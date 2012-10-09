@@ -282,7 +282,7 @@ void setup_smoothinglengths(void)
 #endif
 	}
     }
-
+  
   density();
 }
 

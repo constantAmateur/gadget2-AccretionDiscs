@@ -665,9 +665,10 @@ void density_evaluate(int target, int mode)
       vel = SphP[target].VelPred;
       h = SphP[target].Hsml;
 #ifdef CDAV
+      acc = SphP[target].HydroAccel;
       for(i=0;i<3;i++)
       {
-        acc[i] = SphP[target].HydroAccel[i]+P[target].GravAccel[i];
+        acc[i] += P[target].GravAccel[i];
       }
 #endif
     }

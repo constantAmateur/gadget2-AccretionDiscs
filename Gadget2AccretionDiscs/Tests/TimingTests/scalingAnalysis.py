@@ -27,8 +27,8 @@ folders=["1CPU_1e6","2CPU_1e6","4CPU_1e6","12CPU_1e6","24CPU_1e6","48CPU_1e6","9
 dat.append([1000000,folders])
 folders=["1CPU_5e6","2CPU_5e6","4CPU_5e6","12CPU_5e6","24CPU_5e6","48CPU_5e6","96CPU_5e6","192CPU_5e6"]
 dat.append([5000000,folders])
-folders=["1CPU_1e7","2CPU_1e7","4CPU_1e7","12CPU_1e7","24CPU_1e7","48CPU_1e7","96CPU_1e7","192CPU_1e7","384CPU_1e7"]
-dat.append([10000000,folders])
+#folders=["1CPU_1e7","2CPU_1e7","4CPU_1e7","12CPU_1e7","24CPU_1e7","48CPU_1e7","96CPU_1e7","192CPU_1e7","384CPU_1e7"]
+#dat.append([10000000,folders])
 #Load all information at once...
 for i in xrange(len(dat)):
   folders=dat[i][1]

@@ -18,4 +18,6 @@ Gadget2AccretionDiscs/Gadget2/Gadget2
 Gadget2AccretionDiscs/Tests/TimingTests/initDisc5e5.IC
 Gadget2AccretionDiscs/Tests/TimingTests/initDisc5e6.IC
 Gadget2AccretionDiscs/Tests/TimingTests/initDisc5e7.IC
+#The Makefile
+Gadget2AccretionDiscs/Gadget2/Makefile
 
