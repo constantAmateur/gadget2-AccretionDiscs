@@ -47,7 +47,7 @@ OPT   +=  -DOUTPUTACCELERATION
 OPT   +=  -DOUTPUTCHANGEOFENTROPY
 OPT   +=  -DOUTPUTTIMESTEP
 OPT   +=  -DOUTPUTALPHA
-OPT   +=  -DCDAV
+OPT   +=  -DMMAV
 
 
 #--------------------------------------- Things for special behaviour
