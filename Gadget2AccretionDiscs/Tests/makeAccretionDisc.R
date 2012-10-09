@@ -156,6 +156,7 @@ rejectionSample = function(no,pdf,xmin=0,xmax=1,ymin=NULL,ymax=NULL,sample=100,s
 #Rejection sample the distribution...
 radi = rejectionSample(Npart,pdf,xmax=R_o)
 
+print(paste("Effective inner radius:",min(radi)))
 #First pick a random set of seeds which determines if the particle should go in the disc or in the exponential decay
 #seed=runif(Npart)
 #epart=which(seed<epsilon)

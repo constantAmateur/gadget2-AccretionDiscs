@@ -410,6 +410,7 @@ void hydro_force(void)
       {
 	SphP[i].DtEntropy *= GAMMA_MINUS1 / (hubble_a2 * pow(SphP[i].Density, GAMMA_MINUS1));
 #ifdef BETA_COOLING
+   //The conversion factor from dK/dt to du/dt cancel with the conversion factor from u to K in du/dt = -u / beta/Omega.  This is why we do the above line before the cooling...
    for(j=0,R=0,v2=0;j<3;j++)
    {
      R+=(P[i].Pos[j]-starData[j])*(P[i].Pos[j]-starData[j]);
@@ -420,7 +421,6 @@ void hydro_force(void)
    //tdyn=sqrt(-8.0*E*E*E)/(All.G*starData[3]*All.G*starData[3]);
    tdyn=sqrt(R*R*R/All.G/starData[3]);
    SphP[i].DtEntropy -= SphP[i].Entropy / All.CoolingRate / tdyn;
-	
 #endif
 #ifdef SPH_BND_PARTICLES
 	if(P[i].ID == 0)
@@ -638,6 +638,10 @@ void hydro_evaluate(int target, int mode)
   /* initialize variables before SPH loop is started */
   acc[0] = acc[1] = acc[2] = dtEntropy = 0;
   maxSignalVel = 0;
+#ifdef CDAV
+  //Because the r=0 case will not be evaluated below...
+  maxSignalVel = soundspeed_i;
+#endif
 
   p_over_rho2_i = pressure / (rho * rho) * dhsmlDensityFactor;
 #ifdef PRICE_GRAV_SOFT
@@ -866,81 +870,110 @@ void hydro_evaluate(int target, int mode)
 		    {
 		      dwk_j = 0;
 		    }
-		  if(soundspeed_i + soundspeed_j > maxSignalVel)
-		    maxSignalVel = soundspeed_i + soundspeed_j;
+#ifdef CDAV
+        //We only want to look at neighbours of i, hence the first condition...
+		  if(dwk_i!=0 && .5*(soundspeed_i + soundspeed_j) > maxSignalVel)
+        {
+		    maxSignalVel = .5*(soundspeed_i + soundspeed_j);
+        }
+#else
+        if(soundspeed_i+soundspeed_j >maxSignalVel)
+          maxSignalVel = soundspeed_i+soundspeed_j;
+#endif
 
 		  if(vdotr2 < 0)	/* ... artificial viscosity */
 		    {
 		      mu_ij = fac_mu * vdotr2 / r;	/* note: this is negative! */
-
+#ifdef CDAV
+            vsig = .5*(soundspeed_i+soundspeed_j) - mu_ij;
+            //As above...
+            if(dwk_i==0)
+              vsig = 0;
+#else
             //ArtViscPropConst is 3/2 in original implementation...
             vsig = soundspeed_i + soundspeed_j - All.ArtViscPropConst*2.0 * mu_ij;
-//#if defined CDAV || defined CDAV_DRIFTUPDATE
-//            //Alternative signal velocity definition...
-//            vsig = .5*(soundspeed_i+soundspeed_j) - dmin(0,mu_ij);
-//#endif
+#endif
 
 		      if(vsig > maxSignalVel)
 			maxSignalVel = vsig;
 
 		      rho_ij = 0.5 * (rho + SphP[j].Density);
-#if defined MMAV_DRIFTUPDATE || defined MMAV || defined CDAV || defined CDAV_DRIFTUPDATE
-            //The balsara switch is added to the source term if alpha is per particle...
-          visc = 0.25 * (alpha_visc + alpha_visc_j) * vsig * (-mu_ij) / rho_ij;
+            //Put CD AV in a separate block...
+#if defined CDAV || defined CDAV_DRIFTUPDATE
+            //We are explicitly putting in the form of the C&D paper...
+            mu_ij = (4*vdotr2*h_j*h_j*h_i*h_i)/(r*r*(h_i*h_i+h_j*h_j)*(h_i+h_j));
+            //mu_ij is now Pi_ij
+            mu_ij = -mu_ij*(0.5*(soundspeed_i+soundspeed_j)-All.ArtViscPropConst*mu_ij);
+            //Calculate the acceleration...
+            hfc_visc = .5*mu_ij*P[j].Mass*((alpha_visc*dhsmlDensityFactor*dwk_i/rho)+(alpha_visc_j*SphP[j].DhsmlDensityFactor*dwk_j/SphP[j].Density))/r;
+            //Calculate the dispersion...
+            hfc = .5*vdotr2*P[j].Mass * mu_ij*alpha_visc*dhsmlDensityFactor*dwk_i/(rho*r);
 #else
-          //Comment this out to use the explicit form of the AV used in the paper
-//#if defined CDAV || defined CDAV_DRIFTUPDATE
-//          //We are explicitly putting in the form of the C&D paper...
-//            mu_ij = 4*vdotr2*h_j*h_j/r/(h_i+h_j)/(h_i*h_i+h_j*h_j)/(h_i*h_i+h_j*h_j);
-//            mu_ij = -mu_ij*(0.5*(soundspeed_i+soundspeed_j)-All.ArtViscPropConst*mu_ij);
-//            hfc = 0.5*P[j].Mass*mu_ij*(alpha_visc*dhsmlDensityFactor*dwk_i/rho+alpha_visc_j*SphP[j].DhsmlDensityFactor*dwk_j/SphP[j].Density)/r;
-//            hfc_visc = P[j].Mass*mu_ij*alpha_visc*dhsmlDensityFactor*dwk_i/rho/r;
-//#else
-//            //The standard thing...
+	
+#if defined MMAV_DRIFTUPDATE || defined MMAV
+            //The balsara switch is added to the source term if alpha is per particle...
+            visc = 0.25 * (alpha_visc + alpha_visc_j) * vsig * (-mu_ij) / rho_ij;
+#else
+            //The standard thing...
 #ifdef NOBALSARA
             f2=1.0;
 #else
-          f2 =
+            f2 =
           fabs(SphP[j].DivVel) / (fabs(SphP[j].DivVel) + SphP[j].CurlVel +
                                   0.0001 * soundspeed_j / fac_mu / SphP[j].Hsml);
 #endif
-          visc = 0.25 * alpha_visc * vsig * (-mu_ij) / rho_ij * (f1 + f2);
-//#endif	
+//End no balsara switch for standard AV
+            visc = 0.25 * alpha_visc * vsig * (-mu_ij) / rho_ij * (f1 + f2);
 #endif
+//End Standard or MM AV
+#endif
+//End CD AV or Other
 		      /* .... end artificial viscosity evaluation */
 #ifndef NOVISCOSITYLIMITER
 		      /* make sure that viscous acceleration is not too large */
 		      dt = imax(timestep, (P[j].Ti_endstep - P[j].Ti_begstep)) * All.Timebase_interval;
 		      if(dt > 0 && (dwk_i + dwk_j) < 0)
 			{
+           //Limiter is designed to set the magnitude of the viscous acceleration to be no more than a quarter of the line of sight velocity connecting i and j, divided by dt
+#if defined CDAV || defined CDAV_DRIFTUPDATE
+           hfc_visc = dmin(hfc_visc, 0.25 * fac_vsic_fix * vdotr2 / (r * r*dt));
+           //The associated change in energy is vdotr/r times the magnitude of the acceleration...
+           hfc = vdotr2 * hfc_visc;
+#else
 			  visc = dmin(visc, 0.5 * fac_vsic_fix * vdotr2 /
 				      (0.5 * (mass + P[j].Mass) * (dwk_i + dwk_j) * r * dt));
+#endif
 			}
 #endif
+//End no viscosity limiter
 		    }
 		  else
         {
 		    visc = 0;
-//#if defined CDAV || defined CDAV_DRIFTUPDATE
-//          hfc=0;
-//          hfc_visc=0;
-//#endif
+#if defined CDAV || defined CDAV_DRIFTUPDATE
+          //Because the full force/dispersion calculation has already been done or not at this point...
+          hfc=0;
+          hfc_visc=0;
+#endif
         }
 
 		  p_over_rho2_j *= SphP[j].DhsmlDensityFactor;
-
-//#if defined CDAV || defined CDAV_DRIFTUPDATE
-//        hfc += P[j].Mass * (p_over_rho2_i * dwk_i + p_over_rho2_j * dwk_j) /r;
-//#else
+#if defined CDAV || defined CDAV_DRIFTUPDATE
+        //We've already calculated everything we need, just add it to variables along with hydro force
+        dtEntropy += hfc;
+        hfc = hfc_visc + P[j].Mass * (p_over_rho2_i*dwk_i + p_over_rho2_j*dwk_j) /r;
+        acc[0] -= hfc *dx;
+        acc[1] -= hfc *dy;
+        acc[2] -= hfc *dz;
+#else
 		  hfc_visc = 0.5 * P[j].Mass * visc * (dwk_i + dwk_j) / r;
-
 		  hfc = hfc_visc + P[j].Mass * (p_over_rho2_i * dwk_i + p_over_rho2_j * dwk_j) / r;
-//#endif
 
 		  acc[0] -= hfc * dx;
 		  acc[1] -= hfc * dy;
 		  acc[2] -= hfc * dz;
 		  dtEntropy += 0.5 * hfc_visc * vdotr2;
+#endif
 		}
 	    }
 	}
@@ -951,7 +984,7 @@ void hydro_evaluate(int target, int mode)
   if(mode == 0)
     {
       for(k = 0; k < 3; k++)
-	SphP[target].HydroAccel[k] = acc[k];
+	     SphP[target].HydroAccel[k] = acc[k];
       SphP[target].DtEntropy = dtEntropy;
       SphP[target].MaxSignalVel = maxSignalVel;
 #ifdef NK_AV

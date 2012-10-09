@@ -577,39 +577,41 @@ extern struct sph_particle_data
 #ifdef SINK_PARTICLES  
   int   AccretionTarget;        /*!< flag for accretion. equal to the index of the sink particle it's going to merge with. */
 #endif
-#if defined MMAV_DRIFTUPDATE || defined CDAV_DRIFTUPDATE
-  FLOAT Alpha;		        /*!< viscosity coefficient */
-  FLOAT DtAlpha;       		/*!< time rate of change of viscosity coefficient */
-#endif
-#if defined MMAV || defined CDAV
+  //Different artificial viscosity implementations
+#ifdef MMAV
   FLOAT Alpha;
-  FLOAT DtDrift;
+  FLOAT DtAlpha;
+  FLOAT AlphaOld;
 #endif
-#ifdef PRICE_GRAV_SOFT
-  FLOAT Zeta;             /* The factor needed to calculate the grav softening correction */
+#ifdef MMAV_DRIFTUPDATE
+  FLOAT Alpha;
+  FLOAT DtAlpha;
 #endif
 #ifdef CDAV
+  FLOAT Alpha;
+  FLOAT DtDrift;
+  FLOAT AlphaOld;
   FLOAT D[9];
   FLOAT E[9];
-  FLOAT T[6];             /* The three matrices needed for the more advanced estimation */
-  FLOAT R;                /* For calculating the limiter... */
-  FLOAT oldDivVel;
-#endif
-#if defined CDAV || defined MMAV
-  FLOAT AlphaOld;         /* Needed to ensure alpha is adapted proporely */
+  FLOAT T[6];
+  FLOAT R;
 #endif
 #ifdef CDAV_DRIFTUPDATE
+  FLOAT Alpha;
+  FLOAT DtAlpha;
   FLOAT gradRho[3];
   FLOAT D[9];
-  FLOAT E[9];
   FLOAT T[9];
+  FLOAT E[9];
   FLOAT oldAccel[3];
   FLOAT oldDivVel;
   FLOAT R;
   FLOAT DtDrift;
   FLOAT CDAVSignalVel;
 #endif
-  
+#ifdef PRICE_GRAV_SOFT
+  FLOAT Zeta;             /* The factor needed to calculate the grav softening correction */
+#endif
 #ifdef NK_AV
   int NumN,NumNK;         //Counters for the number of neighbours and non-keplerian neighbours
 #endif
@@ -803,7 +805,6 @@ extern struct densdata_in
   int Task;
 #ifdef CDAV
   FLOAT Accel[3];
-  FLOAT ci;
 #endif
 }
  *DensDataIn,                   /*!< holds particle data for SPH density computation to be exported to other processors */
@@ -823,7 +824,6 @@ extern struct densdata_out
   FLOAT E[9];
   FLOAT T[6];
   FLOAT R;
-  FLOAT MaxSignalVel;
 #endif
 #ifdef CDAV_DRIFTUPDATE
   FLOAT gradRho[3];

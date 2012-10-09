@@ -51,7 +51,7 @@ ErrTolForceAcc	0.005
 %Time integration accuracy
 
 %No more than half a rotation period at inner radius per timestep
-MaxSizeTimestep	0.039
+MaxSizeTimestep	0.05
 MinSizeTimestep	0.0
 TypeOfTimestepCriterion	0
 ErrTolIntAccuracy	0.025
@@ -63,8 +63,8 @@ MaxRMSDisplacementFac	0.25
 OutputListOn	0
 OutputListFilename	output_times.txt
 TimeOfFirstSnapshot	0
-TimeBetSnapshot	30
-TimeBetStatistics	30
+TimeBetSnapshot	6
+TimeBetStatistics	6
 NumFilesWrittenInParallel	1
 
 %Unit system

@@ -138,14 +138,6 @@ void density(void)
 	      {
 		ndone++;
 
-#ifdef CDAV
-      //Update the Pressure as soon as possible because we need a good guess for calculating the sound speed
-      dt_entr = (All.Ti_Current - (P[i].Ti_begstep + P[i].Ti_endstep) / 2) * All.Timebase_interval;
-      SphP[i].Pressure =
-		  (SphP[i].Entropy + SphP[i].DtEntropy * dt_entr) * pow(SphP[i].Density, GAMMA);
-#endif
-
-
 
 		for(j = 0; j < NTask; j++)
 		  Exportflag[j] = 0;
@@ -166,7 +158,6 @@ void density(void)
          DensDataIn[nexport].Accel[0] = SphP[i].HydroAccel[0]+P[i].GravAccel[0];
          DensDataIn[nexport].Accel[1] = SphP[i].HydroAccel[1]+P[i].GravAccel[1];
          DensDataIn[nexport].Accel[2] = SphP[i].HydroAccel[2]+P[i].GravAccel[2];
-         DensDataIn[nexport].ci = sqrt(GAMMA*SphP[i].Pressure / SphP[i].Density);
 #endif
 			DensDataIn[nexport].Hsml = SphP[i].Hsml;
 			DensDataIn[nexport].Index = i;
@@ -304,10 +295,6 @@ void density(void)
                  SphP[place].E[k] += DensDataPartialResult[source].E[k];
                }
                SphP[place].R += DensDataPartialResult[source].R;
-               if(DensDataPartialResult[source].MaxSignalVel > SphP[place].MaxSignalVel)
-               {
-                 SphP[place].MaxSignalVel = DensDataPartialResult[source].MaxSignalVel;
-               }
 #endif
 #ifdef CDAV_DRIFTUPDATE
                for(k=0;k<3;k++)
@@ -352,7 +339,6 @@ void density(void)
 	{
 	  if(P[i].Ti_endstep == All.Ti_Current)
 	    {
-	      {
 		SphP[i].DhsmlDensityFactor =
 		  1 / (1 + SphP[i].Hsml * SphP[i].DhsmlDensityFactor / (NUMDIMS * SphP[i].Density));
 #ifdef CDAV_DRIFTUPDATE
@@ -409,23 +395,10 @@ void density(void)
         SphP[i].E[4]*Tinv[3]+SphP[i].E[8]*Tinv[5];
       //now subtract the second part...
       diva =diva-(V[0]*V[0]+V[4]*V[4]+V[8]*V[8]+2*(V[1]*V[3]+V[2]*V[6]+V[5]*V[7]));
-      if(ThisTask==1)
-      {
-        //printf("old/new divv = %g, diva = %g.\n",SphP[i].DivVel/divv,((divv-SphP[i].oldDivVel)/SphP[i].DtDrift)/diva);
-      }
-      //if(SphP[i].DtDrift==0 || SphP[i].oldDivVel==0)
-      //{
-      //  diva=0;
-      //}
-      //else
-      //{
-      //  diva=((divv-SphP[i].oldDivVel)/SphP[i].DtDrift);
-      //}
       SphP[i].DivVel = divv;
-      SphP[i].oldDivVel = divv;
-      //diva=divv;
-      //printf("diva = %g,divvold=%g, dt=%g\n",divv,A,SphP[i].DtDrift);
-
+#ifdef NOBALSARA
+      xi=1;
+#else
       //Now calculate xi
       xi=2*(1-SphP[i].R)*(1-SphP[i].R)*(1-SphP[i].R)*(1-SphP[i].R)*divv;
       xi *= xi;
@@ -434,18 +407,10 @@ void density(void)
       A=V[0]*V[0]+V[4]*V[4]+V[8]*V[8] + 
         0.5*((V[1]+V[3])*(V[1]+V[3])+(V[2]+V[6])*(V[2]+V[6])+(V[5]+V[7])*(V[5]+V[7])) -
         divv*divv/3;
-      if(ThisTask==1)
-      {
-        //printf("|curl(v)|=%g tr(S.S^t)=%g  |curl(v)|^2/tr(S.S^t) = %g\n",SphP[i].CurlVel,A,SphP[i].CurlVel*SphP[i].CurlVel/A);
-        //printf("curl[0]/curl[0] = %g, 1/1=%g, 2/2=%g\n",SphP[i].Rot[0]/(V[5]-V[7])/SphP[i].Density,SphP[i].Rot[1]/(V[6]-V[2])/SphP[i].Density,SphP[i].Rot[2]/(V[1]-V[3])/SphP[i].Density);
-      }
-      //A=SphP[i].CurlVel*SphP[i].CurlVel;
       if(xi+A!=0)
       {
         xi /= xi+A;
       }
-#ifdef NOBALSARA
-      xi=1;
 #endif
       //Now calculate A_i
       A=dmax(0,-1*diva)*xi;
@@ -460,12 +425,7 @@ void density(void)
       {
         alphaloc = (All.ArtBulkViscConst*SphP[i].Hsml*SphP[i].Hsml*A)/alphaloc;
       }
-      if(ThisTask==1 && diva<0)
-      {
-        //printf("We calculated divv=%g,diva=%g,alpha_loc=%g,xi=%g,R=%g,vsig=%g\n",divv,diva,alphaloc,xi,SphP[i].R,SphP[i].MaxSignalVel);
-        //printf("Setting alpha.  diva=%g, xi=%g, vsig=%g, c=%g,h=%g,(vsig/h)^2=%g alphaloc=%g\n",diva,xi,SphP[i].MaxSignalVel,sqrt(GAMMA * SphP[i].Pressure / SphP[i].Density),SphP[i].Hsml,(SphP[i].MaxSignalVel*SphP[i].MaxSignalVel)/(SphP[i].Hsml*SphP[i].Hsml),alphaloc);
-        //printf("alpha_loc = %g, vsig^2 = %g, h^2A = %g, xi = %g, R=%g, DivVel=%g\n",alphaloc,SphP[i].MaxSignalVel*SphP[i].MaxSignalVel,SphP[i].Hsml*SphP[i].Hsml*A,xi,SphP[i].R,SphP[i].DivVel);
-      }
+      //This is so alpha isn't "set" twice if the density routine has to be rerun...
       if(SphP[i].AlphaOld==-1)
       {
         SphP[i].AlphaOld=SphP[i].Alpha;
@@ -481,7 +441,7 @@ void density(void)
       }
       else
       {
-        //dt_alpha = (All.Ti_Current - (P[i].Ti_begstep + P[i].Ti_endstep) /2 ) *All.Timebase_interval;
+        //Why by dt_drift?  Ultimately I'm not 100% certain and I'm doing it because it's what Cullen & Dehnen do.  Plus it seems reasonable.  Really you don't have much choice.  It can't be advanced with the forces, because it's needed before the forces are advanced.  The only other timestep to use is the previously calculated one, i.e. dt_drift
         dt_alpha = SphP[i].DtDrift;
         SphP[i].Alpha = alphaloc +(SphP[i].Alpha-alphaloc)*exp(-2*All.VariableViscDecayLength*SphP[i].MaxSignalVel*dt_alpha/SphP[i].Hsml);
       }
@@ -512,14 +472,9 @@ void density(void)
         SphP[i].Alpha=SphP[i].AlphaOld;
         //printf("Redoing the loop! Resetting alpha to %g from %g.\n",SphP[i].AlphaOld,SphP[i].Alpha);
       }
-      //Advance immediately in time
-      SphP[i].Alpha += SphP[i].DtDrift*(f_fac*dmax(-SphP[i].DivVel, 0) * (All.ArtBulkViscConst - SphP[i].Alpha) - (soundspeed*(SphP[i].Alpha - All.VariableViscAlphaMin))/tau);
-      if(SphP[i].Alpha < All.VariableViscAlphaMin)
-      {
-        printf("New alpha is %g.  Used dt=%g,f_fac=%g,divv=%g,alpha=%g,c=%g,tau=%g\n",SphP[i].Alpha,SphP[i].DtDrift,f_fac,SphP[i].DivVel,SphP[i].AlphaOld,soundspeed,tau);
-      }
+      //Advance immediately in time.  See the CD block for why dt_drift...
+      SphP[i].Alpha += SphP[i].DtDrift*(f_fac*dmax(-SphP[i].DivVel, 0) * (All.ArtBulkViscConst - SphP[i].Alpha) + (soundspeed*(All.VariableViscAlphaMin - SphP[i].Alpha))/tau);
 #endif
-	      }
 
 
 	      /* now check whether we had enough neighbours */
@@ -693,7 +648,6 @@ void density_evaluate(int target, int mode)
   double D[9],E[9],T[6];
   double dax,day,daz;
   double R,divvsign;
-  double vsig,ci,tmp;
   FLOAT *acc;
 #endif
 #ifdef CDAV_DRIFTUPDATE
@@ -711,12 +665,10 @@ void density_evaluate(int target, int mode)
       vel = SphP[target].VelPred;
       h = SphP[target].Hsml;
 #ifdef CDAV
-      acc = SphP[target].HydroAccel;
       for(i=0;i<3;i++)
       {
-        acc[i] += P[target].GravAccel[i];
+        acc[i] = SphP[target].HydroAccel[i]+P[target].GravAccel[i];
       }
-      ci = sqrt(GAMMA*SphP[i].Pressure/SphP[i].Density);
 #endif
     }
   else
@@ -726,7 +678,6 @@ void density_evaluate(int target, int mode)
       h = DensDataGet[target].Hsml;
 #ifdef CDAV
       acc = DensDataGet[target].Accel;
-      ci = DensDataGet[target].ci;
 #endif
     }
 
@@ -758,7 +709,6 @@ void density_evaluate(int target, int mode)
     E[i]=D[i]=0;
   }
   R=0;
-  vsig=0;
 #endif
 #ifdef VAR_H_TEST
   htest_f[0]=htest_f[1]=htest_f[2]=htest_g=0;
@@ -907,18 +857,6 @@ void density_evaluate(int target, int mode)
         T[3] += fac * (dy*dy);
         T[4] += fac * (dy*dz);
         T[5] += fac * (dz*dz);
-        if(ThisTask==1)
-        {
-          //printf("T(0,1,2) = (%g,%g,%g).\n",T[0],T[1],T[2]);
-        }
-
-        //This should be removed since we now use the signal velocity from the previous timestep instead
-        //Estimate the signal velocity using predicted sound speed
-        tmp = 0.5*(ci + sqrt(GAMMA*SphP[j].Pressure/SphP[j].Density))-(1/r) * dmin(0,(dx * dvx + dy*dvy+dz * dvz));
-        if(tmp > vsig)
-        {
-          vsig = tmp;
-        }
 #endif
 
 		}
@@ -951,8 +889,6 @@ void density_evaluate(int target, int mode)
         SphP[target].E[i]=E[i];
       }
       SphP[target].R=R;
-      //We'll just use the MaxSignalVel estimated in the previous timestep instead...
-      //SphP[target].MaxSignalVel=vsig;
 #endif
 #ifdef CDAV_DRIFTUPDATE
       for(i=0;i<3;i++)
@@ -991,9 +927,6 @@ void density_evaluate(int target, int mode)
         DensDataResult[target].E[i]=E[i];
       }
       DensDataResult[target].R = R;
-      //We'll just use the MaxSignalVel estimated in the previous timestep instead...
-      //DensDataResult[target].MaxSignalVel = vsig;
-      DensDataResult[target].MaxSignalVel = 0;
 #endif
 #ifdef CDAV_DRIFTUPDATE
       for(i=0;i<3;i++)
