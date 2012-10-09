@@ -19,9 +19,9 @@ q=.2
 #density_power = Power law index for the surface density profile.  i.e. Sigma ~ R^density_power
 density_power=-2.0
 #Number of particles...
-Npart = 1e6
+Npart = 32e6
 #Fraction of the mass that should be in the exponential decay
-epsilon = .01
+epsilon = 0.01
 
 ### ARBITRARY PARAMETERS  ###
 
@@ -100,26 +100,33 @@ erf=function(x)
   return(2*pnorm(x*sqrt(2))-1)
 }
 
-#We need to pick the exponential decay in such a way that the surface density remains continuous, its 1st derivative remains continuous and the mass enclosed is equal to epsilon*M.  The root to the following function are what are needed to meet these requirements
-outpeach = function(b,eps,Ri,r,alpha=density_power)
+if(epsilon!=0)
 {
-  return(Ri*(Ri-b)*(1/alpha)*(exp((alpha*(Ri-b))/(2*Ri))-exp(-(alpha*b^2)/(2*Ri*(b-Ri))))+b*sqrt((pi*Ri*(b-Ri))/(2*alpha))*(erf(sqrt(((b-Ri)*alpha*.5)/Ri))-erf(sqrt((alpha*b^2)/(2*Ri*(b-Ri)))))+(eps*Ri^(-alpha)*log(r)*exp((alpha*.5*(Ri-b))/Ri))/(1-eps))
+  #We need to pick the exponential decay in such a way that the surface density remains continuous, its 1st derivative remains continuous and the mass enclosed is equal to epsilon*M.  The root to the following function are what are needed to meet these requirements
+  outpeach = function(b,eps,Ri,r,alpha=density_power)
+  {
+    return(Ri*(Ri-b)*(1/alpha)*(exp((alpha*(Ri-b))/(2*Ri))-exp(-(alpha*b^2)/(2*Ri*(b-Ri))))+b*sqrt((pi*Ri*(b-Ri))/(2*alpha))*(erf(sqrt(((b-Ri)*alpha*.5)/Ri))-erf(sqrt((alpha*b^2)/(2*Ri*(b-Ri)))))+(eps*Ri^(-alpha)*log(r)*exp((alpha*.5*(Ri-b))/Ri))/(1-eps))
+  }
+  #Determine where to look for root
+  samp=R_i*(0:1000)/1000
+  samp=samp[which(samp!=1)]
+  tmp=outpeach(samp,eps=epsilon,Ri=R_i,r=r,alpha=density_power)
+  lower=samp[max(which(tmp<0))]
+  print(paste("searching for root above R=",lower))
+  #The mean of the distribution
+  b=uniroot(outpeach,eps=epsilon,Ri=R_i,r=r,alpha=density_power,lower=lower,upper=R_i,f.upper=(R_i^(-density_power)*epsilon*log(r))/(1-epsilon))
+  b=b$root
+  #it's standard deviation
+  c=sqrt(R_i*(b-R_i)/density_power)
+  print(paste("Root finder settled on standard deviation =",c,"mean=",b))
+  #Not really needed, but for completeness...
+  #needs updating...
+  a=((1-epsilon)*M_disc*R_i^density_power*exp((b-R_i)^2/(2*c*c)))/(2*pi*log(r))
+}else{
+  a=1
+  b=1
+  c=1
 }
-#Determine where to look for root
-samp=R_i*(0:1000)/1000
-samp=samp[which(samp!=1)]
-tmp=outpeach(samp,eps=epsilon,Ri=R_i,r=r,alpha=density_power)
-lower=samp[max(which(tmp<0))]
-print(paste("searching for root above R=",lower))
-#The mean of the distribution
-b=uniroot(outpeach,eps=epsilon,Ri=R_i,r=r,alpha=density_power,lower=lower,upper=R_i,f.upper=(R_i^(-density_power)*epsilon*log(r))/(1-epsilon))
-b=b$root
-#it's standard deviation
-c=sqrt(R_i*(b-R_i)/density_power)
-print(paste("Root finder settled on standard deviation =",c,"mean=",b))
-#Not really needed, but for completeness...
-#needs updating...
-a=((1-epsilon)*M_disc*R_i^density_power*exp((b-R_i)^2/(2*c*c)))/(2*pi*log(r))
 pdf=function(R)
 {
   ret=(a*R*exp(-(R-b)^2/(2*c^2)))
@@ -154,7 +161,14 @@ rejectionSample = function(no,pdf,xmin=0,xmax=1,ymin=NULL,ymax=NULL,sample=100,s
 
 
 #Rejection sample the distribution...
-radi = rejectionSample(Npart,pdf,xmax=R_o)
+if(epsilon==0)
+{
+  start=R_i
+}else
+{
+  start=0
+}
+radi = rejectionSample(Npart,pdf,xmax=R_o,xmin=start)
 
 print(paste("Effective inner radius:",min(radi)))
 #First pick a random set of seeds which determines if the particle should go in the disc or in the exponential decay
