@@ -591,6 +591,8 @@ extern struct sph_particle_data
   FLOAT Alpha;
   FLOAT DtDrift;
   FLOAT AlphaOld;
+  FLOAT DivVelOld;
+  FLOAT GravAccelOld[3];
   FLOAT D[9];
   FLOAT E[9];
   FLOAT T[6];

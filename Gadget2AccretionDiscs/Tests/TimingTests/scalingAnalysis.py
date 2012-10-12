@@ -19,16 +19,18 @@ dat=[]
 #folders=["60CPU_5e7","120CPU_5e7","240CPU_5e7","480CPU_5e7"]
 #dat.append([50000000,folders])
 #These are the new runs with r=5...
-folders=["1CPU_1e5","2CPU_1e5","4CPU_1e5","12CPU_1e5","24CPU_1e5","48CPU_1e5"]#,"96CPU_1e5"]#,"192CPU_1e5"]
-dat.append([100000,folders])
-folders=["1CPU_5e5","2CPU_5e5","4CPU_5e5","12CPU_5e5","24CPU_5e5","48CPU_5e5","96CPU_5e5"]#,"192CPU_5e5"]
-dat.append([500000,folders])
-folders=["1CPU_1e6","2CPU_1e6","4CPU_1e6","12CPU_1e6","24CPU_1e6","48CPU_1e6","96CPU_1e6","192CPU_1e6"]
-dat.append([1000000,folders])
-folders=["1CPU_5e6","2CPU_5e6","4CPU_5e6","12CPU_5e6","24CPU_5e6","48CPU_5e6","96CPU_5e6","192CPU_5e6"]
-dat.append([5000000,folders])
-folders=["2CPU_1e7","4CPU_1e7","12CPU_1e7","24CPU_1e7","48CPU_1e7","96CPU_1e7"]#,"192CPU_1e7","384CPU_1e7"]
-dat.append([10000000,folders])
+#folders=["1CPU_1e5","2CPU_1e5","4CPU_1e5","12CPU_1e5","24CPU_1e5","48CPU_1e5"]#,"96CPU_1e5"]#,"192CPU_1e5"]
+#dat.append([100000,folders])
+#folders=["1CPU_5e5","2CPU_5e5","4CPU_5e5","12CPU_5e5","24CPU_5e5","48CPU_5e5","96CPU_5e5"]#,"192CPU_5e5"]
+#dat.append([500000,folders])
+#folders=["1CPU_1e6","2CPU_1e6","4CPU_1e6","12CPU_1e6","24CPU_1e6","48CPU_1e6","96CPU_1e6","192CPU_1e6"]
+#dat.append([1000000,folders])
+#folders=["1CPU_5e6","2CPU_5e6","4CPU_5e6","12CPU_5e6","24CPU_5e6","48CPU_5e6","96CPU_5e6","192CPU_5e6"]
+#dat.append([5000000,folders])
+#folders=["2CPU_1e7","4CPU_1e7","12CPU_1e7","24CPU_1e7","48CPU_1e7","96CPU_1e7"]#,"192CPU_1e7","384CPU_1e7"]
+#dat.append([10000000,folders])
+folders=["16CPU_1e6","32CPU_1e6","64CPU_1e6","128CPU_1e6"]
+dat.append([1e6,folders])
 #Load all information at once...
 for i in xrange(len(dat)):
   folders=dat[i][1]

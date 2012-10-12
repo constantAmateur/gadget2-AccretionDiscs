@@ -356,6 +356,7 @@ void advance_and_find_timesteps(void)
 	         which prediction can occur is ti_step/2, i.e. from
 	         the middle to the end of the current step */
 
+         //Basically, we want to make sure that the "don't cool more than 50%" condition is met even if we predict entropy in the middle of drift or something...
 	      dt_entr = ti_step / 2 * All.Timebase_interval;
 	      if(SphP[i].Entropy + SphP[i].DtEntropy * dt_entr < 0.5 * SphP[i].Entropy)
 		SphP[i].DtEntropy = -0.5 * SphP[i].Entropy / dt_entr;

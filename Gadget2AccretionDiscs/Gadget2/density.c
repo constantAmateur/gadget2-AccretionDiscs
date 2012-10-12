@@ -155,9 +155,9 @@ void density(void)
 			DensDataIn[nexport].Vel[1] = SphP[i].VelPred[1];
 			DensDataIn[nexport].Vel[2] = SphP[i].VelPred[2];
 #ifdef CDAV
-         DensDataIn[nexport].Accel[0] = SphP[i].HydroAccel[0]+P[i].GravAccel[0];
-         DensDataIn[nexport].Accel[1] = SphP[i].HydroAccel[1]+P[i].GravAccel[1];
-         DensDataIn[nexport].Accel[2] = SphP[i].HydroAccel[2]+P[i].GravAccel[2];
+         DensDataIn[nexport].Accel[0] = SphP[i].HydroAccel[0]+SphP[i].GravAccelOld[0];
+         DensDataIn[nexport].Accel[1] = SphP[i].HydroAccel[1]+SphP[i].GravAccelOld[1];
+         DensDataIn[nexport].Accel[2] = SphP[i].HydroAccel[2]+SphP[i].GravAccelOld[2];
 #endif
 			DensDataIn[nexport].Hsml = SphP[i].Hsml;
 			DensDataIn[nexport].Index = i;
@@ -395,7 +395,31 @@ void density(void)
         SphP[i].E[4]*Tinv[3]+SphP[i].E[8]*Tinv[5];
       //now subtract the second part...
       diva =diva-(V[0]*V[0]+V[4]*V[4]+V[8]*V[8]+2*(V[1]*V[3]+V[2]*V[6]+V[5]*V[7]));
+      //div.v is only calculated at the force updates, hence the appropriate dt is the size of the current timestep
+      //dt_alpha=(P[i].Ti_endstep-P[i].Ti_begstep)*All.Timebase_interval;
+      ////Alternative method for calculating diva
+      //if(dt_alpha!=0)
+      //{
+      //  A=(divv-SphP[i].DivVelOld)/dt_alpha;
+      //}
+      //else
+      //{
+      //  A=0;
+      //}
+      ////Test if the newly calculated quantities return more or less what we expect from the old estimates.  In the case of diva the "old" estimate is from the difference between timesteps.
+      //if(ThisTask==0)
+      //{
+      //  printf("(old,new,new/old) divv = (%g,%g,%g), diva = (%g,%g,%g)\n",SphP[i].DivVel,divv,divv/SphP[i].DivVel,A,diva,diva/A);
+      //  //Outputs old,new,new/old for divv,diva,curl_x,curl_y,curl_z
+      //  printf("sheemba%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",SphP[i].DivVel,divv,divv/SphP[i].DivVel,A,diva,diva/A,SphP[i].Rot[0]/SphP[i].Density,V[5]-V[7],(SphP[i].Density*(V[5]-V[7]))/SphP[i].Rot[0],SphP[i].Rot[1]/SphP[i].Density,V[6]-V[2],(SphP[i].Density*(V[6]-V[2]))/SphP[i].Rot[1],SphP[i].Rot[2]/SphP[i].Density,V[1]-V[3],(SphP[i].Density*(V[1]-V[3]))/SphP[i].Rot[2]);
+      //}
+      //diva=A;
       SphP[i].DivVel = divv;
+      SphP[i].DivVelOld=divv;
+      SphP[i].GravAccelOld[0]=P[i].GravAccel[0];
+      SphP[i].GravAccelOld[1]=P[i].GravAccel[1];
+      SphP[i].GravAccelOld[2]=P[i].GravAccel[2];
+
 #ifdef NOBALSARA
       xi=1;
 #else
@@ -418,8 +442,7 @@ void density(void)
       //that this entire loop will have to repeat itself, in which case we want this
       //adaption step to see the same current alpha every time.  This is the purpose
       //of "alphaold" which is initialised to 0 at the start of each particle.
-      alphaloc = SphP[i].MaxSignalVel*SphP[i].MaxSignalVel + 
-        SphP[i].Hsml*SphP[i].Hsml*A;
+      alphaloc = SphP[i].MaxSignalVel*SphP[i].MaxSignalVel + SphP[i].Hsml*SphP[i].Hsml*A;
       //If everything is zero, leave alpha at 0
       if(alphaloc!=0)
       {
@@ -442,7 +465,7 @@ void density(void)
       else
       {
         //Why by dt_drift?  Ultimately I'm not 100% certain and I'm doing it because it's what Cullen & Dehnen do.  Plus it seems reasonable.  Really you don't have much choice.  It can't be advanced with the forces, because it's needed before the forces are advanced.  The only other timestep to use is the previously calculated one, i.e. dt_drift
-        dt_alpha = SphP[i].DtDrift;
+        dt_alpha=(P[i].Ti_endstep-P[i].Ti_begstep)*All.Timebase_interval;
         SphP[i].Alpha = alphaloc +(SphP[i].Alpha-alphaloc)*exp(-2*All.VariableViscDecayLength*SphP[i].MaxSignalVel*dt_alpha/SphP[i].Hsml);
       }
 #endif
@@ -473,7 +496,7 @@ void density(void)
         //printf("Redoing the loop! Resetting alpha to %g from %g.\n",SphP[i].AlphaOld,SphP[i].Alpha);
       }
       //Advance immediately in time.  See the CD block for why dt_drift...
-      SphP[i].Alpha += SphP[i].DtDrift*(f_fac*dmax(-SphP[i].DivVel, 0) * (All.ArtBulkViscConst - SphP[i].Alpha) + (soundspeed*(All.VariableViscAlphaMin - SphP[i].Alpha))/tau);
+      SphP[i].Alpha += (P[i].Ti_endstep-P[i].Ti_begstep)*All.Timebase_interval*(f_fac*dmax(-SphP[i].DivVel, 0) * (All.ArtBulkViscConst - SphP[i].Alpha) + (soundspeed*(All.VariableViscAlphaMin - SphP[i].Alpha))/tau);
 #endif
 
 
@@ -668,7 +691,7 @@ void density_evaluate(int target, int mode)
       acc = SphP[target].HydroAccel;
       for(i=0;i<3;i++)
       {
-        acc[i] += P[target].GravAccel[i];
+        acc[i] += SphP[target].GravAccelOld[i];
       }
 #endif
     }
@@ -789,8 +812,8 @@ void density_evaluate(int target, int mode)
            {
              divvsign=-1;
            }
+           R += divvsign * mass_j * wk;
          }
-         R += divvsign * mass_j * wk;
 #endif
 #ifdef VAR_H_TEST
          htest_g -= mass_j *NUMDIMS*wk*hinv;

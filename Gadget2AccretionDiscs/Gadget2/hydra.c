@@ -874,50 +874,63 @@ void hydro_evaluate(int target, int mode)
 
         //Each AV method is given a separate block.  At the end of the block hfc_visc should contain the magnitude of the viscous acceleration (divided by r) and dtEntropy should be updated.
 //The block for CD Method
-#if defined CDAV || defined CDAV_DRIFTUPDATE
-        //Set the Signal velocity, only if within h_i
-        if(dwk_i!=0)
-        {
-          if(maxSignalVel < .5*(soundspeed_i + soundspeed_j) - dmin(0,vdotr2)/r)
-          {
-            maxSignalVel = .5*(soundspeed_i + soundspeed_j) -dmin(0,vdotr2)/r;
-          }
-        }
-        if(vdotr2 < 0)
-        {
-            //We are explicitly putting in the form of the C&D paper...
-            mu_ij = (4*vdotr2*h_j*h_j*h_i*h_i)/(r*r*(h_i*h_i+h_j*h_j)*(h_i+h_j));
-            //mu_ij is now Pi_ij
-            mu_ij = -mu_ij*(0.5*(soundspeed_i+soundspeed_j)-All.ArtViscPropConst*mu_ij);
-            //Calculate the acceleration...
-            hfc_visc = .5*mu_ij*P[j].Mass*((alpha_visc*dhsmlDensityFactor*dwk_i/rho)+(alpha_visc_j*SphP[j].DhsmlDensityFactor*dwk_j/SphP[j].Density))/r;
-            //Calculate the dispersion...
-            hfc = .5*vdotr2*P[j].Mass * mu_ij*alpha_visc*dhsmlDensityFactor*dwk_i/(rho*r);
-#ifndef NOVISCOSITYLIMITER
-		      dt = imax(timestep, (P[j].Ti_endstep - P[j].Ti_begstep)) * All.Timebase_interval;
-		      if(dt > 0 && (dwk_i + dwk_j) < 0)
-            {
-              tmp = .25 * fac_vsic_fix * vdotr2 / (r*r*dt);
-              if(hfc_visc<tmp)
-              {
-                printf("Viscosity limiter invoked for particle %d!\n",j);
-                hfc_visc = tmp;
-                hfc = vdotr2 * hfc_visc*.5;
-              }
-            }
-#endif
-        }
-        else
-        {
-          hfc_visc=hfc=0;
-        }
-        dtEntropy+=hfc;
-#endif
+//This block should only be used if you want to use the explicit CD form for the AV and for the signal velocity/dissipation
+//#if defined CDAV || defined CDAV_DRIFTUPDATE
+//        //Set the Signal velocity, only if within h_i
+//        if(dwk_i!=0)
+//        {
+//          if(maxSignalVel < .5*(soundspeed_i + soundspeed_j) - dmin(0,vdotr2)/r)
+//          {
+//            maxSignalVel = .5*(soundspeed_i + soundspeed_j) -dmin(0,vdotr2)/r;
+//          }
+//        }
+//        if(vdotr2 < 0)
+//        {
+//            //We are explicitly putting in the form of the C&D paper...
+//            mu_ij = (4*vdotr2*h_j*h_j*h_i*h_i)/(r*r*(h_i*h_i+h_j*h_j)*(h_i+h_j));
+//            //mu_ij is now Pi_ij
+//            mu_ij = -mu_ij*(0.5*(soundspeed_i+soundspeed_j)-All.ArtViscPropConst*mu_ij);
+//            //Calculate the acceleration...
+//            hfc_visc = .5*mu_ij*P[j].Mass*((alpha_visc*dhsmlDensityFactor*dwk_i/rho)+(alpha_visc_j*SphP[j].DhsmlDensityFactor*dwk_j/SphP[j].Density))/r;
+//            //Calculate the dispersion...
+//            hfc = .5*vdotr2*P[j].Mass * mu_ij*alpha_visc*dhsmlDensityFactor*dwk_i/(rho*r);
+//#ifndef NOVISCOSITYLIMITER
+//		      dt = imax(timestep, (P[j].Ti_endstep - P[j].Ti_begstep)) * All.Timebase_interval;
+//		      if(dt > 0 && (dwk_i + dwk_j) < 0)
+//            {
+//              tmp = .25 * fac_vsic_fix * vdotr2 / (r*r*dt);
+//              if(hfc_visc<tmp)
+//              {
+//                printf("Viscosity limiter invoked for particle %d!\n",j);
+//                hfc_visc = tmp;
+//                hfc = vdotr2 * hfc_visc*.5;
+//              }
+//            }
+//#endif
+//        }
+//        else
+//        {
+//          hfc_visc=hfc=0;
+//        }
+//        dtEntropy+=hfc;
+//#endif
 //Block for the MM method
-#if defined MMAV || defined MMAV_DRIFTUPDATE
+#if defined MMAV || defined MMAV_DRIFTUPDATE || defined CDAV || defined CDAV_DRIFTUPDATE
+        if(soundspeed_i+soundspeed_j >maxSignalVel)
+          maxSignalVel = soundspeed_i+soundspeed_j;
+
+
         if(vdotr2 <0)
         {
 		    rho_ij = 0.5 * (rho + SphP[j].Density);
+          mu_ij = fac_mu * vdotr2 / r;	/* note: this is negative! */
+          //ArtViscPropConst is 3/2 in original implementation...
+          vsig = soundspeed_i + soundspeed_j - All.ArtViscPropConst*2.0 * mu_ij;
+
+	       if(vsig > maxSignalVel)
+	         maxSignalVel = vsig;
+
+
           visc = 0.25 * (alpha_visc + alpha_visc_j) * vsig * (-mu_ij) / rho_ij;
 #ifndef NOVISCOSITYLIMITER
           /* make sure that viscous acceleration is not too large */

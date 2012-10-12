@@ -83,6 +83,7 @@ void move_particles(int time0, int time1)
 
 	  dt_entr = (time1 - (P[i].Ti_begstep + P[i].Ti_endstep) / 2) * All.Timebase_interval;
 
+     //The value of Entropy in the brackets here is "predicted entropy"
 	  SphP[i].Pressure = (SphP[i].Entropy + SphP[i].DtEntropy * dt_entr) * pow(SphP[i].Density, GAMMA);
    
      //Save the "correct" timestep for use in the density loop.
