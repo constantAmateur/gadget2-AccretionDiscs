@@ -461,12 +461,14 @@ void density(void)
       if(SphP[i].Alpha < alphaloc)
       {
         SphP[i].Alpha = alphaloc;
+        SphP[i].DtAlpha = 0;
       }
       else
       {
         //Why by dt_drift?  Ultimately I'm not 100% certain and I'm doing it because it's what Cullen & Dehnen do.  Plus it seems reasonable.  Really you don't have much choice.  It can't be advanced with the forces, because it's needed before the forces are advanced.  The only other timestep to use is the previously calculated one, i.e. dt_drift
-        dt_alpha=(P[i].Ti_endstep-P[i].Ti_begstep)*All.Timebase_interval;
-        SphP[i].Alpha = alphaloc +(SphP[i].Alpha-alphaloc)*exp(-2*All.VariableViscDecayLength*SphP[i].MaxSignalVel*dt_alpha/SphP[i].Hsml);
+        //dt_alpha=(P[i].Ti_endstep-P[i].Ti_begstep)*All.Timebase_interval;
+        //SphP[i].Alpha = alphaloc +(SphP[i].Alpha-alphaloc)*exp(-2*All.VariableViscDecayLength*SphP[i].MaxSignalVel*dt_alpha/SphP[i].Hsml);
+        SphP[i].DtAlpha = (alphaloc-SphP[i].Alpha)*2*All.VariableViscDecayLength * SphP[i].MaxSignalVel / SphP[i].Hsml;
       }
 #endif
 

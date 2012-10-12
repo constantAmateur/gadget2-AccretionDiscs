@@ -580,7 +580,6 @@ extern struct sph_particle_data
   //Different artificial viscosity implementations
 #ifdef MMAV
   FLOAT Alpha;
-  FLOAT DtDrift;
   FLOAT AlphaOld;
 #endif
 #ifdef MMAV_DRIFTUPDATE
@@ -589,7 +588,7 @@ extern struct sph_particle_data
 #endif
 #ifdef CDAV
   FLOAT Alpha;
-  FLOAT DtDrift;
+  FLOAT DtAlpha;
   FLOAT AlphaOld;
   FLOAT DivVelOld;
   FLOAT GravAccelOld[3];

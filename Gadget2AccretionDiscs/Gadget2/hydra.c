@@ -466,6 +466,7 @@ void hydro_force(void)
    //Subtract the V^2 part
    diva = diva-(V[0]*V[0]+V[4]*V[4]+V[8]*V[8]+2*(V[1]*V[3]+V[2]*V[6]+V[5]*V[7]));
    //Alternative way of calculating it...
+   //dt_alpha = (P[i].Ti_endstep-P[i].Ti_begstep)*All.Timebase_interval;
    //if(SphP[i].DtDrift==0 || SphP[i].oldDivVel==0)
    //{
    //  diva=0;

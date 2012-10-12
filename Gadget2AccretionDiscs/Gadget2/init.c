@@ -175,7 +175,6 @@ void init(void)
       SphP[i].MaxSignalVel=0;
       SphP[i].DivVelOld=0;
       SphP[i].DivVel=0;
-      SphP[i].DtDrift=0;
       SphP[i].GravAccelOld[0]=SphP[i].GravAccelOld[1]=SphP[i].GravAccelOld[2]=0;
 #endif
 #if defined MMAV_DRIFTUPDATE || defined CDAV_DRIFTUPDATE
