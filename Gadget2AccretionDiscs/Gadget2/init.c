@@ -167,18 +167,17 @@ void init(void)
 #ifdef SINK_PARTICLES
       SphP[i].AccretionTarget = 0; 
 #endif
-#if defined MMAV_DRIFTUPDATE || defined MMAV
+#if defined MMAV
       SphP[i].Alpha=All.VariableViscAlphaMin;
+      SphP[i].DtAlpha=0;
 #endif
-#if defined CDAV_DRIFTUPDATE || defined CDAV
+#if defined CDAV
       SphP[i].Alpha=0;
+      SphP[i].DtAlpha=0;
       SphP[i].MaxSignalVel=0;
       SphP[i].DivVelOld=0;
       SphP[i].DivVel=0;
       SphP[i].GravAccelOld[0]=SphP[i].GravAccelOld[1]=SphP[i].GravAccelOld[2]=0;
-#endif
-#if defined MMAV_DRIFTUPDATE || defined CDAV_DRIFTUPDATE
-      SphP[i].DtAlpha=0;
 #endif
       if(RestartFlag == 0)
 	{

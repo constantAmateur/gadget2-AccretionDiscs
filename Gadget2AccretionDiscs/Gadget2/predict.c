@@ -86,21 +86,7 @@ void move_particles(int time0, int time1)
      //The value of Entropy in the brackets here is "predicted entropy"
 	  SphP[i].Pressure = (SphP[i].Entropy + SphP[i].DtEntropy * dt_entr) * pow(SphP[i].Density, GAMMA);
    
-#if defined MMAV_DRIFTUPDATE
-    SphP[i].Alpha += SphP[i].DtAlpha * dt_drift;
-#endif
-#ifdef CDAV_DRIFTUPDATE
-    //Do the "replacement" step here, alpha_loc in DtAlpha
-    if(SphP[i].Alpha < SphP[i].DtAlpha)
-    {
-      SphP[i].Alpha = SphP[i].DtAlpha;
-    }
-    else
-    {
-      SphP[i].Alpha = SphP[i].DtAlpha + (SphP[i].Alpha-SphP[i].DtAlpha)*exp(-2*All.VariableViscDecayLength*SphP[i].CDAVSignalVel*dt_drift/SphP[i].Hsml);
-    }
-#endif
-#if defined CDAV
+#if defined MMAV || defined CDAV
     SphP[i].Alpha += SphP[i].DtAlpha * dt_drift;
 #endif
 	}

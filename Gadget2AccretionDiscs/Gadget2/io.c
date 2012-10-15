@@ -356,7 +356,7 @@ void fill_write_buffer(enum iofields blocknr, int *startindex, int pc, int type)
       for(n = 0; n < pc; pindex++)
         if(P[pindex].Type == type)
         {
-#if defined MMAV || defined CDAV || defined CDAV_DRIFTUPDATE || defined MMAV_DRIFTUPDATE
+#if defined MMAV || defined CDAV
           *fp++ = SphP[pindex].Alpha;
 #else
           *fp++ = All.ArtBulkViscConst;

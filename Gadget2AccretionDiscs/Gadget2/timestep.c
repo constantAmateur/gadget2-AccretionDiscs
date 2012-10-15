@@ -41,8 +41,8 @@ void advance_and_find_timesteps(void)
 #ifdef MAKEGLASS
   double disp, dispmax, globmax, dmean, fac, disp2sum, globdisp2sum;
 #endif
-#ifdef MMAV_DRIFTUPDATE
-  double soundspeed, tau, f_fac,fac_mu;
+#ifdef MMAV
+  double soundspeed, f_fac,fac_mu;
 #endif
 
   t0 = second();
@@ -267,7 +267,7 @@ void advance_and_find_timesteps(void)
 	      dt_hydrokick = get_hydrokick_factor(tstart, tend);
 	      dt_gravkick2 = get_gravkick_factor(P[i].Ti_endstep, tend);
 	      dt_hydrokick2 = get_hydrokick_factor(P[i].Ti_endstep, tend);
-#ifdef MMAV_DRIFTUPDATE
+#ifdef MMAV
          fac_mu= pow(All.Time, 3 * (GAMMA -1 )/2) /All.Time;
 #endif
 	    }
@@ -275,7 +275,7 @@ void advance_and_find_timesteps(void)
 	    {
 	      dt_entr = dt_gravkick = dt_hydrokick = (tend - tstart) * All.Timebase_interval;
 	      dt_gravkick2 = dt_hydrokick2 = dt_entr2 = (tend - P[i].Ti_endstep) * All.Timebase_interval;
-#ifdef MMAV_DRIFTUPDATE
+#ifdef MMAV
          fac_mu=1.0;
 #endif
 	    }
@@ -294,7 +294,7 @@ void advance_and_find_timesteps(void)
 
 	  if(P[i].Type == 0)	/* SPH stuff */
 	    {
-#ifdef MMAV_DRIFTUPDATE
+#ifdef MMAV
 	      soundspeed  = sqrt(GAMMA * SphP[i].Pressure / SphP[i].Density);
 #ifndef NK_AV
 #ifdef NOBALSARA
@@ -302,21 +302,15 @@ void advance_and_find_timesteps(void)
 #else
 	      f_fac = fabs(SphP[i].DivVel) / (fabs(SphP[i].DivVel) + SphP[i].CurlVel +
                                         0.0001 * soundspeed / SphP[i].Hsml/fac_mu);
+         //Soundspeed being 0 really screws up everything...
+         if(soundspeed==0 && SphP[i].DivVel==0 && SphP[i].CurlVel==0)
+           f_fac=0.0;
 #endif
 #else
          f_fac = (( 1.0 / SphP[i].NumN) * SphP[i].NumNK);
 #endif
-         //Soundspeed being 0 really screws up everything...
-         if(soundspeed==0 && SphP[i].DivVel==0 && SphP[i].CurlVel==0)
-           f_fac=0.0;
-         //Move the factor of 1/soundspped into the asignment of dtalpha in case it's 0
-	      tau = 0.5 * SphP[i].Hsml / All.VariableViscDecayLength;
-         //printf("Tau: h= %g, c_s = %g\n",SphP[i].Hsml,soundspeed);
-         //printf("f_fac: curlvel= %g, fac_mu = %g\n",SphP[i].CurlVel,fac_mu);
-         //printf("The initial value of alpha is %g\n",SphP[i].Alpha);
-	      SphP[i].DtAlpha = f_fac*dmax(-SphP[i].DivVel, 0) * (All.ArtBulkViscConst - SphP[i].Alpha) - (soundspeed*(SphP[i].Alpha - All.VariableViscAlphaMin))/tau;
-         //printf("divv = %g, f_fac = %g, tau=%g\n",SphP[i].DivVel,f_fac,tau);
-         //printf("The initial value of Dtalpha is %g\n",SphP[i].DtAlpha);
+         //Tau is expanded and included in the expression below
+	      SphP[i].DtAlpha = f_fac*dmax(-SphP[i].DivVel, 0) * (All.ArtBulkViscConst - SphP[i].Alpha) + ((All.VariableViscAlphaMin - SphP[i].Alpha)*soundspeed*2*All.VariableViscDecayLength)/SphP[i].Hsml;
 #endif
 #ifndef NONINTERACTING_GAS
 	      for(j = 0; j < 3; j++)

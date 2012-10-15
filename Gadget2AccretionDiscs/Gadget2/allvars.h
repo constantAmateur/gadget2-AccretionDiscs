@@ -290,10 +290,10 @@ extern struct global_data_all_processes
 
   double ArtBulkViscConst;      /*!< Sets the parameter \f$\alpha\f$ of the artificial viscosity.  When variable artificial viscosity is on, this is AlphaMax */
   double ArtViscPropConst;      /* In the artificial viscosity formulation beta /prop alpha, this is the constant of proportionality.  Set to 3/2 in the original code */
-#if defined MMAV || defined MMAV_DRIFTUPDATE || defined CDAV || defined CDAV_DRIFTUPDATE
+#if defined MMAV || defined CDAV
   double VariableViscDecayLength;  /* The "l" value which sets how quickly the artificial viscosity decays back to zero in the absence of any source terms.  Can be thought of as the number of smoothing lengths over which Art Visc decays.  Typically .1*/
 #endif
-#if defined MMAV || defined MMAV_DRIFTUPDATE
+#if defined MMAV || defined CDAV
   double VariableViscAlphaMin;   /* Minimum value of artificial viscosity */
 #endif
 #if defined BETA_COOLING || defined NK_AV || defined ADD_CENTRAL_GRAVITY
@@ -580,35 +580,19 @@ extern struct sph_particle_data
   //Different artificial viscosity implementations
 #ifdef MMAV
   FLOAT Alpha;
-  FLOAT AlphaOld;
-#endif
-#ifdef MMAV_DRIFTUPDATE
-  FLOAT Alpha;
   FLOAT DtAlpha;
 #endif
 #ifdef CDAV
   FLOAT Alpha;
   FLOAT DtAlpha;
-  FLOAT AlphaOld;
-  FLOAT DivVelOld;
-  FLOAT GravAccelOld[3];
   FLOAT D[9];
   FLOAT E[9];
   FLOAT T[6];
   FLOAT R;
-#endif
-#ifdef CDAV_DRIFTUPDATE
-  FLOAT Alpha;
-  FLOAT DtAlpha;
-  FLOAT gradRho[3];
-  FLOAT D[9];
-  FLOAT T[9];
-  FLOAT E[9];
-  FLOAT oldAccel[3];
-  FLOAT oldDivVel;
-  FLOAT R;
-  FLOAT DtDrift;
-  FLOAT CDAVSignalVel;
+  FLOAT AlphaOld;         //Because the calculation of all the necessary qunatities are done in the density loop, which might have to be repeated, we need to make sure that the evaluation routines always act on the same Alpha each time the density loop is repeated.  To ensure this, we need a temporary store for each particle, which is what this is.
+  FLOAT GravAccelOld[3];  //Gravitational acceleration is calculated before the hydro loop, so we need to save the old value of the acceleration somewhere for use in calculating div.a
+  FLOAT DivVelOld;  //This is only needed for testing div.a or if we are calculating div.a from the difference in div.v directly.
+
 #endif
 #ifdef PRICE_GRAV_SOFT
   FLOAT Zeta;             /* The factor needed to calculate the grav softening correction */
@@ -826,9 +810,6 @@ extern struct densdata_out
   FLOAT T[6];
   FLOAT R;
 #endif
-#ifdef CDAV_DRIFTUPDATE
-  FLOAT gradRho[3];
-#endif
 #ifdef VAR_H_TEST
   FLOAT htest_f[3];
   FLOAT htest_g;
@@ -852,13 +833,8 @@ extern struct hydrodata_in
   int   Timestep;
   int   Task;
   int   Index;
-#if defined MMAV || defined CDAV || defined CDAV_DRIFTUPDATE || defined MMAV_DRIFTUPDATE
+#if defined MMAV || defined CDAV
   FLOAT Alpha;
-#endif
-#ifdef CDAV_DRIFTUPDATE
-  FLOAT oldAccel[3];
-  FLOAT divvsign;
-  FLOAT gradRho[3];
 #endif
 #ifdef SINK_PARTICLES
   int AccretionTarget;
@@ -881,13 +857,6 @@ extern struct hydrodata_out
   FLOAT MaxSignalVel;
 #ifdef NK_AV
   int NumN,NumNK;         //Counters for the number of neighbours and non-keplerian neighbours
-#endif
-#ifdef CDAV_DRIFTUPDATE
-  FLOAT T[9];
-  FLOAT D[9];
-  FLOAT E[9];
-  FLOAT R;
-  FLOAT CDAVSignalVel;
 #endif
 #ifdef VAR_H_TEST
   FLOAT htest_t;

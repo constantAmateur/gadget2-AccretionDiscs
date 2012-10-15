@@ -590,12 +590,11 @@ void read_parameter_file(char *fname)
       addr[nt] = &All.ArtViscPropConst;
       id[nt++] = DOUBLE;
 
-#if defined MMAV || defined MMAV_DRIFTUPDATE || defined CDAV || defined CDAV_DRIFTUPDATE
+#if defined MMAV || defined CDAV
       strcpy(tag[nt], "VariableViscDecayLength");
       addr[nt] = &All.VariableViscDecayLength;
       id[nt++] = DOUBLE;
-#endif
-#if defined MMAV || defined MMAV_DRIFTUPDATE
+
       strcpy(tag[nt], "VariableViscAlphaMin");
       addr[nt] = &All.VariableViscAlphaMin;
       id[nt++] = DOUBLE;

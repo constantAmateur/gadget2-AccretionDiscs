@@ -68,12 +68,6 @@ void density(void)
   double Tinv[6],V[9],fac,dt_alpha,alphaloc;
   double divv,diva,xi,A;
 #endif
-#ifdef CDAV_DRIFTUPDATE
-  int k;
-#endif
-#ifdef MMAV
-  double soundspeed,f_fac,tau;
-#endif
 
 #ifdef PERIODIC
   boxSize = All.BoxSize;
@@ -102,7 +96,7 @@ void density(void)
   for(n = 0, NumSphUpdate = 0; n < N_gas; n++)
     {
       SphP[n].Left = SphP[n].Right = 0;
-#if defined CDAV || defined MMAV
+#if defined CDAV
       SphP[n].AlphaOld=-1;
 #endif
 
@@ -296,12 +290,6 @@ void density(void)
                }
                SphP[place].R += DensDataPartialResult[source].R;
 #endif
-#ifdef CDAV_DRIFTUPDATE
-               for(k=0;k<3;k++)
-               {
-                 SphP[place].gradRho[k] += DensDataPartialResult[source].gradRho[k];
-               }
-#endif
 #ifdef VAR_H_TEST
                for(k=0;k<3;k++)
                {
@@ -341,14 +329,6 @@ void density(void)
 	    {
 		SphP[i].DhsmlDensityFactor =
 		  1 / (1 + SphP[i].Hsml * SphP[i].DhsmlDensityFactor / (NUMDIMS * SphP[i].Density));
-#ifdef CDAV_DRIFTUPDATE
-      for(k=0;k<3;k++)
-      {
-        SphP[i].gradRho[k] *= SphP[i].DhsmlDensityFactor;
-        //Need to store this to calculate E in the next loop
-        SphP[i].oldAccel[k] = SphP[i].HydroAccel[k]+P[i].GravAccel[k];
-      }
-#endif
 #ifdef PRICE_GRAV_SOFT
       SphP[i].Zeta = -SphP[i].Hsml * SphP[i].Zeta / ( NUMDIMS * SphP[i].Density);
 #endif
@@ -415,10 +395,6 @@ void density(void)
       //}
       //diva=A;
       SphP[i].DivVel = divv;
-      SphP[i].DivVelOld=divv;
-      SphP[i].GravAccelOld[0]=P[i].GravAccel[0];
-      SphP[i].GravAccelOld[1]=P[i].GravAccel[1];
-      SphP[i].GravAccelOld[2]=P[i].GravAccel[2];
 
 #ifdef NOBALSARA
       xi=1;
@@ -428,12 +404,13 @@ void density(void)
       xi *= xi;
       //The added bit is tr(S.S^T)
       //This is just a temp variable, not really A
-      A=V[0]*V[0]+V[4]*V[4]+V[8]*V[8] + 
+      A=(V[0]*V[0]+V[4]*V[4]+V[8]*V[8]) + 
         0.5*((V[1]+V[3])*(V[1]+V[3])+(V[2]+V[6])*(V[2]+V[6])+(V[5]+V[7])*(V[5]+V[7])) -
-        divv*divv/3;
+        (divv*divv/3);
+      //If this is true, xi=0 already...
       if(xi+A!=0)
       {
-        xi /= xi+A;
+        xi = xi/(xi+A);
       }
 #endif
       //Now calculate A_i
@@ -465,40 +442,9 @@ void density(void)
       }
       else
       {
-        //Why by dt_drift?  Ultimately I'm not 100% certain and I'm doing it because it's what Cullen & Dehnen do.  Plus it seems reasonable.  Really you don't have much choice.  It can't be advanced with the forces, because it's needed before the forces are advanced.  The only other timestep to use is the previously calculated one, i.e. dt_drift
-        //dt_alpha=(P[i].Ti_endstep-P[i].Ti_begstep)*All.Timebase_interval;
         //SphP[i].Alpha = alphaloc +(SphP[i].Alpha-alphaloc)*exp(-2*All.VariableViscDecayLength*SphP[i].MaxSignalVel*dt_alpha/SphP[i].Hsml);
         SphP[i].DtAlpha = (alphaloc-SphP[i].Alpha)*2*All.VariableViscDecayLength * SphP[i].MaxSignalVel / SphP[i].Hsml;
       }
-#endif
-
-#ifdef MMAV
-	   soundspeed  = sqrt(GAMMA * SphP[i].Pressure / SphP[i].Density);
-#ifdef NOBALSARA
-      f_fac = 1.0;
-#else
-	   f_fac = fabs(SphP[i].DivVel) / (fabs(SphP[i].DivVel) + SphP[i].CurlVel +
-                                        0.0001 * soundspeed / SphP[i].Hsml);
-#endif
-      //Soundspeed being 0 really screws up everything...
-      if(soundspeed==0 && SphP[i].DivVel==0 && SphP[i].CurlVel==0)
-      {
-        f_fac=0.0;
-      }
-      //Move the factor of 1/soundspped into the asignment of dtalpha in case it's 0
-	   tau = 0.5 * SphP[i].Hsml / All.VariableViscDecayLength;
-      //If this isn't the first time we're doing this loop for this particle...
-      if(SphP[i].AlphaOld==-1)
-      {
-        SphP[i].AlphaOld=SphP[i].Alpha;
-      }
-      else
-      {
-        SphP[i].Alpha=SphP[i].AlphaOld;
-        //printf("Redoing the loop! Resetting alpha to %g from %g.\n",SphP[i].AlphaOld,SphP[i].Alpha);
-      }
-      //Advance immediately in time.  See the CD block for why dt_drift...
-      SphP[i].Alpha += (P[i].Ti_endstep-P[i].Ti_begstep)*All.Timebase_interval*(f_fac*dmax(-SphP[i].DivVel, 0) * (All.ArtBulkViscConst - SphP[i].Alpha) + (soundspeed*(All.VariableViscAlphaMin - SphP[i].Alpha))/tau);
 #endif
 
 
@@ -675,10 +621,6 @@ void density_evaluate(int target, int mode)
   double R,divvsign;
   FLOAT *acc;
 #endif
-#ifdef CDAV_DRIFTUPDATE
-  int i;
-  double gradRho[3];
-#endif
 #ifdef VAR_H_TEST
   double htest_f[3],htest_g;
 #endif
@@ -846,17 +788,12 @@ void density_evaluate(int target, int mode)
 		  rotv[0] += fac * (dz * dvy - dy * dvz);
 		  rotv[1] += fac * (dx * dvz - dz * dvx);
 		  rotv[2] += fac * (dy * dvx - dx * dvy);
-#ifdef CDAV_DRIFTUPDATE
-        gradRho[0] += fac *dx;
-        gradRho[1] += fac *dy;
-        gradRho[2] += fac *dz;
-#endif
 
 #ifdef CDAV
         dax = acc[0] - SphP[j].HydroAccel[0]-P[j].GravAccel[0];
         day = acc[1] - SphP[j].HydroAccel[1]-P[j].GravAccel[1];
         daz = acc[2] - SphP[j].HydroAccel[2]-P[j].GravAccel[2];
-        //The factors of h are irrelevant as they appear in both D and T and so will cancel each other out
+        //The factors of h in fac are irrelevant as they appear in both D and T and so will cancel each other out
         D[0] += fac * (dvx*dx);
         D[1] += fac * (dvx*dy);
         D[2] += fac * (dvx*dz);
@@ -916,12 +853,6 @@ void density_evaluate(int target, int mode)
       }
       SphP[target].R=R;
 #endif
-#ifdef CDAV_DRIFTUPDATE
-      for(i=0;i<3;i++)
-      {
-        SphP[target].gradRho[i]=gradRho[i];
-      }
-#endif
 #ifdef VAR_H_TEST
       for(i=0;i<3;i++)
       {
@@ -953,12 +884,6 @@ void density_evaluate(int target, int mode)
         DensDataResult[target].E[i]=E[i];
       }
       DensDataResult[target].R = R;
-#endif
-#ifdef CDAV_DRIFTUPDATE
-      for(i=0;i<3;i++)
-      {
-        DensDataResult[target].gradRho[i]=gradRho[i];
-      }
 #endif
 #ifdef VAR_H_TEST
       for(i=0;i<3;i++)
