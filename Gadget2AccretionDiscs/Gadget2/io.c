@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <math.h>
 #include <mpi.h>
 #include <errno.h>
@@ -96,9 +95,9 @@ void savepositions(int num)
   fill_Tab_IO_Labels();
   
   if(All.NumFilesPerSnapshot > 1)
-    sprintf(buf, "%s%s_%03d.%d", All.OutputDir, All.SnapshotFileBase, num, filenr);
+    sprintf(buf, "%s%s_%04d.%d", All.OutputDir, All.SnapshotFileBase, num, filenr);
   else
-    sprintf(buf, "%s%s_%03d", All.OutputDir, All.SnapshotFileBase, num);
+    sprintf(buf, "%s%s_%04d", All.OutputDir, All.SnapshotFileBase, num);
   
   ngroups = All.NumFilesPerSnapshot / All.NumFilesWrittenInParallel;
   if((All.NumFilesPerSnapshot % All.NumFilesWrittenInParallel))
