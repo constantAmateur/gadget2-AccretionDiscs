@@ -470,12 +470,10 @@ void destroy_doomed_particles(void)
           dposztot += P[j].Pos[2] * P[j].Mass;
           dmasstot += P[j].Mass;
           
-#ifdef NO_COM_MOVE
           //Move position to centre of mass
           P[j].Pos[0] = dposxtot / dmasstot;
           P[j].Pos[1] = dposytot / dmasstot;	  	  
           P[j].Pos[2] = dposztot / dmasstot;	  
-#endif
           
           dt_grav = All.Timebase_interval * (All.Ti_Current - (P[j].Ti_begstep + P[j].Ti_endstep) / 2);
           dt_grav=0;
@@ -483,17 +481,13 @@ void destroy_doomed_particles(void)
           dvelytot += P[j].Mass * (P[j].Vel[1] + dt_grav * P[j].GravAccel[1]);	  
           dvelztot += P[j].Mass * (P[j].Vel[2] + dt_grav * P[j].GravAccel[2]);
           
-#ifdef NO_MOM_MOVE
           //Add momentum to the sink
           P[j].Vel[0] = dvelxtot / dmasstot - dt_grav * P[j].GravAccel[0];
           P[j].Vel[1] = dvelytot / dmasstot - dt_grav * P[j].GravAccel[1];
           P[j].Vel[2] = dvelztot / dmasstot - dt_grav * P[j].GravAccel[2];	  	  
-#endif
           
-#ifdef NO_MASS_MOVE
           //Add the mass to the sink
           P[j].Mass = dmasstot;
-#endif
           printf("ID %d task %d accnum %d final vel, pos, mass: (%e|%e|%e), (%e|%e|%e), %e\n", \
                  P[j].ID,ThisTask,AccNum,P[j].Vel[0],P[j].Vel[1],P[j].Vel[2], \
                  P[j].Pos[0],P[j].Pos[1],P[j].Pos[2],P[j].Mass);

@@ -45,6 +45,10 @@ void advance_and_find_timesteps(void)
   double soundspeed, f_fac,fac_mu;
 #endif
 
+  if(NtypeLocal[1]){
+    printf("At start of kick accel, pos,vel,accel,mass (%g|%g|%g), (%g|%g|%g), (%g|%g|%g), %g\n",P[N_gas].Pos[0],P[N_gas].Pos[1],P[N_gas].Pos[2],P[N_gas].Vel[0],P[N_gas].Vel[1],P[N_gas].Vel[2],P[N_gas].GravAccel[0],P[N_gas].GravAccel[1],P[N_gas].GravAccel[2],P[N_gas].Mass);
+  }
+
   t0 = second();
 
   if(All.ComovingIntegrationOn)
@@ -439,6 +443,9 @@ void advance_and_find_timesteps(void)
 
   t1 = second();
   All.CPU_TimeLine += timediff(t0, t1);
+  if(NtypeLocal[1]){
+    printf("At end of kick accel, pos,vel,accel,mass (%g|%g|%g), (%g|%g|%g), (%g|%g|%g), %g\n",P[N_gas].Pos[0],P[N_gas].Pos[1],P[N_gas].Pos[2],P[N_gas].Vel[0],P[N_gas].Vel[1],P[N_gas].Vel[2],P[N_gas].GravAccel[0],P[N_gas].GravAccel[1],P[N_gas].GravAccel[2],P[N_gas].Mass);
+  }
 }
 
 
