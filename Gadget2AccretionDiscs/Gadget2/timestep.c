@@ -45,9 +45,10 @@ void advance_and_find_timesteps(void)
   double soundspeed, f_fac,fac_mu;
 #endif
 
-  if(NtypeLocal[1]){
-    printf("At start of kick accel, pos,vel,accel,mass (%g|%g|%g), (%g|%g|%g), (%g|%g|%g), %g\n",P[N_gas].Pos[0],P[N_gas].Pos[1],P[N_gas].Pos[2],P[N_gas].Vel[0],P[N_gas].Vel[1],P[N_gas].Vel[2],P[N_gas].GravAccel[0],P[N_gas].GravAccel[1],P[N_gas].GravAccel[2],P[N_gas].Mass);
+  if(NumPart-N_gas){
+    printf("At start of kick, we have NtypeLocal[1] = %d, NumPart = %d, N_gas = %d and particle %d (type %d) has pos,vel,accel,mass: (%e|%e|%e), (%e|%e|%e), (%e|%e|%e), %e\n",NtypeLocal[1],NumPart,N_gas,P[N_gas].ID,P[N_gas].Type,P[N_gas].Pos[0],P[N_gas].Pos[1],P[N_gas].Pos[2],P[N_gas].Vel[0],P[N_gas].Vel[1],P[N_gas].Vel[2],P[N_gas].GravAccel[0],P[N_gas].GravAccel[1],P[N_gas].GravAccel[2],P[N_gas].Mass);
   }
+
 
   t0 = second();
 
@@ -443,9 +444,10 @@ void advance_and_find_timesteps(void)
 
   t1 = second();
   All.CPU_TimeLine += timediff(t0, t1);
-  if(NtypeLocal[1]){
-    printf("At end of kick accel, pos,vel,accel,mass (%g|%g|%g), (%g|%g|%g), (%g|%g|%g), %g\n",P[N_gas].Pos[0],P[N_gas].Pos[1],P[N_gas].Pos[2],P[N_gas].Vel[0],P[N_gas].Vel[1],P[N_gas].Vel[2],P[N_gas].GravAccel[0],P[N_gas].GravAccel[1],P[N_gas].GravAccel[2],P[N_gas].Mass);
+  if(NumPart-N_gas){
+    printf("At end of kick, we have NtypeLocal[1] = %d, NumPart = %d, N_gas = %d and particle %d (type %d) has pos,vel,accel,mass: (%e|%e|%e), (%e|%e|%e), (%e|%e|%e), %e\n",NtypeLocal[1],NumPart,N_gas,P[N_gas].ID,P[N_gas].Type,P[N_gas].Pos[0],P[N_gas].Pos[1],P[N_gas].Pos[2],P[N_gas].Vel[0],P[N_gas].Vel[1],P[N_gas].Vel[2],P[N_gas].GravAccel[0],P[N_gas].GravAccel[1],P[N_gas].GravAccel[2],P[N_gas].Mass);
   }
+
 }
 
 

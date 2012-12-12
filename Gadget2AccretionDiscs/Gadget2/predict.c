@@ -257,48 +257,51 @@ void identify_doomed_particles(void)
       //do
       //{
       //}while(startnode>=0);
-      num = ngb_treefind_variable(&pos[0],sinkrad,&startnode); /* find all particles inside the sink radius */
-      
-      for(n = 0; n < num; n++){
-        k = Ngblist[n];
+      do
+      {
+        num = ngb_treefind_variable(&pos[0],sinkrad,&startnode); /* find all particles inside the sink radius */
         
-        //We want to only mark particles for accretion if they haven't been marked previously
-        if(P[k].Type == 0 && k < N_gas && (SphP[k].AccretionTarget ==0 || SphP[k].AccretionTarget==-2)){  /* only accrete gas particles! */
-          for(seperation = 0,j = 0; j < 3; j++) seperation += (P[k].Pos[j]-pos[j]) * (P[k].Pos[j]-pos[j]);  /* r.r */  
-          seperation = sqrt(seperation);   /* r */
+        for(n = 0; n < num; n++){
+          k = Ngblist[n];
           
-          if(seperation < sinkrad){
+          //We want to only mark particles for accretion if they haven't been marked previously
+          if(P[k].Type == 0 && k < N_gas && (SphP[k].AccretionTarget ==0 || SphP[k].AccretionTarget==-2)){  /* only accrete gas particles! */
+            for(seperation = 0,j = 0; j < 3; j++) seperation += (P[k].Pos[j]-pos[j]) * (P[k].Pos[j]-pos[j]);  /* r.r */  
+            seperation = sqrt(seperation);   /* r */
+            
+            if(seperation < sinkrad){
 
-            if(verbose) printf("Particle ID %d is within accretion radius of sink ID %d from %d %f %f\n",P[k].ID,list_sink_ID[i],ThisTask,seperation,sinkrad);
-            for(relvel = 0,j = 0; j < 3; j++)
-              relvel += (P[k].Vel[j]-vel[j]) * (P[k].Vel[j]-vel[j]);      /* v.v */
-            
-            
-            relenergy = .5*relvel - All.G*list_sink_mass[i]/seperation;
-            
-            if(notestflag) relenergy = -1;  
-            if(relenergy < 0){
-              for(little_L = 0, j = 0;j < 3; j++) little_L +=pow( (P[k].Pos[(j+1)%3] - pos[(j+1)%3]) * (P[k].Vel[(j+2)%3] - vel[(j+2)%3]) -  \
-                                                                 (P[k].Pos[(j+2)%3] - pos[(j+2)%3]) * (P[k].Vel[(j+1)%3] - vel[(j+1)%3]) ,2); /* L.L */
-              if(notestflag) little_L = KeplerL2 /2;								  						
-              //This test may be a bit too stringent, turn it off if things aren't being accreted
-              if(little_L < KeplerL2){             
-                if(SphP[k].AccretionTarget == 0){  /* if targeted by another sink, it doesn't get accreted */ 
-                  SphP[k].AccretionTarget = list_sink_ID[i];       /* if bound in E and L, accrete it */
-                  /*AccreteList[AccNum] = k;*/
-                  if(verbose) printf("Particle ID %d provisionally scheduled for destruction onto sink ID %d from %d %f %f\n",P[k].ID,list_sink_ID[i],ThisTask,seperation,sinkrad);
-                  /*AccNum++; */ 
-                }
-/* let it go until it's unambiguously targeted */                
-                else{
-                  SphP[k].AccretionTarget = -2; /* if targeted by multiple sinks, it doesn't get accreted by any*/
-                  if(verbose) printf("%d targeted twice! sink ID %d from %d %f %f\n",P[k].ID,list_sink_ID[i],ThisTask,seperation,sinkrad);
-                }
-              }  
+              if(verbose) printf("Particle ID %d is within accretion radius of sink ID %d from %d %f %f\n",P[k].ID,list_sink_ID[i],ThisTask,seperation,sinkrad);
+              for(relvel = 0,j = 0; j < 3; j++)
+                relvel += (P[k].Vel[j]-vel[j]) * (P[k].Vel[j]-vel[j]);      /* v.v */
+              
+              
+              relenergy = .5*relvel - All.G*list_sink_mass[i]/seperation;
+              
+              if(notestflag) relenergy = -1;  
+              if(relenergy < 0){
+                for(little_L = 0, j = 0;j < 3; j++) little_L +=pow( (P[k].Pos[(j+1)%3] - pos[(j+1)%3]) * (P[k].Vel[(j+2)%3] - vel[(j+2)%3]) -  (P[k].Pos[(j+2)%3] - pos[(j+2)%3]) * (P[k].Vel[(j+1)%3] - vel[(j+1)%3]) ,2); /* L.L */
+                if(notestflag) little_L = KeplerL2 /2;								  						
+                //This test may be a bit too stringent, turn it off if things aren't being accreted
+                if(little_L < KeplerL2){             
+                  if(SphP[k].AccretionTarget == 0){  /* if targeted by another sink, it doesn't get accreted */ 
+                    SphP[k].AccretionTarget = list_sink_ID[i];       /* if bound in E and L, accrete it */
+                    /*AccreteList[AccNum] = k;*/
+                    if(verbose) printf("Particle ID %d provisionally scheduled for destruction onto sink ID %d from %d %f %f\n",P[k].ID,list_sink_ID[i],ThisTask,seperation,sinkrad);
+                    /*AccNum++; */ 
+                  }
+/* let   it go until it's unambiguously targeted */                
+                  else{
+                    SphP[k].AccretionTarget = -2; /* if targeted by multiple sinks, it doesn't get accreted by any*/
+                    if(verbose) printf("%d targeted twice! sink ID %d from %d %f %f\n",P[k].ID,list_sink_ID[i],ThisTask,seperation,sinkrad);
+                  }
+                }  
+              }
             }
-          }
-        }	       	      	     
-      } 
+          }	       	      	     
+        } 
+      }
+      while(startnode>=0);
     }
   }
   
@@ -437,6 +440,7 @@ void destroy_doomed_particles(void)
         if(SphP[i].AccretionTarget == target){
           accflag = 1;
           
+          //Should we be using the predicted velocities here?
           dvelx += P[i].Mass*P[i].Vel[0];
           dvely += P[i].Mass*P[i].Vel[1];	    
           dvelz += P[i].Mass*P[i].Vel[2];	
@@ -470,7 +474,7 @@ void destroy_doomed_particles(void)
           dposztot += P[j].Pos[2] * P[j].Mass;
           dmasstot += P[j].Mass;
           
-#ifdef NO_COM_MOVE
+#ifndef NO_COM_MOVE
           //Move position to centre of mass
           P[j].Pos[0] = dposxtot / dmasstot;
           P[j].Pos[1] = dposytot / dmasstot;	  	  
@@ -479,18 +483,19 @@ void destroy_doomed_particles(void)
           
           dt_grav = All.Timebase_interval * (All.Ti_Current - (P[j].Ti_begstep + P[j].Ti_endstep) / 2);
           dt_grav=0;
+          //Should this be predicted velocity?
           dvelxtot += P[j].Mass * (P[j].Vel[0] + dt_grav * P[j].GravAccel[0]);	  
           dvelytot += P[j].Mass * (P[j].Vel[1] + dt_grav * P[j].GravAccel[1]);	  
           dvelztot += P[j].Mass * (P[j].Vel[2] + dt_grav * P[j].GravAccel[2]);
           
-#ifdef NO_MOM_MOVE
+#ifndef NO_MOM_MOVE
           //Add momentum to the sink
           P[j].Vel[0] = dvelxtot / dmasstot - dt_grav * P[j].GravAccel[0];
           P[j].Vel[1] = dvelytot / dmasstot - dt_grav * P[j].GravAccel[1];
           P[j].Vel[2] = dvelztot / dmasstot - dt_grav * P[j].GravAccel[2];	  	  
 #endif
           
-#ifdef NO_MASS_MOVE
+#ifndef NO_MASS_MOVE
           //Add the mass to the sink
           P[j].Mass = dmasstot;
 #endif
