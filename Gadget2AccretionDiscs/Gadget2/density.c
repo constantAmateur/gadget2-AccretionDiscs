@@ -327,6 +327,7 @@ void density(void)
 	{
 	  if(P[i].Ti_endstep == All.Ti_Current)
 	    {
+         {
 		SphP[i].DhsmlDensityFactor =
 		  1 / (1 + SphP[i].Hsml * SphP[i].DhsmlDensityFactor / (NUMDIMS * SphP[i].Density));
 #ifdef PRICE_GRAV_SOFT
@@ -446,6 +447,7 @@ void density(void)
         SphP[i].DtAlpha = (alphaloc-SphP[i].Alpha)*2*All.VariableViscDecayLength * SphP[i].MaxSignalVel / SphP[i].Hsml;
       }
 #endif
+         }
 
 
 	      /* now check whether we had enough neighbours */

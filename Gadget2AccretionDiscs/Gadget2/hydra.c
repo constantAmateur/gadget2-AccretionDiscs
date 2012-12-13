@@ -744,7 +744,8 @@ void hydro_evaluate(int target, int mode)
 		    rho_ij = 0.5 * (rho + SphP[j].Density);
           mu_ij = fac_mu * vdotr2 / r;	/* note: this is negative! */
           //ArtViscPropConst is 3/2 in original implementation...
-          vsig = soundspeed_i + soundspeed_j - All.ArtViscPropConst*2.0 * mu_ij;
+          //vsig = soundspeed_i + soundspeed_j - All.ArtViscPropConst*2.0 * mu_ij;
+          vsig = soundspeed_i + soundspeed_j - 3 * mu_ij;
 
 	       if(vsig > maxSignalVel)
 	         maxSignalVel = vsig;
@@ -781,7 +782,8 @@ void hydro_evaluate(int target, int mode)
 		    {
 		      mu_ij = fac_mu * vdotr2 / r;	/* note: this is negative! */
             //ArtViscPropConst is 3/2 in original implementation...
-            vsig = soundspeed_i + soundspeed_j - All.ArtViscPropConst*2.0 * mu_ij;
+            //vsig = soundspeed_i + soundspeed_j - All.ArtViscPropConst*2.0 * mu_ij;
+            vsig = soundspeed_i + soundspeed_j - 3 * mu_ij;
 
 		      if(vsig > maxSignalVel)
 			maxSignalVel = vsig;
