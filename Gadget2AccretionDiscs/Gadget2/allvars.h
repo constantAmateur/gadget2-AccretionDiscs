@@ -289,8 +289,8 @@ extern struct global_data_all_processes
   double MaxNumNgbDeviation;    /*!< Maximum allowed deviation neighbour number */
 
   double ArtBulkViscConst;      /*!< Sets the parameter \f$\alpha\f$ of the artificial viscosity.  When variable artificial viscosity is on, this is AlphaMax */
-  double ArtViscPropConst;      /* In the artificial viscosity formulation beta /prop alpha, this is the constant of proportionality.  Set to 3/2 in the original code */
 #if defined MMAV || defined CDAV
+  double ArtViscPropConst;      /* In the artificial viscosity formulation beta /prop alpha, this is the constant of proportionality.  Set to 3/2 in the original code */
   double VariableViscDecayLength;  /* The "l" value which sets how quickly the artificial viscosity decays back to zero in the absence of any source terms.  Can be thought of as the number of smoothing lengths over which Art Visc decays.  Typically .1*/
 #endif
 #if defined MMAV || defined CDAV

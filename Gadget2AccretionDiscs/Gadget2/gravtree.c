@@ -46,8 +46,8 @@ void gravity_tree(void)
   MPI_Status status;
 #endif
 #ifdef ADD_CENTRAL_GRAVITY
-  int numsinks,root,globalroot;
-  double starData[4],r,h,h_inv,h3_inv,u;
+  int numsinks,root,globalroot,liveStar,liveStarGlobal;
+  double starData[4],r,h,h_inv,h3_inv,u,starGrav[3],starGravGlobal[3];
 #endif
 
   /* set new softening lengths */
@@ -370,6 +370,12 @@ void gravity_tree(void)
   numsinks=NumPart - N_gas;
   starData[0]=starData[1]=starData[2]=starData[3]= -1.0;
   root=-1;
+  liveStar=0;
+  for(i=0; i<3; i++)
+  {
+    starGrav[i]=0.0;
+    starGravGlobal[i]=0.0;
+  }
   for(i=0; i<numsinks;i++)
   {
     if(P[i+N_gas].ID==All.StarID)
@@ -379,44 +385,106 @@ void gravity_tree(void)
       starData[2] = P[i+N_gas].Pos[2];
       starData[3] = P[i+N_gas].Mass;
       root = ThisTask;
+      //Do we need to update the star's gravity?
+      if(P[i+N_gas].Ti_endstep == All.Ti_Current)
+      {
+        liveStar=1;
+      }
     }
   }
   /* Get the node that has the data */
   MPI_Barrier(MPI_COMM_WORLD);
   MPI_Allreduce(&root,&globalroot,1,MPI_INT,MPI_MAX,MPI_COMM_WORLD);
+  MPI_Allreduce(&liveStar,&liveStarGlobal,1,MPI_INT,MPI_MAX,MPI_COMM_WORLD);
   /* Broadcast it. */
   MPI_Bcast(&starData,4,MPI_DOUBLE,globalroot,MPI_COMM_WORLD);
   //We have the central object mass and position, add its gravity, it is softened by the type 1 softening...
   for(i = 0; i < NumPart; i++)
   {
     h = All.ForceSoftening[1];
-    if(P[i].Ti_endstep == All.Ti_Current && P[i].ID!=All.StarID)
+    if(P[i].ID != All.StarID)
     {
-      r=sqrt((starData[0]-P[i].Pos[0])*(starData[0]-P[i].Pos[0])+(starData[1]-P[i].Pos[1])*(starData[1]-P[i].Pos[1])+(starData[2]-P[i].Pos[2])*(starData[2]-P[i].Pos[2]));
-      if(r >= h)
+      //If we need to update the star's gravity we need to calculate this for all particles...
+      if(liveStarGlobal)
       {
-	       fac = 1 / (r*r*r);
-      }
-      else
-      {
-  	     h_inv = 1.0 / h;
-  	     h3_inv = h_inv * h_inv * h_inv;
-  	     u = r * h_inv;
-  	     if(u < 0.5)
+        r=sqrt((starData[0]-P[i].Pos[0])*(starData[0]-P[i].Pos[0])+(starData[1]-P[i].Pos[1])*(starData[1]-P[i].Pos[1])+(starData[2]-P[i].Pos[2])*(starData[2]-P[i].Pos[2]));
+        if(r >= h)
         {
-  	       fac = h3_inv * (10.666666666667 + u * u * (32.0 * u - 38.4));
+	         fac = 1 / (r*r*r);
         }
-  	     else
+        else
         {
-  	       fac = h3_inv * (21.333333333333 - 48.0 * u +
-  			   38.4 * u * u - 10.666666666667 * u * u * u - 0.066666666667 / (u * u * u));
+  	       h_inv = 1.0 / h;
+  	       h3_inv = h_inv * h_inv * h_inv;
+  	       u = r * h_inv;
+  	       if(u < 0.5)
+          {
+  	         fac = h3_inv * (10.666666666667 + u * u * (32.0 * u - 38.4));
+          }
+  	       else
+          {
+  	         fac = h3_inv * (21.333333333333 - 48.0 * u +
+  		  	   38.4 * u * u - 10.666666666667 * u * u * u - 0.066666666667 / (u * u * u));
+          }
+        }
+        for(j=0;j<3;j++)
+        {
+          starGrav[j]+=(P[i].Pos[j]-starData[j])*All.G*P[i].Mass*fac;
         }
       }
-      for(j=0;j<3;j++)
+      //Otherwise, just give the star's gravity to those that need it
+      if(P[i].Ti_endstep == All.Ti_Current)
       {
-        P[i].GravAccel[j]+=(starData[j]-P[i].Pos[j])*All.G*starData[3]*fac;
+        r=sqrt((starData[0]-P[i].Pos[0])*(starData[0]-P[i].Pos[0])+(starData[1]-P[i].Pos[1])*(starData[1]-P[i].Pos[1])+(starData[2]-P[i].Pos[2])*(starData[2]-P[i].Pos[2]));
+        if(r >= h)
+        {
+	         fac = 1 / (r*r*r);
+        }
+        else
+        {
+  	       h_inv = 1.0 / h;
+  	       h3_inv = h_inv * h_inv * h_inv;
+  	       u = r * h_inv;
+  	       if(u < 0.5)
+          {
+  	         fac = h3_inv * (10.666666666667 + u * u * (32.0 * u - 38.4));
+          }
+  	       else
+          {
+  	         fac = h3_inv * (21.333333333333 - 48.0 * u +
+  		  	   38.4 * u * u - 10.666666666667 * u * u * u - 0.066666666667 / (u * u * u));
+          }
+        }
+        for(j=0;j<3;j++)
+        {
+          P[i].GravAccel[j]+=(starData[j]-P[i].Pos[j])*All.G*starData[3]*fac;
+        }
       }
     }
+  }
+  //Gather the forces of the pcles on the star together and add them to the star
+  if(liveStarGlobal)
+  {
+    //Finally we need to combine all the starGrav values for the star...
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Allreduce(&starGrav[0],&starGravGlobal[0],1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+    MPI_Allreduce(&starGrav[1],&starGravGlobal[1],1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+    MPI_Allreduce(&starGrav[2],&starGravGlobal[2],1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+    //Finally, find the actual star and add it
+    if(globalroot==ThisTask)
+    {
+      for(i=0; i<numsinks;i++)
+      {
+        if(P[i+N_gas].ID==All.StarID)
+        {
+          for(j=0;j<3;j++)
+          {
+            P[i+N_gas].GravAccel[j]+=starGravGlobal[j];
+          }
+        }
+      }
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
   }
 #endif
 

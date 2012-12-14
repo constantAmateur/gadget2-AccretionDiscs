@@ -41,7 +41,7 @@ static double boxSize_Z, boxHalf_Z;
 #endif
 #endif
 
-#if defined BETA_COOLING || defined NK_AV
+#ifdef BETA_COOLING
 static double starData[7];
 #endif
 
@@ -63,8 +63,6 @@ void hydro_force(void)
   MPI_Status status;
 #ifdef BETA_COOLING
   double tdyn,E,R,v2;
-#endif
-#if defined BETA_COOLING || defined NK_AV
   int numsinks,root,globalroot;
 #endif
 
@@ -120,7 +118,7 @@ void hydro_force(void)
     ntot += numlist[i];
   free(numlist);
 
-#if defined BETA_COOLING || defined NK_AV
+#ifdef BETA_COOLING
   /* Get the position and mass of the central object and send it to everyone */
   numsinks=NumPart - N_gas;
   starData[0]=starData[1]=starData[2]=starData[3]= -1.0;
@@ -199,12 +197,6 @@ void hydro_force(void)
 		    HydroDataIn[nexport].F1 = fabs(SphP[i].DivVel) /
 		      (fabs(SphP[i].DivVel) + SphP[i].CurlVel +
 		       0.0001 * soundspeed_i / SphP[i].Hsml / fac_mu);
-#endif
-#ifdef VAR_H_TEST
-          HydroDataIn[nexport].htest_f[0] = SphP[i].htest_f[0];
-          HydroDataIn[nexport].htest_f[1] = SphP[i].htest_f[1];
-          HydroDataIn[nexport].htest_f[2] = SphP[i].htest_f[2];
-          HydroDataIn[nexport].htest_g = SphP[i].htest_g;
 #endif
 
 		    HydroDataIn[nexport].Index = i;
@@ -342,13 +334,6 @@ void hydro_force(void)
 
 			  if(SphP[place].MaxSignalVel < HydroDataPartialResult[source].MaxSignalVel)
 			    SphP[place].MaxSignalVel = HydroDataPartialResult[source].MaxSignalVel;
-#ifdef NK_AV
-           SphP[place].NumNK += HydroDataPartialResult[source].NumNK;
-           SphP[place].NumN += HydroDataPartialResult[source].NumN;
-#endif
-#ifdef VAR_H_TEST
-           SphP[place].htest_t += HydroDataPartialResult[source].htest_t;
-#endif
 			}
 		    }
 		}
@@ -412,14 +397,6 @@ void hydro_force(void)
 	      SphP[i].HydroAccel[k] = 0;
 	  }
 #endif
-#ifdef VAR_H_TEST
-   //Multiply by the final factors
-   SphP[i].htest_t *= SphP[i].Hsml*SphP[i].DhsmlDensityFactor/(NUMDIMS*SphP[i].Density*SphP[i].Density);
-   if(ThisTask==1)
-   {
-     printf("The relative contribution of the extra term (term/div.v) to div.v is %g\n",SphP[i].htest_t/SphP[i].DivVel);
-   }
-#endif
       }
 
   tend = second();
@@ -448,32 +425,20 @@ void hydro_evaluate(int target, int mode)
 {
   int j, k, n, timestep, startnode, numngb;
   FLOAT *pos, *vel;
-  FLOAT mass, h_i, dhsmlDensityFactor, rho, pressure, f1, alpha_visc;
+  FLOAT mass, h_i, dhsmlDensityFactor, rho, pressure, f1, f2;
 #if defined MMAV || defined CDAV
-  FLOAT alpha_visc_j;
-#else
-  FLOAT f2;
-  alpha_visc = All.ArtBulkViscConst;
+  FLOAT alpha_visc,alpha_visc_j;
+  double tmp;
 #endif
-#ifdef VAR_H_TEST
-  double wk_i,rinv,htest_term[3],htest_t;
-  FLOAT *htest_f;
-  FLOAT htest_g;
-#endif
-
   double acc[3], dtEntropy, maxSignalVel;
   double dx, dy, dz, dvx, dvy, dvz;
   double h_i2, hinv, hinv4;
   double p_over_rho2_i, p_over_rho2_j, soundspeed_i, soundspeed_j;
   double hfc, dwk_i, vdotr, vdotr2, visc, mu_ij, rho_ij, vsig;
   double h_j, dwk_j, r, r2, u, hfc_visc;
-  double tmp;
+
 #ifndef NOVISCOSITYLIMITER
   double dt;
-#endif
-#ifdef NK_AV
-  double v2r_i,v2r_j,r2_j,v2_j,NK_test;
-  int numN,numNK;
 #endif
 #ifdef PRICE_GRAV_SOFT
   double zeta=0;
@@ -503,10 +468,6 @@ void hydro_evaluate(int target, int mode)
 	(fabs(SphP[target].DivVel) + SphP[target].CurlVel +
 	 0.0001 * soundspeed_i / SphP[target].Hsml / fac_mu);
 #endif
-#ifdef VAR_H_TEST
-      htest_f = SphP[target].htest_f;
-      htest_g = SphP[target].htest_g;
-#endif
     }
   else
     {
@@ -526,10 +487,6 @@ void hydro_evaluate(int target, int mode)
 #ifdef PRICE_GRAV_SOFT
       zeta = HydroDataGet[target].Zeta;
 #endif
-#ifdef VAR_H_TEST
-      htest_f = HydroDataGet[target].htest_f;
-      htest_g = HydroDataGet[target].htest_g;
-#endif
     }
 
 
@@ -548,15 +505,6 @@ void hydro_evaluate(int target, int mode)
 #endif
   h_i2 = h_i * h_i;
   
-#ifdef NK_AV
-  //Calculate the local values
-  v2r_i = ((starData[4]-vel[0])*(starData[4]-vel[0])+(starData[5]-vel[1])*(starData[5]-vel[1])+(starData[6]-vel[2])*(starData[6]-vel[2]))*sqrt((starData[0]-pos[0])*(starData[0]-pos[0])+(starData[1]-pos[1])*(starData[1]-pos[1])+(starData[2]-pos[2])*(starData[2]-pos[2]));
-  numN=numNK=0;
-#endif
-
-#ifdef VAR_H_TEST
-  htest_t=0;
-#endif
 
   /* Now start the actual SPH computation for this particle */
   startnode = All.MaxPart;
@@ -614,64 +562,26 @@ void hydro_evaluate(int target, int mode)
 
 		  if(r2 < h_i2)
 		    {
-#ifdef NK_AV
-            numN++;
-            v2_j = ((starData[4]-SphP[j].VelPred[0])*(starData[4]-SphP[j].VelPred[0])+(starData[5]-SphP[j].VelPred[1])*(starData[5]-SphP[j].VelPred[1])+(starData[6]-SphP[j].VelPred[2])*(starData[6]-SphP[j].VelPred[2]));
-            r2_j = ((starData[0]-P[j].Pos[0])*(starData[0]-P[j].Pos[0])+(starData[1]-P[j].Pos[1])*(starData[1]-P[j].Pos[1])+(starData[2]-P[j].Pos[2])*(starData[2]-P[j].Pos[2]));
-            NK_test =fabs(((SphP[j].VelPred[0]-starData[4])*(P[j].Pos[0]-starData[0])+(SphP[j].VelPred[1]-starData[5])*(P[j].Pos[1]-starData[1])+(SphP[j].VelPred[2]-starData[6])*(P[j].Pos[2]-starData[2]))/sqrt(v2_j*r2_j));
-            v2r_j = v2_j * sqrt(r2_j);
-            //if(NK_test > All.NKtollerence || fabs(1-(v2r_i/v2r_j)) < All.NKtollerence)
-            if(fabs(1-(v2r_i/v2r_j)) < All.NKtollerence)
-            {
-              numNK++;
-              //printf("The particle had ratio %g and dot prod %g\n",NK_test,1-(v2r_i/v2r_j));
-            }
-#endif
 		      hinv = 1.0 / h_i;
 #ifndef  TWODIMS
 		      hinv4 = hinv * hinv * hinv * hinv;
 #else
 		      hinv4 = hinv * hinv * hinv / boxSize_Z;
-
 #endif
 		      u = r * hinv;
 		      if(u < 0.5)
             {
 			     dwk_i = hinv4 * u * (KERNEL_COEFF_3 * u - KERNEL_COEFF_4);
-#if defined VAR_H_TEST
-              wk_i = hinv*hinv*hinv*(KERNEL_COEFF_1+KERNEL_COEFF_2 * (u-1)*u*u);
-#endif
             }
 		      else
             {
 			     dwk_i = hinv4 * KERNEL_COEFF_6 * (1.0 - u) * (1.0 - u);
-#if defined VAR_H_TEST
-              wk_i = hinv*hinv*hinv*KERNEL_COEFF_5*(1.0 -u)*(1.0-u)*(1.0-u);
-#endif
             }
 		    }
 		  else
 		    {
 		      dwk_i = 0;
-#if defined VAR_H_TEST
-            wk_i = 0;
-#endif
 		    }
-#ifdef VAR_H_TEST
-        rinv=1/r;
-        hinv=1/h_i;
-        u=r*hinv;
-        htest_term[0]=-htest_f[0]*((NUMDIMS*wk_i*hinv)+htest_g*dwk_i*dx*rinv);
-        htest_term[1]=-htest_f[1]*((NUMDIMS*wk_i*hinv)+htest_g*dwk_i*dy*rinv);
-        htest_term[2]=-htest_f[2]*((NUMDIMS*wk_i*hinv)+htest_g*dwk_i*dz*rinv);
-        htest_t -= P[j].Mass*htest_g*dwk_i*rinv*(dvx*dx+dvy*dy+dvz*dz);
-        htest_t -= P[j].Mass*(dvx*htest_f[0]+dvy*htest_f[1]+dvz*htest_f[2])*(NUMDIMS*wk_i*hinv+dwk_i*u);
-        //htest_t += P[j].Mass*(htest_term[0]*dvx + htest_term[1]*dvy+htest_term[2]*dvz);
-        if(ThisTask==1)
-        {
-          //printf("Term_ab ~ (%g,%g,%g)\n",htest_term[0],htest_term[1],htest_term[2]);
-        }
-#endif
 
 		  if(r2 < h_j * h_j)
 		    {
@@ -692,7 +602,63 @@ void hydro_evaluate(int target, int mode)
 		      dwk_j = 0;
 		    }
 
-        //Each AV method is given a separate block.  At the end of the block hfc_visc should contain the magnitude of the viscous acceleration (divided by r) and dtEntropy should be updated.
+		  if(soundspeed_i + soundspeed_j > maxSignalVel)
+		    maxSignalVel = soundspeed_i + soundspeed_j;
+
+        //This is the standard AV block, unchanged from original GADGET...
+#ifndef CDAV
+#ifndef MMAV
+		  if(vdotr2 < 0)	/* ... artificial viscosity */
+		    {
+		      mu_ij = fac_mu * vdotr2 / r;	/* note: this is negative! */
+
+                      vsig = soundspeed_i + soundspeed_j - 3 * mu_ij;
+
+		      if(vsig > maxSignalVel)
+			maxSignalVel = vsig;
+
+		      rho_ij = 0.5 * (rho + SphP[j].Density);
+#ifdef NOBALSARA
+            f2 = 1.0;
+#else
+		      f2 =
+			fabs(SphP[j].DivVel) / (fabs(SphP[j].DivVel) + SphP[j].CurlVel +
+						0.0001 * soundspeed_j / fac_mu / SphP[j].Hsml);
+#endif
+
+		      visc = 0.25 * All.ArtBulkViscConst * vsig * (-mu_ij) / rho_ij * (f1 + f2);
+
+		      /* .... end artificial viscosity evaluation */
+#ifndef NOVISCOSITYLIMITER
+		      /* make sure that viscous acceleration is not too large */
+		      dt = imax(timestep, (P[j].Ti_endstep - P[j].Ti_begstep)) * All.Timebase_interval;
+		      if(dt > 0 && (dwk_i + dwk_j) < 0)
+			{
+			  visc = dmin(visc, 0.5 * fac_vsic_fix * vdotr2 /
+				      (0.5 * (mass + P[j].Mass) * (dwk_i + dwk_j) * r * dt));
+			}
+#endif
+		    }
+		  else
+		    visc = 0;
+
+         // if(ThisTask==1)
+         // {
+         //   printf("Default Visc is %g\n",visc);
+         // }
+
+		  p_over_rho2_j *= SphP[j].DhsmlDensityFactor;
+
+		  hfc_visc = 0.5 * P[j].Mass * visc * (dwk_i + dwk_j) / r;
+
+		  hfc = hfc_visc + P[j].Mass * (p_over_rho2_i * dwk_i + p_over_rho2_j * dwk_j) / r;
+
+		  acc[0] -= hfc * dx;
+		  acc[1] -= hfc * dy;
+		  acc[2] -= hfc * dz;
+		  dtEntropy += 0.5 * hfc_visc * vdotr2;
+#endif
+#endif
 //The block for CD Method
 //This block should only be used if you want to use the explicit CD form for the AV and for the signal velocity/dissipation
 //#if defined CDAV || defined CDAV_DRIFTUPDATE
@@ -736,12 +702,9 @@ void hydro_evaluate(int target, int mode)
 //#endif
 //Block for the MM method
 #if defined MMAV || defined CDAV
-        if(soundspeed_i+soundspeed_j >maxSignalVel)
-          maxSignalVel = soundspeed_i+soundspeed_j;
 
         if(vdotr2 <0)
         {
-		    rho_ij = 0.5 * (rho + SphP[j].Density);
           mu_ij = fac_mu * vdotr2 / r;	/* note: this is negative! */
           //ArtViscPropConst is 3/2 in original implementation...
           //vsig = soundspeed_i + soundspeed_j - All.ArtViscPropConst*2.0 * mu_ij;
@@ -750,19 +713,30 @@ void hydro_evaluate(int target, int mode)
 	       if(vsig > maxSignalVel)
 	         maxSignalVel = vsig;
 
+		    rho_ij = 0.5 * (rho + SphP[j].Density);
 
-          visc = 0.25 * (alpha_visc + alpha_visc_j) * vsig * (-mu_ij) / rho_ij;
+
+          //if(ThisTask==1)
+          //{
+          //  printf("Average Alpha is %g\n",.5*(alpha_visc+alpha_visc_j));
+          //}
+
+          //We don't just use the signal velocity here as we want to allow beta to be something other than 3/2 alpha.
+          visc = 0.25 * (alpha_visc + alpha_visc_j) * (soundspeed_i+soundspeed_j-2.0*All.ArtViscPropConst*mu_ij) * (-mu_ij) / rho_ij;
 #ifndef NOVISCOSITYLIMITER
           /* make sure that viscous acceleration is not too large */
 		    dt = imax(timestep, (P[j].Ti_endstep - P[j].Ti_begstep)) * All.Timebase_interval;
 		    if(dt > 0 && (dwk_i + dwk_j) < 0)
           {
+			  visc = dmin(visc, 0.5 * fac_vsic_fix * vdotr2 /
+				      (0.5 * (mass + P[j].Mass) * (dwk_i + dwk_j) * r * dt));
+
             //Limiter is designed to set the magnitude of the viscous acceleration to be no more than a quarter of the line of sight velocity connecting i and j, divided by dt
-            tmp=0.5*fac_vsic_fix * vdotr2 / (0.5 * (mass+P[j].Mass)*(dwk_i+dwk_j)*r*dt);
-            if(visc>tmp)
-            {
-              visc = tmp;
-            }
+            //tmp=0.5*fac_vsic_fix * vdotr2 / (0.5 * (mass+P[j].Mass)*(dwk_i+dwk_j)*r*dt);
+            //if(visc>tmp)
+            //{
+            //  visc = tmp;
+            //}
           }
 #endif
         }
@@ -770,60 +744,22 @@ void hydro_evaluate(int target, int mode)
         {
           visc=0;
         }
-		  hfc_visc = 0.5 * P[j].Mass * visc * (dwk_i + dwk_j) / r;
-        dtEntropy += 0.5 * hfc_visc*vdotr2;
-#endif
-//Block for the standard method
-#if !defined CDAV && !defined MMAV
-        if(soundspeed_i+soundspeed_j >maxSignalVel)
-          maxSignalVel = soundspeed_i+soundspeed_j;
+        //  if(ThisTask==1)
+        //  {
+        //    printf("MM Visc is %g\n",visc);
+        //  }
 
-		  if(vdotr2 < 0)	/* ... artificial viscosity */
-		    {
-		      mu_ij = fac_mu * vdotr2 / r;	/* note: this is negative! */
-            //ArtViscPropConst is 3/2 in original implementation...
-            //vsig = soundspeed_i + soundspeed_j - All.ArtViscPropConst*2.0 * mu_ij;
-            vsig = soundspeed_i + soundspeed_j - 3 * mu_ij;
-
-		      if(vsig > maxSignalVel)
-			maxSignalVel = vsig;
-
-		      rho_ij = 0.5 * (rho + SphP[j].Density);
-            //The standard thing...
-#ifdef NOBALSARA
-            f2=1.0;
-#else
-            f2 =
-          fabs(SphP[j].DivVel) / (fabs(SphP[j].DivVel) + SphP[j].CurlVel +
-                                  0.0001 * soundspeed_j / fac_mu / SphP[j].Hsml);
-#endif
-            visc = 0.25 * alpha_visc * vsig * (-mu_ij) / rho_ij * (f1 + f2);
-		      /* .... end artificial viscosity evaluation */
-#ifndef NOVISCOSITYLIMITER
-		      /* make sure that viscous acceleration is not too large */
-		      dt = imax(timestep, (P[j].Ti_endstep - P[j].Ti_begstep)) * All.Timebase_interval;
-		      if(dt > 0 && (dwk_i + dwk_j) < 0)
-			{
-           //Limiter is designed to set the magnitude of the viscous acceleration to be no more than a quarter of the line of sight velocity connecting i and j, divided by dt
-			  visc = dmin(visc, 0.5 * fac_vsic_fix * vdotr2 /
-				      (0.5 * (mass + P[j].Mass) * (dwk_i + dwk_j) * r * dt));
-			}
-#endif
-//End no viscosity limiter
-		    }
-		  else
-        {
-		    visc = 0;
-        }
-		  hfc_visc = 0.5 * P[j].Mass * visc * (dwk_i + dwk_j) / r;
-        dtEntropy += 0.5 * hfc_visc * vdotr2;
-#endif
-//End AV blocks.  Entropy updated, need to update acceleration after adding pressure terms
 		  p_over_rho2_j *= SphP[j].DhsmlDensityFactor;
+
+		  hfc_visc = 0.5 * P[j].Mass * visc * (dwk_i + dwk_j) / r;
+
 		  hfc = hfc_visc + P[j].Mass * (p_over_rho2_i * dwk_i + p_over_rho2_j * dwk_j) / r;
+
 		  acc[0] -= hfc * dx;
 		  acc[1] -= hfc * dy;
 		  acc[2] -= hfc * dz;
+		  dtEntropy += 0.5 * hfc_visc * vdotr2;
+#endif
 		}
 	    }
 	}
@@ -837,13 +773,6 @@ void hydro_evaluate(int target, int mode)
 	     SphP[target].HydroAccel[k] = acc[k];
       SphP[target].DtEntropy = dtEntropy;
       SphP[target].MaxSignalVel = maxSignalVel;
-#ifdef NK_AV
-      SphP[target].NumNK = numNK;
-      SphP[target].NumN = numN;
-#endif
-#ifdef VAR_H_TEST
-      SphP[target].htest_t =htest_t;
-#endif
     }
   else
     {
@@ -851,13 +780,6 @@ void hydro_evaluate(int target, int mode)
 	HydroDataResult[target].Acc[k] = acc[k];
       HydroDataResult[target].DtEntropy = dtEntropy;
       HydroDataResult[target].MaxSignalVel = maxSignalVel;
-#ifdef NK_AV
-      HydroDataResult[target].NumNK = numNK;
-      HydroDataResult[target].NumN = numN;
-#endif
-#ifdef VAR_H_TEST
-      HydroDataResult[target].htest_t = htest_t;
-#endif
     }
 }
 

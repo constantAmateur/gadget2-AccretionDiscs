@@ -586,11 +586,11 @@ void read_parameter_file(char *fname)
       addr[nt] = &All.MinGasTemp;
       id[nt++] = DOUBLE;
 
-//      strcpy(tag[nt], "ArtViscPropConst");
-//      addr[nt] = &All.ArtViscPropConst;
-//      id[nt++] = DOUBLE;
-
 #if defined MMAV || defined CDAV
+      strcpy(tag[nt], "ArtViscPropConst");
+      addr[nt] = &All.ArtViscPropConst;
+      id[nt++] = DOUBLE;
+
       strcpy(tag[nt], "VariableViscDecayLength");
       addr[nt] = &All.VariableViscDecayLength;
       id[nt++] = DOUBLE;
