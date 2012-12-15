@@ -380,6 +380,9 @@ void hydro_force(void)
    //tdyn=sqrt(-8.0*E*E*E)/(All.G*starData[3]*All.G*starData[3]);
    tdyn=sqrt(R*R*R/All.G/starData[3]);
    SphP[i].DtEntropy -= SphP[i].Entropy / All.CoolingRate / tdyn;
+#ifdef OUTPUTRADIATEDENERGY
+   SphP[i].DtRadiatedEntropy -= SphP[i].Entropy / All.CoolingRate / tdyn;
+#endif
 #endif
    //These values will be needed by the density loop the next time around...
    //Not done in the density loop since the density loop could in principal be run multiple times per particle and these values should only be set once to the final results...

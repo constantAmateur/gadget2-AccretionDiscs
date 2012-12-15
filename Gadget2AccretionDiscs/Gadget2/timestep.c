@@ -335,9 +335,19 @@ void advance_and_find_timesteps(void)
 	         hence temperature decreases by more than a factor 0.5 */
 
 	      if(SphP[i].DtEntropy * dt_entr > -0.5 * SphP[i].Entropy)
+         {
 		SphP[i].Entropy += SphP[i].DtEntropy * dt_entr;
+#if defined BETA_COOLING && defined OUTPUTRADIATEDENERGY
+      SphP[i].RadiatedEntropy += SphP[i].DtRadiatedEntropy * dt_entr;
+#endif
+         }
 	      else
+         {
+#if defined BETA_COOLING && defined OUTPUTRADIATEDENERGY
+      SphP[i].RadiatedEntropy += SphP[i].Entropy*0.5;
+#endif
 		SphP[i].Entropy *= 0.5;
+         }
 
 	      if(All.MinEgySpec)
 		{

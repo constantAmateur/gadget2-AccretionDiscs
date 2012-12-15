@@ -574,6 +574,12 @@ extern struct sph_particle_data
   FLOAT Rot[3];		        /*!< local velocity curl */
   FLOAT DhsmlDensityFactor;     /*!< correction factor needed in the equation of motion of the conservative entropy formulation of SPH */
   FLOAT MaxSignalVel;           /*!< maximum "signal velocity" occuring for this particle */
+#ifdef BETA_COOLING
+#ifdef OUTPUTRADIATEDENERGY
+  FLOAT DtRadiatedEntropy;   //If cooling is on and we want to know how much energy has been radiated away
+  FLOAT RadiatedEntropy;   //If cooling is on and we want to know how much energy has been radiated away
+#endif
+#endif
 #ifdef SINK_PARTICLES  
   int   AccretionTarget;        /*!< flag for accretion. equal to the index of the sink particle it's going to merge with. */
 #endif
@@ -596,14 +602,6 @@ extern struct sph_particle_data
 #endif
 #ifdef PRICE_GRAV_SOFT
   FLOAT Zeta;             /* The factor needed to calculate the grav softening correction */
-#endif
-#ifdef NK_AV
-  int NumN,NumNK;         //Counters for the number of neighbours and non-keplerian neighbours
-#endif
-#ifdef VAR_H_TEST
-  FLOAT htest_f[3];
-  FLOAT htest_t;
-  FLOAT htest_g;
 #endif
 }
  *SphP,                        	/*!< holds SPH particle data on local processor */
@@ -694,7 +692,7 @@ extern struct io_header
  header;                               /*!< holds header for snapshot files */
 
 
-#define IO_NBLOCKS 12   /*!< total number of defined information blocks for snapshot files.
+#define IO_NBLOCKS 13   /*!< total number of defined information blocks for snapshot files.
                              Must be equal to the number of entries in "enum iofields" */
 
 enum iofields           /*!< this enumeration lists the defined output blocks in snapshot files. Not all of them need to be present. */
@@ -711,6 +709,7 @@ enum iofields           /*!< this enumeration lists the defined output blocks in
   IO_DTENTR,
   IO_TSTP,
   IO_ALPHA,
+  IO_RAD_ENERGY,
 };
 
 

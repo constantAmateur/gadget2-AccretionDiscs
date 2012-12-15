@@ -365,6 +365,21 @@ void fill_write_buffer(enum iofields blocknr, int *startindex, int pc, int type)
 #endif
       break;
       
+    case IO_RAD_ENERGY:  /* radiated energy */
+#ifdef OUTPUTRADIATEDENERGY
+      for(n = 0; n < pc; pindex++)
+        if(P[pindex].Type == type)
+        {
+#ifdef BETA_COOLING
+          *fp++ = SphP[pindex].RadiatedEntropy / GAMMA_MINUS1 * pow(SphP[pindex].Density * a3inv, GAMMA_MINUS1);
+#else
+          *fp++ = 0.0;
+#endif
+          n++;
+        }
+#endif
+      break;
+
   }
   
   *startindex = pindex;
@@ -404,6 +419,7 @@ int get_bytes_per_blockelement(enum iofields blocknr)
     case IO_POT:
     case IO_DTENTR:
     case IO_ALPHA:
+    case IO_RAD_ENERGY:
     case IO_TSTP:
       bytes_per_blockelement = sizeof(float);
       break;
@@ -464,6 +480,7 @@ int get_values_per_blockelement(enum iofields blocknr)
     case IO_POT:
     case IO_DTENTR:
     case IO_ALPHA:
+    case IO_RAD_ENERGY:
     case IO_TSTP:
       values = 1;
       break;
@@ -528,6 +545,7 @@ int get_particles_in_block(enum iofields blocknr, int *typelist)
     case IO_RHO:
     case IO_HSML:
     case IO_ALPHA:
+    case IO_RAD_ENERGY:
     case IO_DTENTR:
       for(i = 1; i < 6; i++)
         typelist[i] = 0;
@@ -571,6 +589,11 @@ int blockpresent(enum iofields blocknr)
 
 #ifndef OUTPUTALPHA
   if(blocknr == IO_ALPHA)
+    return 0;
+#endif
+
+#ifndef OUTPUTRADIATEDENERGY
+  if(blocknr == IO_RAD_ENERGY)
     return 0;
 #endif
   
@@ -626,8 +649,12 @@ void fill_Tab_IO_Labels(void)
       strncpy(Tab_IO_Labels[IO_TSTP], "TSTP", 4);
       break;
     case IO_ALPHA:
-      strncpy(Tab_IO_Labels[IO_ALPHA], "APLHA", 4);
+      strncpy(Tab_IO_Labels[IO_ALPHA], "ALPH", 4);
       break;
+    case IO_RAD_ENERGY:
+      strncpy(Tab_IO_Labels[IO_RAD_ENERGY], "RADU", 4);
+      break;
+
   }
 }
 
@@ -678,6 +705,10 @@ void get_dataset_name(enum iofields blocknr, char *buf)
     case IO_ALPHA:
       strcpy(buf, "ArtificialViscosity");
       break;
+    case IO_RAD_ENERGY:
+      strcpy(buf, "RadiatedEnergy");
+      break;
+
   }
 }
 
@@ -796,6 +827,9 @@ void write_file(char *fname, int writeTask, int lastTask)
 #endif
 #ifdef OUTPUTALPHA
   header.extra_output += 16;
+#endif
+#ifdef OUTPUTRADIATEDENERGY
+  header.extra_output += 32;
 #endif
   
   header.num_files = All.NumFilesPerSnapshot;
