@@ -382,7 +382,7 @@ void hydro_force(void)
    SphP[i].DtEntropy -= SphP[i].Entropy / All.CoolingRate / tdyn;
 #ifdef OUTPUTRADIATEDENERGY
    //We want to track the ENERGY radiated, not the ENTROPY
-   SphP[i].DtRadiatedEnergy += (SphP[i].Entropy*pow(SphP[i].Density,GAMMA_MINUS1)) / All.CoolingRate / tdyn / (GAMMA_MINUS1);
+   SphP[i].DtRadiatedEnergy = (SphP[i].Entropy*pow(SphP[i].Density,GAMMA_MINUS1)) / (All.CoolingRate * tdyn * (GAMMA_MINUS1));
 #endif
 #endif
    //These values will be needed by the density loop the next time around...
