@@ -338,7 +338,9 @@ void advance_and_find_timesteps(void)
          {
 		SphP[i].Entropy += SphP[i].DtEntropy * dt_entr;
 #if defined BETA_COOLING && defined OUTPUTRADIATEDENERGY
-      SphP[i].RadiatedEnergy += (SphP[i].RadiatedEnergy * dt_entr);
+      SphP[i].RadiatedEnergy += (SphP[i].DtRadiatedEnergy * dt_entr);
+      if(ThisTask==1)
+        printf("Particle has radiated %g energy\n", SphP[i].RadiatedEnergy);
 #endif
          }
 	      else
