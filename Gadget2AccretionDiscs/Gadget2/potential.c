@@ -399,7 +399,7 @@ void compute_potential(void)
 	        -3.2 + 0.066666666667 / u + u * u * (10.666666666667 +
 	     				   u * (-16.0 + u * (9.6 - 2.133333333333 * u)));
         }
-	     P[i].Potential = -1.0*All.G*starData[3] * h_inv * wp;
+	     P[i].Potential = All.G*starData[3] * h_inv * wp;
       }
     }
   }
