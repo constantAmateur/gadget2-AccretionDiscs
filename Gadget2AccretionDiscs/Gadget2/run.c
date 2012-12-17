@@ -453,7 +453,7 @@ void energy_statistics(void)
           "%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
           All.Time, SysState.EnergyTot, SysState.EnergyInt, SysState.EnergyRad,
           SysState.EnergyPot, SysState.EnergyKin, SysState.CenterOfMass[0],
-          SysState.CenterOfMas[1], SysState.CenterOfmas[2], SysState.Momentum[0],
+          SysState.CenterOfMass[1], SysState.CenterOfMass[2], SysState.Momentum[0],
           SysState.Momentum[1], SysState.Momentum[2], SysState.AngMomentum[0],
           SysState.AngMomentum[1], SysState.AngMomentum[2], SysState.MassComp[0],
           SysState.MassComp[1], SysState.MassComp[2], SysState.MassComp[3],

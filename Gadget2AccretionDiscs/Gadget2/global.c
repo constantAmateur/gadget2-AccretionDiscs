@@ -108,7 +108,9 @@ void compute_global_quantities_of_system(void)
 #endif
 	  sys.EnergyIntComp[0] += P[i].Mass * egyspec;
 #ifdef EXTRA_STATS
+#if defined BETA_COOLING && defined OUTPUTRADIATEDENERGY
      sys.EnergyRadComp[0] += P[i].Mass * SphP[i].RadiatedEnergy;
+#endif
 #endif
 	}
 
@@ -155,7 +157,7 @@ void compute_global_quantities_of_system(void)
 
       SysState.Mass = SysState.EnergyKin = SysState.EnergyPot = SysState.EnergyInt = SysState.EnergyTot = 0;
 #ifdef EXTRA_STATS
-      SysState.EnergyRadComp = 0;
+      SysState.EnergyRad = 0;
 #endif
 
 
