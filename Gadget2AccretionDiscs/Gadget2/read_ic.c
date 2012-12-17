@@ -233,6 +233,7 @@ void empty_read_buffer(enum iofields blocknr, int offset, int pc, int type)
     case IO_DTENTR:
     case IO_TSTP:
     case IO_ALPHA:
+    case IO_RAD_ENERGY:
       break;
   }
 }

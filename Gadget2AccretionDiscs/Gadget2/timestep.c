@@ -338,13 +338,13 @@ void advance_and_find_timesteps(void)
          {
 		SphP[i].Entropy += SphP[i].DtEntropy * dt_entr;
 #if defined BETA_COOLING && defined OUTPUTRADIATEDENERGY
-      SphP[i].RadiatedEntropy += SphP[i].DtRadiatedEntropy * dt_entr;
+      SphP[i].RadiatedEnergy += (SphP[i].RadiatedEnergy * dt_entr);
 #endif
          }
 	      else
          {
 #if defined BETA_COOLING && defined OUTPUTRADIATEDENERGY
-      SphP[i].RadiatedEntropy += SphP[i].Entropy*0.5;
+      SphP[i].RadiatedEnergy += (SphP[i].Entropy*0.5 * pow(SphP[i].Density,GAMMA_MINUS1)) / (GAMMA_MINUS1);
 #endif
 		SphP[i].Entropy *= 0.5;
          }

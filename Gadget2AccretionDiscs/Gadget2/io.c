@@ -371,7 +371,7 @@ void fill_write_buffer(enum iofields blocknr, int *startindex, int pc, int type)
         if(P[pindex].Type == type)
         {
 #ifdef BETA_COOLING
-          *fp++ = SphP[pindex].RadiatedEntropy / GAMMA_MINUS1 * pow(SphP[pindex].Density * a3inv, GAMMA_MINUS1);
+          *fp++ = SphP[pindex].RadiatedEnergy;
 #else
           *fp++ = 0.0;
 #endif

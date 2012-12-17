@@ -240,6 +240,7 @@ void find_next_sync_point_and_drift(void)
       //Don't want to accrete here, want to do that when we expect it.
       All.AccreteFlag=0;
 #endif
+      //Get weird segfaults otherwise, it's possible this screws stuff up though...
       domain_Decomposition();
 #ifdef SINK_PARTICLES
       All.AccreteFlag=1;
@@ -443,6 +444,21 @@ void energy_statistics(void)
 
   if(ThisTask == 0)
     {
+#ifdef EXTRA_STATS
+      //New stats format with more useful information...
+      //Format is Time, Total, Internal, Radiated, Potential, Kinetic
+      //Centre of Mass_xyz, Linear Momentum_xyz, Angular Momentum_xyz
+      //Mass in type_0-6
+      fprintf(FdEnergy,
+          "%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+          All.Time, SysState.EnergyTot, SysState.EnergyInt, SysState.EnergyRad,
+          SysState.EnergyPot, SysState.EnergyKin, SysState.CenterOfMass[0],
+          SysState.CenterOfMas[1], SysState.CenterOfmas[2], SysState.Momentum[0],
+          SysState.Momentum[1], SysState.Momentum[2], SysState.AngMomentum[0],
+          SysState.AngMomentum[1], SysState.AngMomentum[2], SysState.MassComp[0],
+          SysState.MassComp[1], SysState.MassComp[2], SysState.MassComp[3],
+          SysState.MassComp[4], SysState.MassComp[5]);
+#else
       fprintf(FdEnergy,
 	      "%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	      All.Time, SysState.EnergyInt, SysState.EnergyPot, SysState.EnergyKin, SysState.EnergyIntComp[0],
@@ -454,6 +470,7 @@ void energy_statistics(void)
 	      SysState.EnergyPotComp[5], SysState.EnergyKinComp[5], SysState.MassComp[0],
 	      SysState.MassComp[1], SysState.MassComp[2], SysState.MassComp[3], SysState.MassComp[4],
 	      SysState.MassComp[5]);
+#endif
 
       fflush(FdEnergy);
     }

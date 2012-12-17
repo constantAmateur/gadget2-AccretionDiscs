@@ -399,9 +399,9 @@ void gravity_tree(void)
   /* Broadcast it. */
   MPI_Bcast(&starData,4,MPI_DOUBLE,globalroot,MPI_COMM_WORLD);
   //We have the central object mass and position, add its gravity, it is softened by the type 1 softening...
+  h = All.ForceSoftening[1];
   for(i = 0; i < NumPart; i++)
   {
-    h = All.ForceSoftening[1];
     if(P[i].ID != All.StarID)
     {
       //If we need to update the star's gravity we need to calculate this for all particles...
@@ -484,8 +484,8 @@ void gravity_tree(void)
         }
       }
     }
-    MPI_Barrier(MPI_COMM_WORLD);
   }
+  MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
 

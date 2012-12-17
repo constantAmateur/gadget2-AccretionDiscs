@@ -166,8 +166,8 @@ void init(void)
       SphP[i].DtEntropy = 0;
 #ifdef BETA_COOILNG
 #ifdef OUTPUTRADIATEDENERGY
-      SphP[i].DtRadiatedEntropy = 0;
-      SphP[i].RadiatedEntropy = 0;
+      SphP[i].DtRadiatedEnergy = 0;
+      SphP[i].RadiatedEnergy = 0;
 #endif
 #endif
 #ifdef SINK_PARTICLES

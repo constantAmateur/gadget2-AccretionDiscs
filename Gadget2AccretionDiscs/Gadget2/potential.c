@@ -22,6 +22,10 @@
 void compute_potential(void)
 {
   int i;
+#ifdef ADD_CENTRAL_GRAVITY
+  int numsinks,root,globalroot;
+  double starData[4],h,h_inv,r,u,wp;
+#endif
 
 #ifndef NOGRAVITY
   long long ntot, ntotleft;
@@ -346,5 +350,60 @@ void compute_potential(void)
 #else
   for(i = 0; i < NumPart; i++)
     P[i].Potential = 0;
+#ifdef ADD_CENTRAL_GRAVITY
+  numsinks=NumPart - N_gas;
+  starData[0]=starData[1]=starData[2]=starData[3]= -1.0;
+  root=-1;
+  for(i=0; i<numsinks;i++)
+  {
+    if(P[i+N_gas].ID==All.StarID)
+    {
+      starData[0] = P[i+N_gas].Pos[0];
+      starData[1] = P[i+N_gas].Pos[1];
+      starData[2] = P[i+N_gas].Pos[2];
+      starData[3] = P[i+N_gas].Mass;
+      root = ThisTask;
+    }
+  }
+  /* Get the node that has the data */
+  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Allreduce(&root,&globalroot,1,MPI_INT,MPI_MAX,MPI_COMM_WORLD);
+  /* Broadcast it. */
+  MPI_Bcast(&starData,4,MPI_DOUBLE,globalroot,MPI_COMM_WORLD);
+  h = All.ForceSoftening[1];
+  h_inv = 1.0 /h;
+  for(i=0; i<NumPart; i++)
+  {
+    //The potential will all be stored in those particles around the star
+    if(P[i].ID == All.StarID)
+    {
+      P[i].Potential = 0.0;
+    }
+    else
+    {
+      r=sqrt((starData[0]-P[i].Pos[0])*(starData[0]-P[i].Pos[0])+(starData[1]-P[i].Pos[1])*(starData[1]-P[i].Pos[1])+(starData[2]-P[i].Pos[2])*(starData[2]-P[i].Pos[2]));
+      if(r>=h)
+      {
+        P[i].Potential = -1.0*All.G * (starData[3] / r);
+      }
+      else
+      {
+        u = r * h_inv;
+	     if(u < 0.5)
+        {
+	       wp = -2.8 + u * u * (5.333333333333 + u * u * (6.4 * u - 9.6));
+        }
+	     else
+        {
+	      wp =
+	        -3.2 + 0.066666666667 / u + u * u * (10.666666666667 +
+	     				   u * (-16.0 + u * (9.6 - 2.133333333333 * u)));
+        }
+	     P[i].Potential = -1.0*All.G*starData[3] * h_inv * wp;
+      }
+    }
+  }
+  MPI_Barrier(MPI_COMM_WORLD);
+#endif
 #endif
 }

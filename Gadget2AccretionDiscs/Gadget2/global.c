@@ -28,6 +28,7 @@ void compute_global_quantities_of_system(void)
   double dt_entr, dt_gravkick, dt_hydrokick;
 
 
+  //We want to add the extra little bits needed to output the radiated energy, total angular/linear momentum...
 
   if(All.ComovingIntegrationOn)
     {
@@ -44,6 +45,9 @@ void compute_global_quantities_of_system(void)
   for(n = 0; n < 6; n++)
     {
       sys.MassComp[n] = sys.EnergyKinComp[n] = sys.EnergyPotComp[n] = sys.EnergyIntComp[n] = 0;
+#ifdef EXTRA_STATS
+      sys.EnergyRadComp[n]=0;
+#endif
 
       for(j = 0; j < 4; j++)
 	sys.CenterOfMassComp[n][j] = sys.MomentumComp[n][j] = sys.AngMomentumComp[n][j] = 0;
@@ -53,7 +57,12 @@ void compute_global_quantities_of_system(void)
     {
       sys.MassComp[P[i].Type] += P[i].Mass;
 
+      //Potential is only stored in the orbiting particles if we have self gravity turned off, so we don't need the factor of a half
+#ifdef ADD_CENTRAL_GRAVITY
+      sys.EnergyPotComp[P[i].Type] += P[i].Mass * P[i].Potential / a1;
+#else
       sys.EnergyPotComp[P[i].Type] += 0.5 * P[i].Mass * P[i].Potential / a1;
+#endif
 
       if(All.ComovingIntegrationOn)
 	{
@@ -98,6 +107,9 @@ void compute_global_quantities_of_system(void)
 	  egyspec = entr / (GAMMA_MINUS1) * pow(SphP[i].Density / a3, GAMMA_MINUS1);
 #endif
 	  sys.EnergyIntComp[0] += P[i].Mass * egyspec;
+#ifdef EXTRA_STATS
+     sys.EnergyRadComp[0] += P[i].Mass * SphP[i].RadiatedEnergy;
+#endif
 	}
 
 
@@ -119,6 +131,9 @@ void compute_global_quantities_of_system(void)
   MPI_Reduce(&sys.EnergyPotComp[0], &SysState.EnergyPotComp[0], 6, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
   MPI_Reduce(&sys.EnergyIntComp[0], &SysState.EnergyIntComp[0], 6, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
   MPI_Reduce(&sys.EnergyKinComp[0], &SysState.EnergyKinComp[0], 6, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+#ifdef EXTRA_STATS
+  MPI_Reduce(&sys.EnergyRadComp[0], &SysState.EnergyRadComp[0], 6, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+#endif
   MPI_Reduce(&sys.MomentumComp[0][0], &SysState.MomentumComp[0][0], 6 * 4, MPI_DOUBLE, MPI_SUM, 0,
 	     MPI_COMM_WORLD);
   MPI_Reduce(&sys.AngMomentumComp[0][0], &SysState.AngMomentumComp[0][0], 6 * 4, MPI_DOUBLE, MPI_SUM, 0,
@@ -130,10 +145,19 @@ void compute_global_quantities_of_system(void)
   if(ThisTask == 0)
     {
       for(i = 0; i < 6; i++)
+      {
 	SysState.EnergyTotComp[i] = SysState.EnergyKinComp[i] +
 	  SysState.EnergyPotComp[i] + SysState.EnergyIntComp[i];
+#ifdef EXTRA_STATS
+   SysState.EnergyTotComp[i] += SysState.EnergyRadComp[i];
+#endif
+      }
 
       SysState.Mass = SysState.EnergyKin = SysState.EnergyPot = SysState.EnergyInt = SysState.EnergyTot = 0;
+#ifdef EXTRA_STATS
+      SysState.EnergyRadComp = 0;
+#endif
+
 
       for(j = 0; j < 3; j++)
 	SysState.Momentum[j] = SysState.AngMomentum[j] = SysState.CenterOfMass[j] = 0;
@@ -145,6 +169,9 @@ void compute_global_quantities_of_system(void)
 	  SysState.EnergyPot += SysState.EnergyPotComp[i];
 	  SysState.EnergyInt += SysState.EnergyIntComp[i];
 	  SysState.EnergyTot += SysState.EnergyTotComp[i];
+#ifdef EXTRA_STATS
+     SysState.EnergyRad += SysState.EnergyRadComp[i];
+#endif
 
 	  for(j = 0; j < 3; j++)
 	    {

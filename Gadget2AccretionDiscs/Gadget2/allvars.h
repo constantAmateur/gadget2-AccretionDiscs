@@ -576,8 +576,8 @@ extern struct sph_particle_data
   FLOAT MaxSignalVel;           /*!< maximum "signal velocity" occuring for this particle */
 #ifdef BETA_COOLING
 #ifdef OUTPUTRADIATEDENERGY
-  FLOAT DtRadiatedEntropy;   //If cooling is on and we want to know how much energy has been radiated away
-  FLOAT RadiatedEntropy;   //If cooling is on and we want to know how much energy has been radiated away
+  FLOAT DtRadiatedEnergy;   //If cooling is on and we want to know how much energy has been radiated away
+  FLOAT RadiatedEnergy;   //If cooling is on and we want to know how much energy has been radiated away
 #endif
 #endif
 #ifdef SINK_PARTICLES  
@@ -736,6 +736,10 @@ extern struct state_of_system
   double MomentumComp[6][4]; 
   double AngMomentumComp[6][4]; 
   double CenterOfMassComp[6][4];
+#ifdef EXTRA_STATS
+  double EnergyRadComp[6];
+  double EnergyRad;
+#endif
 }
  SysState;                       /*<! Structure for storing some global statistics about the simulation. */
  
