@@ -366,6 +366,15 @@ void destroy_doomed_particles(void)
   double dposxtot, dposytot, dposztot, dvelxtot, dvelytot, dvelztot, dmasstot;      
   double Ei, Ef;
   double dt_grav;
+#ifdef TRACK_ACCRETION_LOSSES
+  double starR[3],starv[3],starM,starRtot[3],starvtot[3],starMtot;
+  double accretion_int,accretion_rad,accretion_kin,accretion_pot;
+  double accretion_angmom[3];
+  double acc_int_tot,acc_rad_tot,acc_kin_tot,acc_pot_tot,acc_angmom_tot[3];
+  double com[7],delR[3],delv[3];
+  int *list_acc_num;
+  int accnumtot,start,stop,ii,accflagtot,tmpflag;
+#endif
 
   
   for(k = N_gas; k < NumPart; k++) printf("ID %d (%d) init vel, pos, mass: (%e|%e|%e), (%e|%e|%e), %e\n",P[k].ID,k,P[k].Vel[0],P[k].Vel[1],P[k].Vel[2],
@@ -393,6 +402,9 @@ void destroy_doomed_particles(void)
   list_sink_velz = malloc(sizeof(double) * numsinkstot * NTask); 
   list_sink_ID = malloc(sizeof(int) * numsinkstot * NTask);    
   list_sink_mass = malloc(sizeof(double) * numsinkstot * NTask);
+#ifdef TRACK_ACCRETION_LOSSES
+  list_acc_num = malloc(sizeof(int) * NTask);
+#endif
   
   for(i = 0; i < numsinkstot; i++) local_sink_mass[i] = -1;
   
@@ -434,6 +446,120 @@ void destroy_doomed_particles(void)
       MPI_Barrier(MPI_COMM_WORLD);
       dvelx = 0; dvely = 0; dvelz = 0; dposx = 0; dposy = 0; dposz = 0; dmass = 0;      
       target = list_sink_ID[s];
+#ifdef TRACK_ACCRETION_LOSSES
+      //Need the initial stars position, mass and velocity
+      starR[0]=starR[1]=starR[2]=starv[0]=starv[1]=starv[2]=starM=0;
+      for(j = N_gas;j < NumPart; j++){
+        if(P[j].ID == target){
+          starR[0] = P[j].Pos[0];
+          starR[1] = P[j].Pos[1];
+          starR[2] = P[j].Pos[2];
+
+          dt_grav = All.Timebase_interval * (All.Ti_Current - (P[j].Ti_begstep + P[j].Ti_endstep) / 2);
+          dt_grav=0;
+          starv[0] = (P[j].Vel[0] + dt_grav * P[j].GravAccel[0]);	  
+          starv[1] = (P[j].Vel[1] + dt_grav * P[j].GravAccel[1]);	  
+          starv[2] = (P[j].Vel[2] + dt_grav * P[j].GravAccel[2]);	  
+
+          starM= P[j].Mass;
+        }
+      }
+      MPI_Barrier(MPI_COMM_WORLD); 
+      MPI_Allreduce(&starR[0], &starRtot[0], 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD); 
+      MPI_Allreduce(&starv[0], &starvtot[0], 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD); 
+      MPI_Allreduce(&starM, &starMtot, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD); 
+      MPI_Allreduce(&AccNum, &accnumtot, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD); 
+      MPI_Allgather(&AccNum, 1, MPI_INT, list_acc_num, 1, MPI_INT, MPI_COMM_WORLD);
+      MPI_Barrier(MPI_COMM_WORLD);     
+      if(ThisTask==0)
+      //Now loop over all accreting particles
+      accretion_int=accretion_rad=accretion_kin=accretion_pot=accretion_angmom[0]=accretion_angmom[1]=accretion_angmom[2]=0;
+      start=0;
+      for(k=0;k<ThisTask;k++)
+        start+=list_acc_num[k];
+      stop=start+list_acc_num[ThisTask];
+      for(k=0;k<accnumtot;k++){
+        tmpflag=-1;
+        com[0]=com[1]=com[2]=com[3]=com[4]=com[5]=com[6]=0;
+        //The particle we want is on this processor!
+        if(k>=start && k<stop){
+          i = AccreteList[k-start];
+          //And it's for this star!
+          if(SphP[i].AccretionTarget == target){
+            tmpflag = ThisTask;
+
+            if(P[i].Type==0){
+              accretion_int -= (P[i].Mass*SphP[i].Entropy * pow(SphP[i].Density,(GAMMA_MINUS1)))/(GAMMA_MINUS1);
+#if defined BETA_COOLING && defined EXTRA_STATS
+              accretion_rad -= P[i].Mass*SphP[i].RadiatedEnergy;
+#endif
+            }
+            accretion_kin -= ((P[i].Mass*starMtot)/(2.0*(starMtot+P[i].Mass)))*((P[i].Vel[0]-starvtot[0])*(P[i].Vel[0]-starvtot[0])+(P[i].Vel[1]-starvtot[1])*(P[i].Vel[1]-starvtot[1])+(P[i].Vel[2]-starvtot[2])*(P[i].Vel[2]-starvtot[2]));
+            delR[0]=starRtot[0]-P[i].Pos[0];
+            delR[1]=starRtot[1]-P[i].Pos[1];
+            delR[2]=starRtot[2]-P[i].Pos[2];
+            delv[0]=starvtot[0]-P[i].Vel[0];
+            delv[1]=starvtot[1]-P[i].Vel[1];
+            delv[2]=starvtot[2]-P[i].Vel[2];
+            com[0]=(starRtot[0]*starMtot+P[i].Pos[0]*P[i].Mass)/(P[i].Mass+starMtot);
+            com[1]=(starRtot[1]*starMtot+P[i].Pos[2]*P[i].Mass)/(P[i].Mass+starMtot);
+            com[2]=(starRtot[2]*starMtot+P[i].Pos[2]*P[i].Mass)/(P[i].Mass+starMtot);
+            com[3]=P[i].Mass;
+            com[4]=(P[i].Mass*P[i].Vel[0]+starMtot*starvtot[0])/(P[i].Mass+starMtot);
+            com[5]=(P[i].Mass*P[i].Vel[1]+starMtot*starvtot[1])/(P[i].Mass+starMtot);
+            com[6]=(P[i].Mass*P[i].Vel[2]+starMtot*starvtot[2])/(P[i].Mass+starMtot);
+            accretion_angmom[0] -= ((starMtot*P[i].Mass)/(starMtot+P[i].Mass))*(delR[1]*delv[2]-delR[2]*delv[1]);
+            accretion_angmom[1] -= ((starMtot*P[i].Mass)/(starMtot+P[i].Mass))*(delR[2]*delv[0]-delR[0]*delv[2]);
+            accretion_angmom[2] -= ((starMtot*P[i].Mass)/(starMtot+P[i].Mass))*(delR[0]*delv[1]-delR[1]*delv[0]);
+            //This is going to be slightly inaccurate because we potentially(hehe) haven't calculated the potential in a while, so it's out of date
+#ifdef ADD_CENTRAL_GRAVITY
+            accretion_pot += (All.G*P[i].Mass*starMtot)/sqrt((P[i].Pos[0]-starRtot[0])*(P[i].Pos[0]-starRtot[0])+(P[i].Pos[1]-starRtot[1])*(P[i].Pos[1]-starRtot[1])+(P[i].Pos[2]-starRtot[2])*(P[i].Pos[2]-starRtot[2]));
+#else
+            accretion_pot -= P[i].Mass*P[i].Potential;
+#endif
+          }
+        }
+        MPI_Barrier(MPI_COMM_WORLD);     
+        MPI_Allreduce(&tmpflag, &accflagtot, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD); 
+        //Did anything accrete?
+        if(accflagtot>=0)
+        {
+          MPI_Barrier(MPI_COMM_WORLD);
+          MPI_Bcast(&com,7,MPI_DOUBLE,accflagtot,MPI_COMM_WORLD);
+          for(ii=0;ii < NumPart;ii++)
+          {
+            //We don't want to count the accreting particle, or the star.  The ID condition takes care of the star, the other one ensures that if we're on the same processor as the accreting particle, we won't process it.
+            if((ThisTask!=accflagtot || ii!=i) && (P[ii].ID!=target))
+            {
+              accretion_pot += (All.G*P[ii].Mass*starMtot)/sqrt((P[ii].Pos[0]-starRtot[0])*(P[ii].Pos[0]-starRtot[0])+(P[ii].Pos[1]-starRtot[1])*(P[ii].Pos[1]-starRtot[1])+(P[ii].Pos[2]-starRtot[2])*(P[i].Pos[2]-starRtot[2]));
+              accretion_pot -= (All.G*P[ii].Mass*(com[3]+starMtot))/sqrt((P[ii].Pos[0]-com[0])*(P[ii].Pos[0]-com[0])+(P[ii].Pos[1]-com[1])*(P[ii].Pos[1]-com[1])+(P[ii].Pos[2]-com[2])*(P[i].Pos[2]-com[2]));
+            }
+          }
+          //Update the star's position, mass and velocity for the next particle...
+          starRtot[0]=com[0];
+          starRtot[1]=com[1];
+          starRtot[2]=com[2];
+          starMtot+=com[3];
+          starvtot[0]=com[4];
+          starvtot[1]=com[5];
+          starvtot[2]=com[6];
+        }
+      }//End the loop over accreting particles...
+      //Gather and store the total changes...
+      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Allreduce(&accretion_int,&acc_int_tot,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+      MPI_Allreduce(&accretion_rad,&acc_rad_tot,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+      MPI_Allreduce(&accretion_kin,&acc_kin_tot,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+      MPI_Allreduce(&accretion_pot,&acc_pot_tot,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+      MPI_Allreduce(&accretion_angmom[0],&acc_angmom_tot[0],3,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+      All.Accretion_int += acc_int_tot;
+      All.Accretion_rad += acc_rad_tot;
+      All.Accretion_kin += acc_kin_tot;
+      All.Accretion_pot += acc_pot_tot;
+      All.Accretion_angmom[0] += acc_angmom_tot[0];
+      All.Accretion_angmom[1] += acc_angmom_tot[1];
+      All.Accretion_angmom[2] += acc_angmom_tot[2];
+#endif
       
       for(k = 0;k < AccNum;k++){
         i = AccreteList[k];
@@ -467,19 +593,17 @@ void destroy_doomed_particles(void)
       /* check to see if the sink being considered is on the local processor.  if so, add the changes to it. */
       for(j = N_gas;j < NumPart; j++){
         if(P[j].ID == target){
-          printf("jay = %d\n",j);
+          //printf("jay = %d\n",j);
           
           dposxtot += P[j].Pos[0] * P[j].Mass;
           dposytot += P[j].Pos[1] * P[j].Mass;	
           dposztot += P[j].Pos[2] * P[j].Mass;
           dmasstot += P[j].Mass;
           
-#ifndef NO_COM_MOVE
           //Move position to centre of mass
           P[j].Pos[0] = dposxtot / dmasstot;
           P[j].Pos[1] = dposytot / dmasstot;	  	  
           P[j].Pos[2] = dposztot / dmasstot;	  
-#endif
           
           dt_grav = All.Timebase_interval * (All.Ti_Current - (P[j].Ti_begstep + P[j].Ti_endstep) / 2);
           dt_grav=0;
@@ -488,17 +612,13 @@ void destroy_doomed_particles(void)
           dvelytot += P[j].Mass * (P[j].Vel[1] + dt_grav * P[j].GravAccel[1]);	  
           dvelztot += P[j].Mass * (P[j].Vel[2] + dt_grav * P[j].GravAccel[2]);
           
-#ifndef NO_MOM_MOVE
           //Add momentum to the sink
           P[j].Vel[0] = dvelxtot / dmasstot - dt_grav * P[j].GravAccel[0];
           P[j].Vel[1] = dvelytot / dmasstot - dt_grav * P[j].GravAccel[1];
           P[j].Vel[2] = dvelztot / dmasstot - dt_grav * P[j].GravAccel[2];	  	  
-#endif
           
-#ifndef NO_MASS_MOVE
           //Add the mass to the sink
           P[j].Mass = dmasstot;
-#endif
           printf("ID %d task %d accnum %d final vel, pos, mass: (%e|%e|%e), (%e|%e|%e), %e\n", \
                  P[j].ID,ThisTask,AccNum,P[j].Vel[0],P[j].Vel[1],P[j].Vel[2], \
                  P[j].Pos[0],P[j].Pos[1],P[j].Pos[2],P[j].Mass);
@@ -549,6 +669,9 @@ void destroy_doomed_particles(void)
   free(local_sink_velz); 
   free(local_sink_ID);      
   free(local_sink_mass); 
+#ifdef TRACK_ACCRETION_LOSSES
+  free(list_acc_num);
+#endif
   
   AccNum = 0;
   

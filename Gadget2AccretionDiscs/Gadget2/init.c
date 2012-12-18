@@ -29,6 +29,15 @@ void init(void)
   All.Time = All.TimeBegin;
 #ifdef SINK_PARTICLES
   All.AccreteFlag = 1;
+#ifdef TRACK_ACCRETION_LOSSES
+  All.Accretion_int = 0;
+  All.Accretion_rad = 0;
+  All.Accretion_kin = 0;
+  All.Accretion_pot = 0;
+  All.Accretion_angmom[0]=0;
+  All.Accretion_angmom[1]=0;
+  All.Accretion_angmom[2]=0;
+#endif
 #endif
 
   switch (All.ICFormat)

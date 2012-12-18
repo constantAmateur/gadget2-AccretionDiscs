@@ -440,6 +440,10 @@ void every_timestep_stuff(void)
  */
 void energy_statistics(void)
 {
+#ifdef EXTRA_STATS
+  double temp[6];
+#endif
+
   compute_global_quantities_of_system();
 
   if(ThisTask == 0)
@@ -449,15 +453,27 @@ void energy_statistics(void)
       //Format is Time, Total, Internal, Radiated, Potential, Kinetic
       //Centre of Mass_xyz, Linear Momentum_xyz, Angular Momentum_xyz
       //Mass in type_0-6
+      temp[0]=temp[1]=temp[2]=temp[3]=temp[4]=temp[5]=temp[6]=0;
+#if defined SINK_PARTICLES && defined TRACK_ACCRETION_LOSSES
+      temp[0]=All.Accretion_int;
+      temp[1]=All.Accretion_rad;
+      temp[2]=All.Accretion_kin;
+      temp[3]=All.Accretion_pot;
+      temp[4]=All.Accretion_angmom[0];
+      temp[5]=All.Accretion_angmom[1];
+      temp[6]=All.Accretion_angmom[2];
+#endif
+
       fprintf(FdEnergy,
-          "%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+          "%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
           All.Time, SysState.EnergyTot, SysState.EnergyInt, SysState.EnergyRad,
-          SysState.EnergyPot, SysState.EnergyKin, SysState.CenterOfMass[0],
+          SysState.EnergyPot, SysState.EnergyKin, temp[0], temp[1], temp[2],
+          temp[3], SysState.CenterOfMass[0],
           SysState.CenterOfMass[1], SysState.CenterOfMass[2], SysState.Momentum[0],
           SysState.Momentum[1], SysState.Momentum[2], SysState.AngMomentum[0],
-          SysState.AngMomentum[1], SysState.AngMomentum[2], SysState.MassComp[0],
-          SysState.MassComp[1], SysState.MassComp[2], SysState.MassComp[3],
-          SysState.MassComp[4], SysState.MassComp[5]);
+          SysState.AngMomentum[1], SysState.AngMomentum[2], temp[4], temp[5],
+          temp[6], SysState.MassComp[0], SysState.MassComp[1], SysState.MassComp[2], 
+          SysState.MassComp[3], SysState.MassComp[4], SysState.MassComp[5]);
 #else
       fprintf(FdEnergy,
 	      "%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",

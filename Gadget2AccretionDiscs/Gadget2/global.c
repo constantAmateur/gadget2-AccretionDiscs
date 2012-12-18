@@ -110,7 +110,6 @@ void compute_global_quantities_of_system(void)
 #ifdef EXTRA_STATS
 #if defined BETA_COOLING && defined OUTPUTRADIATEDENERGY
      sys.EnergyRadComp[0] += P[i].Mass * SphP[i].RadiatedEnergy;
-     printf("Outputing radiated energy.\n");
 #endif
 #endif
 	}

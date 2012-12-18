@@ -507,7 +507,13 @@ extern struct global_data_all_processes
 
   double OutputListTimes[MAXLEN_OUTPUTLIST];   /*!< table with desired output times */
   int OutputListLength;                        /*!< number of output times stored in the table of desired output times */
-
+#if defined TRACK_ACCRETION_LOSSES && defined SINK_PARTICLES
+  double Accretion_int;
+  double Accretion_rad;
+  double Accretion_kin;
+  double Accretion_pot;
+  double Accretion_angmom[3];
+#endif
 }
  All;                                          /*!< a container variable for global variables that are equal on all processors */
 
