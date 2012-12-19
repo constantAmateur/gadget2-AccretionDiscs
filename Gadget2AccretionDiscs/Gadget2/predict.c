@@ -375,7 +375,7 @@ void destroy_doomed_particles(void)
   int *list_acc_num;
   int accnumtot,start,stop,ii,accflagtot,tmpflag;
 #ifdef HIGH_PRECISION_POT
-  double acc_pot_start,acc_pot_end,acc_temp;
+  double acc_pot_start,acc_pot_temp,acc_pot_finish;
 #endif
 #endif
 
@@ -480,14 +480,18 @@ void destroy_doomed_particles(void)
 #ifdef HIGH_PRECISION_POT
       //Tracking the potential is challenging...
       MPI_Barrier(MPI_COMM_WORLD);
-      printf("Calculating potential at start of accretion.\n");
+      TreeReconstructFlag =1;
       compute_potential();
-      acc_temp =0;
+      acc_pot_temp =0;
       for(j=0;j<NumPart;j++){
-        acc_temp += 0.5 * P[j].Mass * P[j].Potential;
+#ifdef ADD_CENTRAL_GRAVITY
+        acc_pot_temp += P[j].Mass * P[j].Potential;
+#else
+        acc_pot_temp += 0.5 * P[j].Mass * P[j].Potential;
+#endif
       }
       MPI_Barrier(MPI_COMM_WORLD);
-      MPI_Allreduce(&acc_temp,&acc_pot_start,1,MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      MPI_Allreduce(&acc_pot_temp,&acc_pot_start,1,MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #endif
       start=0;
       for(k=0;k<ThisTask;k++)
@@ -701,20 +705,20 @@ void destroy_doomed_particles(void)
   free(local_sink_mass); 
 #ifdef TRACK_ACCRETION_LOSSES
   free(list_acc_num);
-  //Calculate the final potential and take the difference...
-#ifdef HIGH_PRECISION_POT
   MPI_Barrier(MPI_COMM_WORLD); 
-  acc_pot_temp=0;
-  printf("Calculating potential at end of accretion.\n");
-  TreeReconstructFlag=1;
+  TreeReconstructFlag =1;
   compute_potential();
-  for(j=0;j<NumPart;j++){
-    acc_pot_temp += 0.5 * P[j].Mass * P[j].Potential;
+  acc_pot_temp=0;
+  for(i=0;i<NumPart;i++){
+#ifdef ADD_CENTRAL_GRAVITY
+    acc_pot_temp += P[i].Mass * P[i].Potential;
+#else
+    acc_pot_temp += 0.5 * P[i].Mass * P[i].Potential;
+#endif
   }
   MPI_Barrier(MPI_COMM_WORLD); 
   MPI_Allreduce(&acc_pot_temp,&acc_pot_finish,1,MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   All.Accretion_pot += (acc_pot_finish-acc_pot_start);
-#endif
 #endif
   
   AccNum = 0;

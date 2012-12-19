@@ -21,7 +21,7 @@ void init(void)
 {
   int i, j;
   double a3;
-#if defined BETA_COOLING || defined NK_AV || defined ADD_CENTRAL_GRAVITY
+#if defined BETA_COOLING || defined ADD_CENTRAL_GRAVITY
   int starID,*list_starID;
   double starMass,*list_starMass;
 #endif
