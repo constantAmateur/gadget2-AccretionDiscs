@@ -374,6 +374,9 @@ void destroy_doomed_particles(void)
   double com[7],delR[3],delv[3];
   int *list_acc_num;
   int accnumtot,start,stop,ii,accflagtot,tmpflag;
+#ifdef HIGH_PRECISION_POT
+  double acc_pot_start,acc_pot_end,acc_temp;
+#endif
 #endif
 
   
@@ -471,8 +474,21 @@ void destroy_doomed_particles(void)
       MPI_Allreduce(&AccNum, &accnumtot, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD); 
       MPI_Allgather(&AccNum, 1, MPI_INT, list_acc_num, 1, MPI_INT, MPI_COMM_WORLD);
       MPI_Barrier(MPI_COMM_WORLD);     
+     
       //Now loop over all accreting particles
       accretion_int=accretion_rad=accretion_kin=accretion_pot=accretion_angmom[0]=accretion_angmom[1]=accretion_angmom[2]=0;
+#ifdef HIGH_PRECISION_POT
+      //Tracking the potential is challenging...
+      MPI_Barrier(MPI_COMM_WORLD);
+      printf("Calculating potential at start of accretion.\n");
+      compute_potential();
+      acc_temp =0;
+      for(j=0;j<NumPart;j++){
+        acc_temp += 0.5 * P[j].Mass * P[j].Potential;
+      }
+      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Allreduce(&acc_temp,&acc_pot_start,1,MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+#endif
       start=0;
       for(k=0;k<ThisTask;k++)
         start+=list_acc_num[k];
@@ -511,12 +527,16 @@ void destroy_doomed_particles(void)
             accretion_angmom[1] -= ((starMtot*P[i].Mass)/(starMtot+P[i].Mass))*(delR[2]*delv[0]-delR[0]*delv[2]);
             accretion_angmom[2] -= ((starMtot*P[i].Mass)/(starMtot+P[i].Mass))*(delR[0]*delv[1]-delR[1]*delv[0]);
             //This is going to be slightly inaccurate because we potentially(hehe) haven't calculated the potential in a while, so it's out of date
+#ifndef HIGH_PRECISION_POT
 #ifdef ADD_CENTRAL_GRAVITY
             accretion_pot += (All.G*P[i].Mass*starMtot)/sqrt((P[i].Pos[0]-starRtot[0])*(P[i].Pos[0]-starRtot[0])+(P[i].Pos[1]-starRtot[1])*(P[i].Pos[1]-starRtot[1])+(P[i].Pos[2]-starRtot[2])*(P[i].Pos[2]-starRtot[2]));
 #else
             accretion_pot -= P[i].Mass*P[i].Potential;
 #endif
-            printf("Accretion potential is %g\n",accretion_pot);
+            accretion_pot += (All.G*P[i].Mass*P[i].Mass)/sqrt((P[i].Pos[0]-starRtot[0])*(P[i].Pos[0]-starRtot[0])+(P[i].Pos[1]-starRtot[1])*(P[i].Pos[1]-starRtot[1])+(P[i].Pos[2]-starRtot[2])*(P[i].Pos[2]-starRtot[2]));
+
+#endif
+            //printf("Accretion potential is %g\n",accretion_pot);
           }
         }
         MPI_Barrier(MPI_COMM_WORLD);     
@@ -527,17 +547,24 @@ void destroy_doomed_particles(void)
           MPI_Barrier(MPI_COMM_WORLD);
           MPI_Bcast(&com,7,MPI_DOUBLE,accflagtot,MPI_COMM_WORLD);
           MPI_Barrier(MPI_COMM_WORLD);
+#ifndef HIGH_PRECISION_POT
           for(ii=0;ii < NumPart;ii++)
           {
             //We don't want to count the accreting particle, or the star.  The ID condition takes care of the star, the other one ensures that if we're on the same processor as the accreting particle, we won't process it.
-            if((ThisTask!=accflagtot || ii!=i) && (P[ii].ID!=target))
+#ifndef ADD_CENTRAL_GRAVITY
+            if(P[ii].ID==target)
             {
-              accretion_pot += (All.G*P[ii].Mass*starMtot)/sqrt((P[ii].Pos[0]-starRtot[0])*(P[ii].Pos[0]-starRtot[0])+(P[ii].Pos[1]-starRtot[1])*(P[ii].Pos[1]-starRtot[1])+(P[ii].Pos[2]-starRtot[2])*(P[i].Pos[2]-starRtot[2]));
-              accretion_pot -= (All.G*P[ii].Mass*(com[3]+starMtot))/sqrt((P[ii].Pos[0]-com[0])*(P[ii].Pos[0]-com[0])+(P[ii].Pos[1]-com[1])*(P[ii].Pos[1]-com[1])+(P[ii].Pos[2]-com[2])*(P[i].Pos[2]-com[2]));
+              accretion_pot += P[ii].Potential * com[3];
             }
+#else
+            //if((ThisTask!=accflagtot || ii!=i) && (P[ii].ID!=target))
+            if(P[ii].ID!=target)
+            {
+              accretion_pot -= (All.G*P[ii].Mass*com[3])/sqrt((P[ii].Pos[0]-starRtot[0])*(P[ii].Pos[0]-starRtot[0])+(P[ii].Pos[1]-starRtot[1])*(P[ii].Pos[1]-starRtot[1])+(P[ii].Pos[2]-starRtot[2])*(P[ii].Pos[2]-starRtot[2]));
+            }
+#endif
           }
-          if(ThisTask==accflagtot)
-            printf("Accretion potential becomes %g\n",accretion_pot);
+#endif
           //Update the star's position, mass and velocity for the next particle...
           starRtot[0]=com[0];
           starRtot[1]=com[1];
@@ -562,8 +589,6 @@ void destroy_doomed_particles(void)
       All.Accretion_angmom[0] += acc_angmom_tot[0];
       All.Accretion_angmom[1] += acc_angmom_tot[1];
       All.Accretion_angmom[2] += acc_angmom_tot[2];
-      if(ThisTask==0)
-        printf("Accretion potential at commit %g\n",acc_pot_tot);
 #endif
       
       for(k = 0;k < AccNum;k++){
@@ -676,6 +701,20 @@ void destroy_doomed_particles(void)
   free(local_sink_mass); 
 #ifdef TRACK_ACCRETION_LOSSES
   free(list_acc_num);
+  //Calculate the final potential and take the difference...
+#ifdef HIGH_PRECISION_POT
+  MPI_Barrier(MPI_COMM_WORLD); 
+  acc_pot_temp=0;
+  printf("Calculating potential at end of accretion.\n");
+  TreeReconstructFlag=1;
+  compute_potential();
+  for(j=0;j<NumPart;j++){
+    acc_pot_temp += 0.5 * P[j].Mass * P[j].Potential;
+  }
+  MPI_Barrier(MPI_COMM_WORLD); 
+  MPI_Allreduce(&acc_pot_temp,&acc_pot_finish,1,MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  All.Accretion_pot += (acc_pot_finish-acc_pot_start);
+#endif
 #endif
   
   AccNum = 0;
@@ -689,4 +728,3 @@ int index_compare_key(const void *a, const void *b)
 }
 
 #endif /* SINK_PARTICLES */
-
