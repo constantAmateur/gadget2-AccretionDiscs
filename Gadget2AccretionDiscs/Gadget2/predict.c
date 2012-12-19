@@ -480,6 +480,7 @@ void destroy_doomed_particles(void)
 #ifdef HIGH_PRECISION_POT
       //Tracking the potential is challenging...
       MPI_Barrier(MPI_COMM_WORLD);
+      printf("Calculating potential before accretion.\n");
       TreeReconstructFlag =1;
       compute_potential();
       acc_pot_temp =0;
@@ -706,6 +707,7 @@ void destroy_doomed_particles(void)
 #ifdef TRACK_ACCRETION_LOSSES
   free(list_acc_num);
   MPI_Barrier(MPI_COMM_WORLD); 
+  printf("Calculating potential after accretion.\n");
   TreeReconstructFlag =1;
   compute_potential();
   acc_pot_temp=0;
