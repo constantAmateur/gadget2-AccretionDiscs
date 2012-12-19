@@ -471,7 +471,6 @@ void destroy_doomed_particles(void)
       MPI_Allreduce(&AccNum, &accnumtot, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD); 
       MPI_Allgather(&AccNum, 1, MPI_INT, list_acc_num, 1, MPI_INT, MPI_COMM_WORLD);
       MPI_Barrier(MPI_COMM_WORLD);     
-      if(ThisTask==0)
       //Now loop over all accreting particles
       accretion_int=accretion_rad=accretion_kin=accretion_pot=accretion_angmom[0]=accretion_angmom[1]=accretion_angmom[2]=0;
       start=0;
@@ -526,6 +525,7 @@ void destroy_doomed_particles(void)
         {
           MPI_Barrier(MPI_COMM_WORLD);
           MPI_Bcast(&com,7,MPI_DOUBLE,accflagtot,MPI_COMM_WORLD);
+          MPI_Barrier(MPI_COMM_WORLD);
           for(ii=0;ii < NumPart;ii++)
           {
             //We don't want to count the accreting particle, or the star.  The ID condition takes care of the star, the other one ensures that if we're on the same processor as the accreting particle, we won't process it.
@@ -675,7 +675,7 @@ void destroy_doomed_particles(void)
   
   AccNum = 0;
   
-  printf("done with accretion, rank %d\n",ThisTask); 
+  //printf("done with accretion, rank %d\n",ThisTask); 
 }
 
 int index_compare_key(const void *a, const void *b)
