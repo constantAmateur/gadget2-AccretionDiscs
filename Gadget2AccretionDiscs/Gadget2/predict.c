@@ -708,6 +708,7 @@ void destroy_doomed_particles(void)
   free(local_sink_mass); 
 #ifdef TRACK_ACCRETION_LOSSES
   free(list_acc_num);
+#ifdef HIGH_PRECISION_POT
   MPI_Barrier(MPI_COMM_WORLD); 
   printf("Calculating potential after accretion.\n");
 #ifndef ADD_CENTRAL_GRAVITY
@@ -725,6 +726,7 @@ void destroy_doomed_particles(void)
   MPI_Barrier(MPI_COMM_WORLD); 
   MPI_Allreduce(&acc_pot_temp,&acc_pot_finish,1,MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   All.Accretion_pot += (acc_pot_finish-acc_pot_start);
+#endif
 #endif
   
   AccNum = 0;
