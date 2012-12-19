@@ -481,7 +481,9 @@ void destroy_doomed_particles(void)
       //Tracking the potential is challenging...
       MPI_Barrier(MPI_COMM_WORLD);
       printf("Calculating potential before accretion.\n");
+#ifndef ADD_CENTRAL_GRAVITY
       TreeReconstructFlag =1;
+#endif
       compute_potential();
       acc_pot_temp =0;
       for(j=0;j<NumPart;j++){
@@ -708,7 +710,9 @@ void destroy_doomed_particles(void)
   free(list_acc_num);
   MPI_Barrier(MPI_COMM_WORLD); 
   printf("Calculating potential after accretion.\n");
+#ifndef ADD_CENTRAL_GRAVITY
   TreeReconstructFlag =1;
+#endif
   compute_potential();
   acc_pot_temp=0;
   for(i=0;i<NumPart;i++){
