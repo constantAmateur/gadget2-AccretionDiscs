@@ -296,7 +296,7 @@ extern struct global_data_all_processes
 #if defined MMAV || defined CDAV
   double VariableViscAlphaMin;   /* Minimum value of artificial viscosity */
 #endif
-#if defined BETA_COOLING || defined NK_AV || defined ADD_CENTRAL_GRAVITY
+#if defined BETA_COOLING || defined ADD_CENTRAL_GRAVITY
   int StarID;              /* The ID of the central object. */
 #endif
   double InitGasTemp;		/*!< may be used to set the temperature in the IC's */

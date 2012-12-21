@@ -1127,8 +1127,7 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 {
   struct NODE *nop = 0;
   int no, ninteractions, ptype;
-  double r2, dx, dy, dz, mass, r, fac, h;
-  double u,h_inv,h3_inv;
+  double r2, dx, dy, dz, mass, r, fac, u, h, h_inv, h3_inv;
   double acc_x, acc_y, acc_z, pos_x, pos_y, pos_z, aold;
 #if defined(UNEQUALSOFTENINGS) && !defined(ADAPTIVE_GRAVSOFT_FORGAS)
   int maxsofttype;

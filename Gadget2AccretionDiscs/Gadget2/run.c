@@ -240,7 +240,6 @@ void find_next_sync_point_and_drift(void)
       //Don't want to accrete here, want to do that when we expect it.
       All.AccreteFlag=0;
 #endif
-      //Get weird segfaults otherwise, it's possible this screws stuff up though...
       domain_Decomposition();
 #ifdef SINK_PARTICLES
       All.AccreteFlag=1;
