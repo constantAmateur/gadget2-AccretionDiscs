@@ -1332,11 +1332,11 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 #ifdef EXTRA_CRITERIA
          /*  final check if we're too close for comfort */
          h_tmp= All.ForceSoftening[ptype];
-         if(((pos_x-h_tmp) <= (nop->center[0] + 0.5 * nop->len)) && ((pos_x+h_tmp) >= (nop->center[0] - 0.5 * nop->len)))
+         if(((pos_x-h_tmp) <= (nop->center[0] + 1.0 * nop->len)) && ((pos_x+h_tmp) >= (nop->center[0] - 1.0 * nop->len)))
          {
-           if(((pos_y-h_tmp) <= (nop->center[1] + 0.5 * nop->len)) && ((pos_y+h_tmp) >= (nop->center[1] - 0.5 * nop->len)))
+           if(((pos_y-h_tmp) <= (nop->center[1] + 1.0 * nop->len)) && ((pos_y+h_tmp) >= (nop->center[1] - 1.0 * nop->len)))
            {
-             if(((pos_z-h_tmp) <= (nop->center[2] + 0.5 * nop->len)) && ((pos_z+h_tmp) >= (nop->center[2] - 0.5 * nop->len)))
+             if(((pos_z-h_tmp) <= (nop->center[2] + 1.0 * nop->len)) && ((pos_z+h_tmp) >= (nop->center[2] - 1.0 * nop->len)))
              {
                no = nop->u.d.nextnode;
                continue;
