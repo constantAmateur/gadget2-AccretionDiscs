@@ -1129,6 +1129,9 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
   int no, ninteractions, ptype;
   double r2, dx, dy, dz, mass, r, fac, u, h, h_inv, h3_inv;
   double acc_x, acc_y, acc_z, pos_x, pos_y, pos_z, aold;
+#ifdef EXTRA_CRITERIA
+  double h_tmp;
+#endif
 #if defined(UNEQUALSOFTENINGS) && !defined(ADAPTIVE_GRAVSOFT_FORGAS)
   int maxsofttype;
 #endif
@@ -1325,6 +1328,22 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 			}
 		    }
 		}
+
+#ifdef EXTRA_CRITERIA
+         /*  final check if we're too close for comfort */
+         h_tmp= All.ForceSofeting[ptype];
+         if(((pos_x-h_tmp) <= (nop->center[0] + 0.5 * nop->len)) && ((pos_x+h_tmp) >= (nop->center[0] - 0.5 * nop->len)))
+         {
+           if(((pos_y-h_tmp) <= (nop->center[1] + 0.5 * nop->len)) && ((pos_y+h_tmp) >= (nop->center[1] - 0.5 * nop->len)))
+           {
+             if(((pos_z-h_tmp) <= (nop->center[2] + 0.5 * nop->len)) && ((pos_z+h_tmp) >= (nop->center[2] - 0.5 * nop->len)))
+             {
+               no = nop->u.d.nextnode;
+               continue;
+             }
+           }
+         }
+#endif
 	    }
 
 #ifdef UNEQUALSOFTENINGS
