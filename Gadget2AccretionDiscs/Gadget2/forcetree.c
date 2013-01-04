@@ -1310,7 +1310,7 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 	    {
 #ifdef EXACT_STAR_GRAV
          /* Always open up star all the way... */
-         if(ptype || mass >= 1.0)
+         if(ptype!=0 || mass >= 1.0)
          {
            no = nop->u.d.nextnode;
            continue;
