@@ -1313,7 +1313,7 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
          if(ptype || mass >= 1.0)
          {
            no = nop->u.d.nextnode;
-           continue
+           continue;
          }
 #endif
 	      if(mass * nop->len * nop->len > r2 * r2 * aold)
