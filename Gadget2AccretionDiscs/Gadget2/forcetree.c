@@ -1323,6 +1323,38 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 		  continue;
 		}
 
+#ifdef EXTRA_CRITERIA
+	      if(fabs(nop->center[0] - pos_x) < 1.60 * nop->len)
+         {
+		     if(fabs(nop->center[1] - pos_y) < 1.60 * nop->len)
+		     {
+		       if(fabs(nop->center[2] - pos_z) < 1.60 * nop->len)
+			    {
+			      no = nop->u.d.nextnode;
+			      continue;
+			    }
+		     }
+		   }
+         /*  final check if we're too close for comfort */
+         h_tmp= All.ForceSoftening[ptype];
+#ifdef ADPATIVE_GRAVSOFT_FORGAS
+         if(ptype==0)
+         {
+           h_tmp=soft;
+         }
+#endif
+         if(((pos_x-h_tmp) <= (nop->center[0] + 1.0 * nop->len)) && ((pos_x+h_tmp) >= (nop->center[0] - 1.0 * nop->len)))
+         {
+           if(((pos_y-h_tmp) <= (nop->center[1] + 1.0 * nop->len)) && ((pos_y+h_tmp) >= (nop->center[1] - 1.0 * nop->len)))
+           {
+             if(((pos_z-h_tmp) <= (nop->center[2] + 1.0 * nop->len)) && ((pos_z+h_tmp) >= (nop->center[2] - 1.0 * nop->len)))
+             {
+               no = nop->u.d.nextnode;
+               continue;
+             }
+           }
+         }
+#else
 	      /* check in addition whether we lie inside the cell */
 	      if(fabs(nop->center[0] - pos_x) < 0.60 * nop->len)
 		{
@@ -1335,39 +1367,7 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 			}
 		    }
 		}
-//#ifdef EXTRA_CRITERIA
-//	      if(fabs(nop->center[0] - pos_x) < 1.60 * nop->len)
-//         {
-//		     if(fabs(nop->center[1] - pos_y) < 1.60 * nop->len)
-//		     {
-//		       if(fabs(nop->center[2] - pos_z) < 1.60 * nop->len)
-//			    {
-//			      no = nop->u.d.nextnode;
-//			      continue;
-//			    }
-//		     }
-//		   }
-//         /*  final check if we're too close for comfort */
-//         h_tmp= All.ForceSoftening[ptype];
-//#ifdef ADPATIVE_GRAVSOFT_FORGAS
-//         if(ptype==0)
-//         {
-//           h_tmp=soft;
-//         }
-//#endif
-//         if(((pos_x-h_tmp) <= (nop->center[0] + 1.0 * nop->len)) && ((pos_x+h_tmp) >= (nop->center[0] - 1.0 * nop->len)))
-//         {
-//           if(((pos_y-h_tmp) <= (nop->center[1] + 1.0 * nop->len)) && ((pos_y+h_tmp) >= (nop->center[1] - 1.0 * nop->len)))
-//           {
-//             if(((pos_z-h_tmp) <= (nop->center[2] + 1.0 * nop->len)) && ((pos_z+h_tmp) >= (nop->center[2] - 1.0 * nop->len)))
-//             {
-//               no = nop->u.d.nextnode;
-//               continue;
-//             }
-//           }
-//         }
-//#else
-
+#endif
 	    }
 
 #ifdef UNEQUALSOFTENINGS
