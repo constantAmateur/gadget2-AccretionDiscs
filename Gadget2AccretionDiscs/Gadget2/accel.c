@@ -62,8 +62,8 @@ void compute_accelerations(int mode)
   if(NumPart-N_gas){
     //printf("At end of grav calc, we have NtypeLocal[1] = %d, NumPart = %d, N_gas = %d and particle %d (type %d) has pos,vel,accel,mass: (%e|%e|%e), (%e|%e|%e), (%e|%e|%e), %e\n",NtypeLocal[1],NumPart,N_gas,P[N_gas].ID,P[N_gas].Type,P[N_gas].Pos[0],P[N_gas].Pos[1],P[N_gas].Pos[2],P[N_gas].Vel[0],P[N_gas].Vel[1],P[N_gas].Vel[2],P[N_gas].GravAccel[0],P[N_gas].GravAccel[1],P[N_gas].GravAccel[2],P[N_gas].Mass);
 #ifdef DIRTY_SHAMEFUL_SECRET
-    P[N_gas].GravAccel[0]=0;
-    P[N_gas].GravAccel[1]=0;
+    //P[N_gas].GravAccel[0]=0;
+    //P[N_gas].GravAccel[1]=0;
     P[N_gas].GravAccel[2]=0;
 #endif
   }
