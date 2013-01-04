@@ -473,9 +473,9 @@ void energy_statistics(void)
           SysState.AngMomentum[1], SysState.AngMomentum[2], temp[4], temp[5],
           temp[6], SysState.MassComp[0], SysState.MassComp[1], SysState.MassComp[2], 
           SysState.MassComp[3], SysState.MassComp[4], SysState.MassComp[5], 
-          SysState.MomentumComp[0][3], SysState.MomentumComp[1][3], 
-          SysState.MomentumComp[2][3], SysState.MomentumComp[3][3], 
-          SysState.MomentumComp[4][3], SysState.MomentumComp[5][3]);
+          SysState.MomentumComp[0][2], SysState.MomentumComp[1][2], 
+          SysState.MomentumComp[2][2], SysState.MomentumComp[3][2], 
+          SysState.MomentumComp[4][2], SysState.MomentumComp[5][2]);
 #else
       fprintf(FdEnergy,
 	      "%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
