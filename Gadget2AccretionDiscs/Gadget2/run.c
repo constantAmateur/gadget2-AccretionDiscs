@@ -464,18 +464,17 @@ void energy_statistics(void)
 #endif
 
       fprintf(FdEnergy,
-          "%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+          "%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
           All.Time, SysState.EnergyTot, SysState.EnergyInt, SysState.EnergyRad,
           SysState.EnergyPot, SysState.EnergyKin, temp[0], temp[1], temp[2],
           temp[3], SysState.CenterOfMass[0],
           SysState.CenterOfMass[1], SysState.CenterOfMass[2], SysState.Momentum[0],
           SysState.Momentum[1], SysState.Momentum[2], SysState.AngMomentum[0],
           SysState.AngMomentum[1], SysState.AngMomentum[2], temp[4], temp[5],
-          temp[6], SysState.MassComp[0], SysState.MassComp[1], SysState.MassComp[2], 
-          SysState.MassComp[3], SysState.MassComp[4], SysState.MassComp[5], 
-          SysState.MomentumComp[0][2], SysState.MomentumComp[1][2], 
-          SysState.MomentumComp[2][2], SysState.MomentumComp[3][2], 
-          SysState.MomentumComp[4][2], SysState.MomentumComp[5][2]);
+          temp[6], SysState.MassComp[0], SysState.MassComp[1], 
+          SysState.MomentumComp[0][0], SysState.MomentumComp[1][0], 
+          SysState.MomentumComp[0][1], SysState.MomentumComp[1][1], 
+          SysState.MomentumComp[0][2], SysState.MomentumComp[1][2]);
 #else
       fprintf(FdEnergy,
 	      "%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
