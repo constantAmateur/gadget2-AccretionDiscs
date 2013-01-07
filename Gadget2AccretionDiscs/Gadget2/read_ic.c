@@ -140,6 +140,15 @@ void read_ic(char *fname)
          after the densities have been computed */
 	    }
     }
+#ifdef MMAV
+    for(i=0; i<N_gas; i++)
+      SphP[i].Alpha=All.VariableViscAlphaMin;
+#endif
+#ifdef CDAV
+    for(i=0; i<N_gas; i++)
+      SphP[i].Alpha=0;
+#endif
+
   }
   
   for(i = 0; i < N_gas; i++)
@@ -222,7 +231,15 @@ void empty_read_buffer(enum iofields blocknr, int offset, int pc, int type)
         SphP[offset + n].Hsml = *fp++;
       break;
       
-      
+#if defined CDAV || defined MMAV
+    case IO_ALPHA:   /*  Per particle smoothing */
+      for(n=0; n<pc; n++)
+        SphP[offset + n].Alpha = *fp++;
+      break;
+#else
+    case IO_ALPHA:
+      break;
+#endif
       
       
       /* the other input fields (if present) are not needed to define the 
@@ -232,7 +249,6 @@ void empty_read_buffer(enum iofields blocknr, int offset, int pc, int type)
     case IO_ACCEL:
     case IO_DTENTR:
     case IO_TSTP:
-    case IO_ALPHA:
     case IO_RAD_ENERGY:
       break;
   }

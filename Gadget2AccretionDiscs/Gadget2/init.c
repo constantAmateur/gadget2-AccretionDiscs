@@ -183,11 +183,11 @@ void init(void)
       SphP[i].AccretionTarget = 0; 
 #endif
 #if defined MMAV
-      SphP[i].Alpha=All.VariableViscAlphaMin;
+//     SphP[i].Alpha=All.VariableViscAlphaMin;
       SphP[i].DtAlpha=0;
 #endif
 #if defined CDAV
-      SphP[i].Alpha=0;
+//      SphP[i].Alpha=0;
       SphP[i].DtAlpha=0;
       SphP[i].MaxSignalVel=0;
       SphP[i].DivVelOld=0;
