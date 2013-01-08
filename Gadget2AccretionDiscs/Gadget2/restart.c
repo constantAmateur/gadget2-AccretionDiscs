@@ -90,6 +90,11 @@ void restart(int modus)
 
 	  /* common data  */
 	  byten(&All, sizeof(struct global_data_all_processes), modus);
+#ifdef SINK_PARTICLES
+     //This should be modified if the associated block in allocate.c is...
+     byten(AccreteList, 100000*sizeof(int), modus);
+     in(&AccNum,modus);
+#endif
 
 	  if(ThisTask == 0 && modus > 0)
 	    all_task0 = All;
