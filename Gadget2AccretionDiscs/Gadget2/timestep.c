@@ -486,15 +486,6 @@ int get_timestep(int p,		/*!< particle index */
   double dt_cond;
 #endif
 
-#ifdef EXACT_STAR_GRAV
-  if(P[p].Type==1)
-  {
-    dt = All.MinSizeTimestep;
-    ti_step = dt / All.Timebase_interval;
-    return ti_step;
-  }
-#endif
-
   if(flag == 0)
     {
       ax = fac1 * P[p].GravAccel[0];
