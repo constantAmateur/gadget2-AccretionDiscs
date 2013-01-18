@@ -43,14 +43,9 @@ void run(void)
 
       every_timestep_stuff();	/* write some info to log-files */
 
-      Flag_FullStep = 1;
 
       domain_Decomposition();	/* do domain decomposition if needed */
                               // particles are accreted in domain_Decomposition, as well.
-      ngb_treebuild();
-
-      TreeReconstructFlag = 1;
-
 
       compute_accelerations(0);	/* compute accelerations for 
 				 * the particles that are to be advanced  
@@ -67,7 +62,7 @@ void run(void)
         MPI_Barrier(MPI_COMM_WORLD);
        	
         //This will cause domain decomposition to be performed next time this loop is iterated
-        MPI_Allreduce(&AccNum, &AccNumTot, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);		
+        //MPI_Allreduce(&AccNum, &AccNumTot, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);		
         if(AccNumTot > 0) All.NumForcesSinceLastDomainDecomp =  All.TotNumPart * All.TreeDomainUpdateFrequency + 1;			 
       }
 #endif
