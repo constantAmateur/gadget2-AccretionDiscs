@@ -112,7 +112,6 @@ void domain_Decomposition(void)
       MPI_Allgather(&NumPart, 1, MPI_INT, list_NumPart, 1, MPI_INT, MPI_COMM_WORLD);
       MPI_Allgather(&N_gas, 1, MPI_INT, list_N_gas, 1, MPI_INT, MPI_COMM_WORLD);
       
-      
 #ifdef SINK_PARTICLES   
       //Don't do it if we've just started or if the flag explicitly says not to
       if(All.NumCurrentTiStep > 0 && All.AccreteFlag){  
@@ -134,6 +133,7 @@ void domain_Decomposition(void)
         }
       }
 #endif	
+
 
       maxload = All.MaxPart * REDUC_FAC;
       maxloadsph = All.MaxPartSph * REDUC_FAC;
