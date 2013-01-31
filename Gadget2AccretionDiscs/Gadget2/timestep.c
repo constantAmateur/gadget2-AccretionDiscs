@@ -28,6 +28,9 @@ void advance_and_find_timesteps(void)
   double minentropy, aphys;
   FLOAT dv[3];
 
+#ifdef CONSTANT_TSTEPS
+  int min_step,min_step_tot;
+#endif
 #ifdef FLEXSTEPS
   int ti_grp;
 #endif
@@ -45,9 +48,6 @@ void advance_and_find_timesteps(void)
   double soundspeed, f_fac,fac_mu;
 #endif
 
-  if(NumPart-N_gas){
-    printf("At start of kick, we have NtypeLocal[1] = %d, NumPart = %d, N_gas = %d and particle %d (type %d) has pos,vel,accel,mass: (%e|%e|%e), (%e|%e|%e), (%e|%e|%e), %e\n",NtypeLocal[1],NumPart,N_gas,P[N_gas].ID,P[N_gas].Type,P[N_gas].Pos[0],P[N_gas].Pos[1],P[N_gas].Pos[2],P[N_gas].Vel[0],P[N_gas].Vel[1],P[N_gas].Vel[2],P[N_gas].GravAccel[0],P[N_gas].GravAccel[1],P[N_gas].GravAccel[2],P[N_gas].Mass);
-  }
 
 
   t0 = second();
@@ -189,6 +189,31 @@ void advance_and_find_timesteps(void)
 
 #endif
 
+#ifdef CONSTANT_TSTEPS
+  min_step=TIMEBASE;
+  min_step_tot =0;
+  for(i= 0; i< NumPart; i++)
+  {
+    if(P[i].Ti_endstep == All.Ti_Current)
+    {
+      ti_step = get_timestep(i, &aphys, 0);
+      ti_min = TIMEBASE;
+      while(ti_min > ti_step)
+        ti_min >>= 1;
+      ti_step = ti_min;
+    }
+    else
+    {
+      printf("There should never be anything here!\n");
+      ti_step = (P[i].Ti_endstep - P[i].Ti_begstep);
+    }
+    if(ti_step < min_step)
+      min_step = ti_step;
+  }
+  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Allreduce(&min_step, &min_step_tot, 1 , MPI_INT, MPI_MIN, MPI_COMM_WORLD);
+  MPI_Barrier(MPI_COMM_WORLD);
+#endif
 
   for(i = 0; i < NumPart; i++)
     {
@@ -254,6 +279,9 @@ void advance_and_find_timesteps(void)
 	    }
 #endif
 #endif /* end of FLEXSTEPS */
+#ifdef CONSTANT_TSTEPS
+     ti_step = min_step_tot;
+#endif
 
 	  if(All.Ti_Current == TIMEBASE)	/* we here finish the last timestep. */
 	    ti_step = 0;
@@ -454,9 +482,6 @@ void advance_and_find_timesteps(void)
 
   t1 = second();
   All.CPU_TimeLine += timediff(t0, t1);
-  if(NumPart-N_gas){
-    printf("At end of kick, we have NtypeLocal[1] = %d, NumPart = %d, N_gas = %d and particle %d (type %d) has pos,vel,accel,mass: (%e|%e|%e), (%e|%e|%e), (%e|%e|%e), %e\n",NtypeLocal[1],NumPart,N_gas,P[N_gas].ID,P[N_gas].Type,P[N_gas].Pos[0],P[N_gas].Pos[1],P[N_gas].Pos[2],P[N_gas].Vel[0],P[N_gas].Vel[1],P[N_gas].Vel[2],P[N_gas].GravAccel[0],P[N_gas].GravAccel[1],P[N_gas].GravAccel[2],P[N_gas].Mass);
-  }
 
 }
 

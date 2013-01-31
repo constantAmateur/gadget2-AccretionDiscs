@@ -129,7 +129,8 @@ void domain_Decomposition(void)
           All.TotN_gas -= AccNumTot;
           MPI_Allgather(&NumPart, 1, MPI_INT, list_NumPart, 1, MPI_INT, MPI_COMM_WORLD); 
           MPI_Allgather(&N_gas, 1, MPI_INT, list_N_gas, 1, MPI_INT, MPI_COMM_WORLD);      
-          if(ThisTask == 0) printf("accreted  %d particles\n",AccNumTot);
+          if(ThisTask == 0) 
+            printf("accreted  %d particles\n",AccNumTot);
         }
       }
 #endif	

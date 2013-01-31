@@ -225,11 +225,11 @@ void identify_doomed_particles(void)
   MPI_Allgather(local_sink_ID, numsinkstot, MPI_INT, list_sink_ID, numsinkstot, MPI_INT, MPI_COMM_WORLD);           
   MPI_Barrier(MPI_COMM_WORLD); 
   
-  for(i = 0; i < numsinkstot * NTask; i++) if(ThisTask == 0 && list_sink_mass[i] > 0) fprintf(FdInfo,"  %d:%e  ",list_sink_ID[i],list_sink_mass[i]);      
-  if(ThisTask == 0) fprintf(FdInfo,"\n");
-  for(i = 0; i < numsinkstot * NTask; i++) if(ThisTask == 0 && list_sink_mass[i] > 0) fprintf(FdInfo,"  %e:%e  ",list_sink_posx[i],list_sink_velx[i]);      
-  if(ThisTask == 0) fprintf(FdInfo,"\n");  
-  fflush(FdInfo);
+  //for(i = 0; i < numsinkstot * NTask; i++) if(ThisTask == 0 && list_sink_mass[i] > 0) fprintf(FdInfo,"  %d:%e  ",list_sink_ID[i],list_sink_mass[i]);      
+  //if(ThisTask == 0) fprintf(FdInfo,"\n");
+  //for(i = 0; i < numsinkstot * NTask; i++) if(ThisTask == 0 && list_sink_mass[i] > 0) fprintf(FdInfo,"  %e:%e  ",list_sink_posx[i],list_sink_velx[i]);      
+  //if(ThisTask == 0) fprintf(FdInfo,"\n");  
+  //fflush(FdInfo);
   
   for(i = 0; i < numsinkstot * NTask; i++){ /* go through all the sink particles (From all processors) and find doomed gas */
     notestflag = 0;
@@ -380,8 +380,8 @@ void destroy_doomed_particles(void)
 #endif
 
   
-  for(k = N_gas; k < NumPart; k++) printf("ID %d (%d) init vel, pos, mass: (%e|%e|%e), (%e|%e|%e), %e\n",P[k].ID,k,P[k].Vel[0],P[k].Vel[1],P[k].Vel[2],
-                                          P[k].Pos[0],P[k].Pos[1],P[k].Pos[2],P[k].Mass); 
+  //for(k = N_gas; k < NumPart; k++) printf("ID %d (%d) init vel, pos, mass: (%e|%e|%e), (%e|%e|%e), %e\n",P[k].ID,k,P[k].Vel[0],P[k].Vel[1],P[k].Vel[2],
+  //                                        P[k].Pos[0],P[k].Pos[1],P[k].Pos[2],P[k].Mass); 
   /* first transfer momentum from all particles that are going to be accreted */
   
   numsinks = NumPart - N_gas;  
@@ -656,7 +656,7 @@ void destroy_doomed_particles(void)
           
           //Add the mass to the sink
           P[j].Mass = dmasstot;
-          printf("ID %d task %d accnum %d final vel, pos, mass: (%e|%e|%e), (%e|%e|%e), %e\n", \
+          //printf("ID %d task %d accnum %d final vel, pos, mass: (%e|%e|%e), (%e|%e|%e), %e\n", \
                  P[j].ID,ThisTask,AccNum,P[j].Vel[0],P[j].Vel[1],P[j].Vel[2], \
                  P[j].Pos[0],P[j].Pos[1],P[j].Pos[2],P[j].Mass);
           P[j].Ti_endstep = All.Ti_Current;

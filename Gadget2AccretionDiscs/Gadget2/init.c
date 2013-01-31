@@ -143,7 +143,7 @@ void init(void)
   }
   /* Now we all have the same starMass and starID */
   All.StarID=starID;
-  if(ThisTask==1)
+  if(ThisTask==0)
     printf("The star ID is %d\n",All.StarID);
   free(list_starMass);
   free(list_starID);
