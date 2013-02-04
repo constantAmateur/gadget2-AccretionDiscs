@@ -389,9 +389,9 @@ void hydro_force(void)
    //Not done in the density loop since the density loop could in principal be run multiple times per particle and these values should only be set once to the final results...
 #ifdef CDAV
    SphP[i].DivVelOld = SphP[i].DivVel;
-   SphP[i].GravAccelOld[0] = P[i].GravAccel[0];
-   SphP[i].GravAccelOld[1] = P[i].GravAccel[1];
-   SphP[i].GravAccelOld[2] = P[i].GravAccel[2];
+   P[i].GravAccelOld[0] = P[i].GravAccel[0];
+   P[i].GravAccelOld[1] = P[i].GravAccel[1];
+   P[i].GravAccelOld[2] = P[i].GravAccel[2];
 #endif
 #ifdef SPH_BND_PARTICLES
 	if(P[i].ID == 0)

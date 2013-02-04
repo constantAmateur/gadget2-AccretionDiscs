@@ -149,9 +149,9 @@ void density(void)
 			DensDataIn[nexport].Vel[1] = SphP[i].VelPred[1];
 			DensDataIn[nexport].Vel[2] = SphP[i].VelPred[2];
 #ifdef CDAV
-         DensDataIn[nexport].Accel[0] = SphP[i].HydroAccel[0]+SphP[i].GravAccelOld[0];
-         DensDataIn[nexport].Accel[1] = SphP[i].HydroAccel[1]+SphP[i].GravAccelOld[1];
-         DensDataIn[nexport].Accel[2] = SphP[i].HydroAccel[2]+SphP[i].GravAccelOld[2];
+         DensDataIn[nexport].Accel[0] = SphP[i].HydroAccel[0]+P[i].GravAccelOld[0];
+         DensDataIn[nexport].Accel[1] = SphP[i].HydroAccel[1]+P[i].GravAccelOld[1];
+         DensDataIn[nexport].Accel[2] = SphP[i].HydroAccel[2]+P[i].GravAccelOld[2];
 #endif
 			DensDataIn[nexport].Hsml = SphP[i].Hsml;
 			DensDataIn[nexport].Index = i;
@@ -637,7 +637,7 @@ void density_evaluate(int target, int mode)
       acc = SphP[target].HydroAccel;
       for(i=0;i<3;i++)
       {
-        acc[i] += SphP[target].GravAccelOld[i];
+        acc[i] += P[target].GravAccelOld[i];
       }
 #endif
     }
@@ -792,9 +792,9 @@ void density_evaluate(int target, int mode)
 		  rotv[2] += fac * (dy * dvx - dx * dvy);
 
 #ifdef CDAV
-        dax = acc[0] - SphP[j].HydroAccel[0]-SphP[j].GravAccelOld[0];
-        day = acc[1] - SphP[j].HydroAccel[1]-SphP[j].GravAccelOld[1];
-        daz = acc[2] - SphP[j].HydroAccel[2]-SphP[j].GravAccelOld[2];
+        dax = acc[0] - SphP[j].HydroAccel[0]-P[j].GravAccelOld[0];
+        day = acc[1] - SphP[j].HydroAccel[1]-P[j].GravAccelOld[1];
+        daz = acc[2] - SphP[j].HydroAccel[2]-P[j].GravAccelOld[2];
         //The factors of h in fac are irrelevant as they appear in both D and T and so will cancel each other out
         D[0] += fac * (dvx*dx);
         D[1] += fac * (dvx*dy);

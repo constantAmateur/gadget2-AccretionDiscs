@@ -555,6 +555,9 @@ extern struct particle_data
                                      allowing to guess whether a decrease/increase of the timestep should occur
                                      in the timestep that is started. */
 #endif
+#ifdef CDAV
+  FLOAT GravAccelOld[3];  //Gravitational acceleration is calculated before the hydro loop, so we need to save the old value of the acceleration somewhere for use in calculating div.a
+#endif
 }
  *P,              /*!< holds particle data on local processor */
  *DomainPartBuf;  /*!< buffer for particle data used in domain decomposition */
@@ -602,7 +605,6 @@ extern struct sph_particle_data
   FLOAT T[6];
   FLOAT R;
   FLOAT AlphaOld;         //Because the calculation of all the necessary qunatities are done in the density loop, which might have to be repeated, we need to make sure that the evaluation routines always act on the same Alpha each time the density loop is repeated.  To ensure this, we need a temporary store for each particle, which is what this is.
-  FLOAT GravAccelOld[3];  //Gravitational acceleration is calculated before the hydro loop, so we need to save the old value of the acceleration somewhere for use in calculating div.a
   FLOAT DivVelOld;  //This is only needed for testing div.a or if we are calculating div.a from the difference in div.v directly.
 
 #endif

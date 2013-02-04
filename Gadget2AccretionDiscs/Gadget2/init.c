@@ -163,6 +163,10 @@ void init(void)
     }
 #endif
 
+#ifdef CDAV
+  for(i=0; i < NumPart; i++)
+    P[i].GravAccelOld[0]=P[i].GravAccelOld[1]=P[i].GravAccelOld[2]=0;
+#endif
 
   for(i = 0; i < N_gas; i++)	/* initialize sph_properties */
     {
@@ -192,7 +196,7 @@ void init(void)
       SphP[i].MaxSignalVel=0;
       SphP[i].DivVelOld=0;
       SphP[i].DivVel=0;
-      SphP[i].GravAccelOld[0]=SphP[i].GravAccelOld[1]=SphP[i].GravAccelOld[2]=0;
+//      SphP[i].GravAccelOld[0]=SphP[i].GravAccelOld[1]=SphP[i].GravAccelOld[2]=0;
 #endif
       if(RestartFlag == 0)
 	{
