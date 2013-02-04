@@ -435,16 +435,19 @@ void density(void)
       {
         SphP[i].Alpha=SphP[i].AlphaOld;
       }
-      //Finally, advance the artificial viscosity value to the new value
-      if(SphP[i].Alpha < alphaloc)
+      //Finally, advance the artificial viscosity value to the new value, if it's the first time step, don't.
+      if(All.Ti_Current)
       {
-        SphP[i].Alpha = alphaloc;
-        SphP[i].DtAlpha = 0;
-      }
-      else
-      {
-        //SphP[i].Alpha = alphaloc +(SphP[i].Alpha-alphaloc)*exp(-2*All.VariableViscDecayLength*SphP[i].MaxSignalVel*dt_alpha/SphP[i].Hsml);
-        SphP[i].DtAlpha = (alphaloc-SphP[i].Alpha)*2*All.VariableViscDecayLength * SphP[i].MaxSignalVel / SphP[i].Hsml;
+        if(SphP[i].Alpha < alphaloc)
+        {
+          SphP[i].Alpha = alphaloc;
+          SphP[i].DtAlpha = 0;
+        }
+        else
+        {
+          //SphP[i].Alpha = alphaloc +(SphP[i].Alpha-alphaloc)*exp(-2*All.VariableViscDecayLength*SphP[i].MaxSignalVel*dt_alpha/SphP[i].Hsml);
+          SphP[i].DtAlpha = (alphaloc-SphP[i].Alpha)*2*All.VariableViscDecayLength * SphP[i].MaxSignalVel / SphP[i].Hsml;
+        }
       }
 #endif
          }
