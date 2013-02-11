@@ -114,7 +114,7 @@ void domain_Decomposition(void)
       
 #ifdef SINK_PARTICLES   
       //Don't do it if we've just started or if the flag explicitly says not to
-      if(Flag_FullStep && All.NumCurrentTiStep > 0 && All.AccreteFlag){  
+      if(All.NumCurrentTiStep > 0 && All.AccreteFlag){  
       // first see if any processors have particles scheduled for accretion
         MPI_Barrier(MPI_COMM_WORLD);         	
         MPI_Allreduce(&AccNum, &AccNumTot, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD); 

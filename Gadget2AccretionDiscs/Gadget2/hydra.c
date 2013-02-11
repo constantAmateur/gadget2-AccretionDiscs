@@ -610,8 +610,9 @@ void hydro_evaluate(int target, int mode)
 		    maxSignalVel = soundspeed_i + soundspeed_j;
 
         //This is the standard AV block, unchanged from original GADGET...
-#ifndef CDAV
-#ifndef MMAV
+
+//#ifndef CDAV
+//#ifndef MMAV
 		  if(vdotr2 < 0)	/* ... artificial viscosity */
 		    {
 		      mu_ij = fac_mu * vdotr2 / r;	/* note: this is negative! */
@@ -629,8 +630,11 @@ void hydro_evaluate(int target, int mode)
 			fabs(SphP[j].DivVel) / (fabs(SphP[j].DivVel) + SphP[j].CurlVel +
 						0.0001 * soundspeed_j / fac_mu / SphP[j].Hsml);
 #endif
-
+#if defined CDAV || defined MMAV
+            visc = 0.25 * (alpha_visc + alpha_visc_j) * (soundspeed_i+soundspeed_j-2.0*All.ArtViscPropConst*mu_ij) * (-mu_ij) / rho_ij;
+#else
 		      visc = 0.25 * All.ArtBulkViscConst * vsig * (-mu_ij) / rho_ij * (f1 + f2);
+#endif
 
 		      /* .... end artificial viscosity evaluation */
 #ifndef NOVISCOSITYLIMITER
@@ -661,8 +665,8 @@ void hydro_evaluate(int target, int mode)
 		  acc[1] -= hfc * dy;
 		  acc[2] -= hfc * dz;
 		  dtEntropy += 0.5 * hfc_visc * vdotr2;
-#endif
-#endif
+//#endif
+//#endif
 //The block for CD Method
 //This block should only be used if you want to use the explicit CD form for the AV and for the signal velocity/dissipation
 //#if defined CDAV || defined CDAV_DRIFTUPDATE
@@ -705,65 +709,65 @@ void hydro_evaluate(int target, int mode)
 //        dtEntropy+=hfc;
 //#endif
 //Block for the MM method
-#if defined MMAV || defined CDAV
-
-        if(vdotr2 <0)
-        {
-          mu_ij = fac_mu * vdotr2 / r;	/* note: this is negative! */
-          //ArtViscPropConst is 3/2 in original implementation...
-          //vsig = soundspeed_i + soundspeed_j - All.ArtViscPropConst*2.0 * mu_ij;
-          vsig = soundspeed_i + soundspeed_j - 3 * mu_ij;
-
-	       if(vsig > maxSignalVel)
-	         maxSignalVel = vsig;
-
-		    rho_ij = 0.5 * (rho + SphP[j].Density);
-
-
-          //if(ThisTask==1)
-          //{
-          //  printf("Average Alpha is %g\n",.5*(alpha_visc+alpha_visc_j));
-          //}
-
-          //We don't just use the signal velocity here as we want to allow beta to be something other than 3/2 alpha.
-          visc = 0.25 * (alpha_visc + alpha_visc_j) * (soundspeed_i+soundspeed_j-2.0*All.ArtViscPropConst*mu_ij) * (-mu_ij) / rho_ij;
-#ifndef NOVISCOSITYLIMITER
-          /* make sure that viscous acceleration is not too large */
-		    dt = imax(timestep, (P[j].Ti_endstep - P[j].Ti_begstep)) * All.Timebase_interval;
-		    if(dt > 0 && (dwk_i + dwk_j) < 0)
-          {
-			  visc = dmin(visc, 0.5 * fac_vsic_fix * vdotr2 /
-				      (0.5 * (mass + P[j].Mass) * (dwk_i + dwk_j) * r * dt));
-
-            //Limiter is designed to set the magnitude of the viscous acceleration to be no more than a quarter of the line of sight velocity connecting i and j, divided by dt
-            //tmp=0.5*fac_vsic_fix * vdotr2 / (0.5 * (mass+P[j].Mass)*(dwk_i+dwk_j)*r*dt);
-            //if(visc>tmp)
-            //{
-            //  visc = tmp;
-            //}
-          }
-#endif
-        }
-        else
-        {
-          visc=0;
-        }
-        //  if(ThisTask==1)
-        //  {
-        //    printf("MM Visc is %g\n",visc);
-        //  }
-
-		  p_over_rho2_j *= SphP[j].DhsmlDensityFactor;
-
-		  hfc_visc = 0.5 * P[j].Mass * visc * (dwk_i + dwk_j) / r;
-
-		  hfc = hfc_visc + P[j].Mass * (p_over_rho2_i * dwk_i + p_over_rho2_j * dwk_j) / r;
-
-		  acc[0] -= hfc * dx;
-		  acc[1] -= hfc * dy;
-		  acc[2] -= hfc * dz;
-		  dtEntropy += 0.5 * hfc_visc * vdotr2;
-#endif
+//#if defined MMAV || defined CDAV
+//
+//        if(vdotr2 <0)
+//        {
+//          mu_ij = fac_mu * vdotr2 / r;	/* note: this is negative! */
+//          //ArtViscPropConst is 3/2 in original implementation...
+//          //vsig = soundspeed_i + soundspeed_j - All.ArtViscPropConst*2.0 * mu_ij;
+//          vsig = soundspeed_i + soundspeed_j - 3 * mu_ij;
+//
+//	       if(vsig > maxSignalVel)
+//	         maxSignalVel = vsig;
+//
+//		    rho_ij = 0.5 * (rho + SphP[j].Density);
+//
+//
+//          //if(ThisTask==0)
+//          //{
+//          //  printf("Average Alpha is %g\n",.5*(alpha_visc+alpha_visc_j));
+//          //}
+//
+//          //We don't just use the signal velocity here as we want to allow beta to be something other than 3/2 alpha.
+//          visc = 0.25 * (alpha_visc + alpha_visc_j) * (soundspeed_i+soundspeed_j-2.0*All.ArtViscPropConst*mu_ij) * (-mu_ij) / rho_ij;
+//#ifndef NOVISCOSITYLIMITER
+//          /* make sure that viscous acceleration is not too large */
+//		    dt = imax(timestep, (P[j].Ti_endstep - P[j].Ti_begstep)) * All.Timebase_interval;
+//		    if(dt > 0 && (dwk_i + dwk_j) < 0)
+//          {
+//			  visc = dmin(visc, 0.5 * fac_vsic_fix * vdotr2 /
+//				      (0.5 * (mass + P[j].Mass) * (dwk_i + dwk_j) * r * dt));
+//
+//            //Limiter is designed to set the magnitude of the viscous acceleration to be no more than a quarter of the line of sight velocity connecting i and j, divided by dt
+//            //tmp=0.5*fac_vsic_fix * vdotr2 / (0.5 * (mass+P[j].Mass)*(dwk_i+dwk_j)*r*dt);
+//            //if(visc>tmp)
+//            //{
+//            //  visc = tmp;
+//            //}
+//          }
+//#endif
+//        }
+//        else
+//        {
+//          visc=0;
+//        }
+//        //if(ThisTask==0)
+//        //{
+//        //  printf("MM Visc alpha_i,alpha_j =  %g  %g  %g\n",visc,alpha_visc,alpha_visc_j);
+//        //}
+//
+//		  p_over_rho2_j *= SphP[j].DhsmlDensityFactor;
+//
+//		  hfc_visc = 0.5 * P[j].Mass * visc * (dwk_i + dwk_j) / r;
+//
+//		  hfc = hfc_visc + P[j].Mass * (p_over_rho2_i * dwk_i + p_over_rho2_j * dwk_j) / r;
+//
+//		  acc[0] -= hfc * dx;
+//		  acc[1] -= hfc * dy;
+//		  acc[2] -= hfc * dz;
+//		  dtEntropy += 0.5 * hfc_visc * vdotr2;
+//#endif
 		}
 	    }
 	}

@@ -377,8 +377,8 @@ void density(void)
       //now subtract the second part...
       diva =diva-(V[0]*V[0]+V[4]*V[4]+V[8]*V[8]+2*(V[1]*V[3]+V[2]*V[6]+V[5]*V[7]));
       //div.v is only calculated at the force updates, hence the appropriate dt is the size of the current timestep
-      //dt_alpha=(P[i].Ti_endstep-P[i].Ti_begstep)*All.Timebase_interval;
-      ////Alternative method for calculating diva
+      dt_alpha=(P[i].Ti_endstep-P[i].Ti_begstep)*All.Timebase_interval;
+      //Alternative method for calculating diva
       //if(dt_alpha!=0)
       //{
       //  A=(divv-SphP[i].DivVelOld)/dt_alpha;
@@ -387,7 +387,7 @@ void density(void)
       //{
       //  A=0;
       //}
-      ////Test if the newly calculated quantities return more or less what we expect from the old estimates.  In the case of diva the "old" estimate is from the difference between timesteps.
+      //Test if the newly calculated quantities return more or less what we expect from the old estimates.  In the case of diva the "old" estimate is from the difference between timesteps.
       //if(ThisTask==0)
       //{
       //  printf("(old,new,new/old) divv = (%g,%g,%g), diva = (%g,%g,%g)\n",SphP[i].DivVel,divv,divv/SphP[i].DivVel,A,diva,diva/A);
@@ -438,6 +438,10 @@ void density(void)
       //Finally, advance the artificial viscosity value to the new value, if it's the first time step, don't.
       if(All.Ti_Current)
       {
+        if(alphaloc > All.ArtBulkViscConst || alphaloc<0)
+        {
+          printf("Alpha went wonkey %d\n",alphaloc);
+        }
         if(SphP[i].Alpha < alphaloc)
         {
           SphP[i].Alpha = alphaloc;
