@@ -639,7 +639,10 @@ void density_evaluate(int target, int mode)
       vel = DensDataGet[target].Vel;
       h = DensDataGet[target].Hsml;
 #ifdef CDAV
-      acc = DensDataGet[target].Accel;
+      for(i=0;i<3;i++)
+      {
+        acc[i] = DensDataGet[target].Accel[i];
+      }
 #endif
     }
 
