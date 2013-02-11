@@ -190,7 +190,7 @@ void init(void)
 //     SphP[i].Alpha=All.VariableViscAlphaMin;
       SphP[i].DtAlpha=0;
 #endif
-#if defined CDAV
+#ifdef CDAV
 //      SphP[i].Alpha=0;
       SphP[i].DtAlpha=0;
       SphP[i].MaxSignalVel=0;

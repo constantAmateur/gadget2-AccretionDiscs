@@ -96,7 +96,7 @@ void density(void)
   for(n = 0, NumSphUpdate = 0; n < N_gas; n++)
     {
       SphP[n].Left = SphP[n].Right = 0;
-#if defined CDAV
+#ifdef CDAV
       SphP[n].AlphaOld=-1;
 #endif
 
