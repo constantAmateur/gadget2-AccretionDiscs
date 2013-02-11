@@ -140,14 +140,14 @@ void read_ic(char *fname)
          after the densities have been computed */
 	    }
     }
-#ifdef MMAV
+#if defined CDAV || defined MMAV
     for(i=0; i<N_gas; i++)
       SphP[i].Alpha=All.VariableViscAlphaMin;
 #endif
-#ifdef CDAV
-    for(i=0; i<N_gas; i++)
-      SphP[i].Alpha=0;
-#endif
+//#ifdef CDAV
+//    for(i=0; i<N_gas; i++)
+//      SphP[i].Alpha=0;
+//#endif
 
   }
   
