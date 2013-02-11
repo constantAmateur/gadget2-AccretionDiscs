@@ -290,13 +290,6 @@ void density(void)
                }
                SphP[place].R += DensDataPartialResult[source].R;
 #endif
-#ifdef VAR_H_TEST
-               for(k=0;k<3;k++)
-               {
-                 SphP[place].htest_f[k] += DensDataPartialResult[source].htest_f[k];
-               }
-               SphP[place].htest_g += DensDataPartialResult[source].htest_g;
-#endif
 			      SphP[place].Rot[0] += DensDataPartialResult[source].Rot[0];
 			      SphP[place].Rot[1] += DensDataPartialResult[source].Rot[1];
 			      SphP[place].Rot[2] += DensDataPartialResult[source].Rot[2];
@@ -395,7 +388,7 @@ void density(void)
       //  printf("sheemba%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",SphP[i].DivVel,divv,divv/SphP[i].DivVel,A,diva,diva/A,SphP[i].Rot[0]/SphP[i].Density,V[5]-V[7],(SphP[i].Density*(V[5]-V[7]))/SphP[i].Rot[0],SphP[i].Rot[1]/SphP[i].Density,V[6]-V[2],(SphP[i].Density*(V[6]-V[2]))/SphP[i].Rot[1],SphP[i].Rot[2]/SphP[i].Density,V[1]-V[3],(SphP[i].Density*(V[1]-V[3]))/SphP[i].Rot[2]);
       //}
       //diva=A;
-      SphP[i].DivVel = divv;
+      //SphP[i].DivVel = divv;
 
 #ifdef NOBALSARA
       xi=1;
@@ -438,10 +431,6 @@ void density(void)
       //Finally, advance the artificial viscosity value to the new value, if it's the first time step, don't.
       if(All.Ti_Current)
       {
-        if(alphaloc > All.ArtBulkViscConst || alphaloc<0)
-        {
-          printf("Alpha went wonkey %d\n",alphaloc);
-        }
         if(SphP[i].Alpha < alphaloc)
         {
           SphP[i].Alpha = alphaloc;
@@ -628,10 +617,7 @@ void density_evaluate(int target, int mode)
   double D[9],E[9],T[6];
   double dax,day,daz;
   double R,divvsign;
-  FLOAT *acc;
-#endif
-#ifdef VAR_H_TEST
-  double htest_f[3],htest_g;
+  double acc[3];
 #endif
   FLOAT *pos, *vel;
 
@@ -641,10 +627,9 @@ void density_evaluate(int target, int mode)
       vel = SphP[target].VelPred;
       h = SphP[target].Hsml;
 #ifdef CDAV
-      acc = SphP[target].HydroAccel;
       for(i=0;i<3;i++)
       {
-        acc[i] += P[target].GravAccelOld[i];
+        acc[i] = SphP[target].HydroAccel+P[target].GravAccelOld[i];
       }
 #endif
     }
@@ -686,9 +671,6 @@ void density_evaluate(int target, int mode)
     E[i]=D[i]=0;
   }
   R=0;
-#endif
-#ifdef VAR_H_TEST
-  htest_f[0]=htest_f[1]=htest_f[2]=htest_g=0;
 #endif
 
   startnode = All.MaxPart;
@@ -766,17 +748,6 @@ void density_evaluate(int target, int mode)
              divvsign=-1;
            }
            R += divvsign * mass_j * wk;
-         }
-#endif
-#ifdef VAR_H_TEST
-         htest_g -= mass_j *NUMDIMS*wk*hinv;
-         if(r>0)
-         {
-           htest_g -= mass_j * dwk * u;
-           fac = mass_j * dwk /r;
-           htest_f[0] += fac *dx;
-           htest_f[1] += fac *dy;
-           htest_f[2] += fac *dz;
          }
 #endif
 
@@ -862,13 +833,6 @@ void density_evaluate(int target, int mode)
       }
       SphP[target].R=R;
 #endif
-#ifdef VAR_H_TEST
-      for(i=0;i<3;i++)
-      {
-        SphP[target].htest_f[i]=htest_f[i];
-      }
-      SphP[target].htest_g=htest_g;
-#endif
     }
   else
     {
@@ -893,13 +857,6 @@ void density_evaluate(int target, int mode)
         DensDataResult[target].E[i]=E[i];
       }
       DensDataResult[target].R = R;
-#endif
-#ifdef VAR_H_TEST
-      for(i=0;i<3;i++)
-      {
-        SphP[target].htest_f[i]=htest_f[i];
-      }
-      SphP[target].htest_g=htest_g;
 #endif
     }
 }
