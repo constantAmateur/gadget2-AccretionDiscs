@@ -193,9 +193,9 @@ void init(void)
 #ifdef CDAV
 //      SphP[i].Alpha=0;
       SphP[i].DtAlpha=0;
-      SphP[i].MaxSignalVel=0;
+//      SphP[i].MaxSignalVel=0;
       SphP[i].DivVelOld=0;
-      SphP[i].DivVel=0;
+//      SphP[i].DivVel=0;
 //      SphP[i].GravAccelOld[0]=SphP[i].GravAccelOld[1]=SphP[i].GravAccelOld[2]=0;
 #endif
       if(RestartFlag == 0)
