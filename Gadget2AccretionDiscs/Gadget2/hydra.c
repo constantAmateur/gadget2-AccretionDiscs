@@ -617,11 +617,13 @@ void hydro_evaluate(int target, int mode)
 		    {
 		      mu_ij = fac_mu * vdotr2 / r;	/* note: this is negative! */
 
-#if defined CDAV || defined MMAV
-            vsig = soundspeed_i * soundspeed_j - 2.0 * All.ArtViscPropConst*mu_ij;
-#else
+//#if defined CDAV || defined MMAV
+//            vsig = soundspeed_i + soundspeed_j - 2.0 * All.ArtViscPropConst*mu_ij;
+//#else
                       vsig = soundspeed_i + soundspeed_j - 3 * mu_ij;
-#endif
+//#endif
+//            vsig = soundspeed_i + soundspeed_j - 2.0 * All.ArtViscPropConst*mu_ij;
+
 
 		      if(vsig > maxSignalVel)
 			maxSignalVel = vsig;
@@ -635,9 +637,9 @@ void hydro_evaluate(int target, int mode)
 						0.0001 * soundspeed_j / fac_mu / SphP[j].Hsml);
 #endif
 #if defined CDAV || defined MMAV
-            visc = 0.25 * (alpha_visc + alpha_visc_j) * vsig * (-mu_ij) / rho_ij;
+            visc = 0.25 * (alpha_visc + alpha_visc_j) * (soundspeed_i + soundspeed_j-2.0*All.ArtViscPropConst*mu_ij) * (-mu_ij) / rho_ij;
 #else
-		      visc = 0.25 * All.ArtBulkViscConst * vsig * (-mu_ij) / rho_ij * (f1 + f2);
+		      visc = 0.25 * All.ArtBulkViscConst * (soundspeed_i + soundspeed_j-2.0*All.ArtViscPropConst*mu_ij) * (-mu_ij) / rho_ij * (f1 + f2);
 #endif
 
 		      /* .... end artificial viscosity evaluation */
