@@ -318,9 +318,11 @@ void fill_write_buffer(enum iofields blocknr, int *startindex, int pc, int type)
           for(k = 0; k < 3; k++)
             fp[k] += fac1 * P[pindex].GravPM[k];
 #endif
+#ifndef DONT_OUTPUT_HYDRO_ACCEL
           if(P[pindex].Type == 0)
             for(k = 0; k < 3; k++)
               fp[k] += fac2 * SphP[pindex].HydroAccel[k];
+#endif
           fp += 3;
           n++;
         }
