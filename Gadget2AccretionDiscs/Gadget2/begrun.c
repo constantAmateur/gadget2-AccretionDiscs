@@ -604,6 +604,14 @@ void read_parameter_file(char *fname)
       strcpy(tag[nt], "AccretionRadius");
       addr[nt] = &All.AccretionRadius;
       id[nt++] = DOUBLE;
+#ifdef CUTOFF_BOX
+      strcpy(tag[nt], "CutoffMaxR");
+      addr[nt] = &All.maxR2;
+      id[nt++] = DOUBLE;
+      strcpy(tag[nt], "CutoffMaxZ");
+      addr[nt] = &All.maxZ;
+      id[nt++] = DOUBLE;
+#endif
 #endif
 #ifdef BETA_COOLING
       strcpy(tag[nt], "CoolingRate");

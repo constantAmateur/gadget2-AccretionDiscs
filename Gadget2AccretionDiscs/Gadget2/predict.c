@@ -377,6 +377,10 @@ void destroy_doomed_particles(void)
 #ifdef HIGH_PRECISION_POT
   double acc_pot_start,acc_pot_temp,acc_pot_finish;
 #endif
+#else
+#ifdef CUTOFF_BOX
+  double starR[3],starRtot[3];
+#endif
 #endif
 
   
@@ -596,6 +600,21 @@ void destroy_doomed_particles(void)
       All.Accretion_angmom[0] += acc_angmom_tot[0];
       All.Accretion_angmom[1] += acc_angmom_tot[1];
       All.Accretion_angmom[2] += acc_angmom_tot[2];
+#else
+#ifdef CUTOFF_BOX
+      //Need to calculate star radius for box limiting
+      starR[0]=starR[1]=starR[2]=0;
+      for(j = N_gas;j < NumPart; j++){
+        if(P[j].ID == target){
+          starR[0] = P[j].Pos[0];
+          starR[1] = P[j].Pos[1];
+          starR[2] = P[j].Pos[2];
+        }
+      }
+      MPI_Barrier(MPI_COMM_WORLD); 
+      MPI_Allreduce(&starR[0], &starRtot[0], 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD); 
+      MPI_Barrier(MPI_COMM_WORLD);     
+#endif
 #endif
       
       for(k = 0;k < AccNum;k++){
@@ -689,6 +708,27 @@ void destroy_doomed_particles(void)
       acc_counter++; 
     }
   }
+#ifdef CUTOFF_BOX
+  for(j = 0;j<N_gas; j++){
+    //Is it outside the box?
+    if((P[j].Pos[0]-starRtot[0])*(P[j].Pos[0]-starRtot[0])+(P[j].Pos[1]-starRtot[1])*(P[j].Pos[1]-starRtot[1]) > All.maxR2 || fabs(P[j].Pos[2]-starRtot[2]) > All.maxZ)
+    {
+      //It is, delete it.
+      if(P[j].Ti_endstep == All.Ti_Current){
+        NumForceUpdate--;
+        NumSphUpdate--;
+      }
+      for(k = i+1; k<=NumPart; k++){ // actually remove the particle here, 
+                                     // and shift everything down to fill the gap in the array.
+        P[k-1] = P[k];
+        if(P[k].Type == 0)
+          SphP[k-1] = SphP[k];      
+      }
+      NumPart--;   // decrement the local countrs of particles and gas particles
+      N_gas--;
+    }
+  }
+#endif
     
   free(list_sink_posx);
   free(list_sink_posy);

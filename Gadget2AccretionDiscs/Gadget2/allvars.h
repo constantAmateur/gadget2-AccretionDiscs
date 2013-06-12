@@ -308,6 +308,10 @@ extern struct global_data_all_processes
   /* accretion and wind parameters */
   double AccretionRadius;    /*!< the radius at which sph particles are accreted onto sinks */
   int AccreteFlag;           /* Determines whether a domain decomposition should cause accretion to be processed */
+#ifdef CUTOFF_BOX
+  double maxR2;
+  double maxZ;
+#endif
 #endif
 #ifdef NK_AV
   double NKtollerence;       //How much can a particle deviate from keplerian before it is "anomolous" default .03

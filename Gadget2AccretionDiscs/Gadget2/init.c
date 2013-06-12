@@ -38,6 +38,10 @@ void init(void)
   All.Accretion_angmom[1]=0;
   All.Accretion_angmom[2]=0;
 #endif
+  //Square radius for fast comparison
+#ifdef CUTOFF_BOX
+  All.maxR2 = All.maxR2*All.maxR2;
+#endif
 #endif
 
   switch (All.ICFormat)
