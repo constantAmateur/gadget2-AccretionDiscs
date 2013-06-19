@@ -709,7 +709,12 @@ void destroy_doomed_particles(void)
     }
   }
 #ifdef CUTOFF_BOX
-  for(j = 0;j<N_gas; j++){
+  //How far to go?
+  i=N_gas;
+  j=0;
+  //Check each particle in array
+  while(j<i)
+  {
     //Is it outside the box?
     if((P[j].Pos[0]-starRtot[0])*(P[j].Pos[0]-starRtot[0])+(P[j].Pos[1]-starRtot[1])*(P[j].Pos[1]-starRtot[1]) > All.maxR2 || fabs(P[j].Pos[2]-starRtot[2]) > All.maxZ)
     {
@@ -718,7 +723,7 @@ void destroy_doomed_particles(void)
         NumForceUpdate--;
         NumSphUpdate--;
       }
-      for(k = i+1; k<=NumPart; k++){ // actually remove the particle here, 
+      for(k = j+1; k<=NumPart; k++){ // actually remove the particle here, 
                                      // and shift everything down to fill the gap in the array.
         P[k-1] = P[k];
         if(P[k].Type == 0)
@@ -726,7 +731,10 @@ void destroy_doomed_particles(void)
       }
       NumPart--;   // decrement the local countrs of particles and gas particles
       N_gas--;
+      //There's one less particle to consider now, so stop loop a bit earlier
+      i--;
     }
+    j++;
   }
 #endif
     
