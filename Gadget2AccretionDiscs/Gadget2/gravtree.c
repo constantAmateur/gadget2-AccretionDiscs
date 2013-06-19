@@ -329,7 +329,10 @@ void gravity_tree(void)
   for(i = 0; i < NumPart; i++)
     if(P[i].Ti_endstep == All.Ti_Current)
       for(j = 0; j < 3; j++)
-	P[i].GravAccel[j] *= All.G;
+      {
+	     P[i].GravAccel[j] *= All.G;
+        //printf("Gravity! %g\n",P[i].GravAccel[j]);
+      }
 
 
   /* Finally, the following factor allows a computation of a cosmological simulation 

@@ -570,7 +570,8 @@ void hydro_evaluate(int target, int mode)
 #ifndef  TWODIMS
 		      hinv4 = hinv * hinv * hinv * hinv;
 #else
-		      hinv4 = hinv * hinv * hinv / boxSize_Z;
+		      //hinv4 = hinv * hinv * hinv / boxSize_Z;
+		      hinv4 = hinv * hinv * hinv;
 #endif
 		      u = r * hinv;
 		      if(u < 0.5)
@@ -593,7 +594,8 @@ void hydro_evaluate(int target, int mode)
 #ifndef  TWODIMS
 		      hinv4 = hinv * hinv * hinv * hinv;
 #else
-		      hinv4 = hinv * hinv * hinv / boxSize_Z;
+		      //hinv4 = hinv * hinv * hinv / boxSize_Z;
+		      hinv4 = hinv * hinv * hinv;
 #endif
 		      u = r * hinv;
 		      if(u < 0.5)
@@ -639,7 +641,7 @@ void hydro_evaluate(int target, int mode)
 #if defined CDAV || defined MMAV
             visc = 0.25 * (alpha_visc + alpha_visc_j) * (soundspeed_i + soundspeed_j-2.0*All.ArtViscPropConst*mu_ij) * (-mu_ij) / rho_ij;
 #else
-		      visc = 0.25 * All.ArtBulkViscConst * (soundspeed_i + soundspeed_j-2.0*All.ArtViscPropConst*mu_ij) * (-mu_ij) / rho_ij * (f1 + f2);
+		      visc = 0.25 * All.ArtBulkViscConst * (soundspeed_i + soundspeed_j-3*mu_ij) * (-mu_ij) / rho_ij * (f1 + f2);
 #endif
 
 		      /* .... end artificial viscosity evaluation */

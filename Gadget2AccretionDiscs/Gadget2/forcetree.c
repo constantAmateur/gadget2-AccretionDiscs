@@ -1123,6 +1123,408 @@ void force_update_node_hmax_toptree(void)
  *  the value of TypeOfOpeningCriterion, either the geometrical BH
  *  cell-opening criterion, or the `relative' opening criterion is used.
  */
+#ifdef TWODIMS
+int force_treeevaluate(int target, int mode, double *ewaldcountsum)
+{
+  struct NODE *nop = 0;
+  int no, ninteractions, ptype;
+  double r2, dx, dy, dz, mass, r, fac, u, h, h_inv, h3_inv;
+  double acc_x, acc_y, acc_z, pos_x, pos_y, pos_z, aold;
+#if defined(UNEQUALSOFTENINGS) && !defined(ADAPTIVE_GRAVSOFT_FORGAS)
+  int maxsofttype;
+#endif
+#ifdef ADAPTIVE_GRAVSOFT_FORGAS
+  double soft = 0;
+#endif
+#ifdef PRICE_GRAV_SOFT
+  double h_i,h_j;
+  h_i=h_j=0;
+#endif
+#ifdef PERIODIC
+  double boxsize, boxhalf;
+
+  boxsize = All.BoxSize;
+  boxhalf = 0.5 * All.BoxSize;
+#endif
+
+  //if(ThisTask==0)
+  //  printf("Start force evaluation for target %d in mode %d.\n",target,mode);
+  acc_x = 0;
+  acc_y = 0;
+  acc_z = 0;
+  ninteractions = 0;
+
+  if(mode == 0)
+    {
+      pos_x = P[target].Pos[0];
+      pos_y = P[target].Pos[1];
+      ptype = P[target].Type;
+      aold = All.ErrTolForceAcc * P[target].OldAcc;
+#ifdef ADAPTIVE_GRAVSOFT_FORGAS
+      if(ptype == 0)
+      {
+	     soft = SphP[target].Hsml;
+#if PRICE_GRAV_SOFT
+        h_i = soft;
+      }
+      else
+      {
+	    h_i = All.ForceSoftening[ptype];
+#endif
+      }
+#endif
+    }
+  else
+    {
+      pos_x = GravDataGet[target].u.Pos[0];
+      pos_y = GravDataGet[target].u.Pos[1];
+#ifdef UNEQUALSOFTENINGS
+      ptype = GravDataGet[target].Type;
+#else
+      ptype = P[0].Type;
+#endif
+      aold = All.ErrTolForceAcc * GravDataGet[target].w.OldAcc;
+#ifdef ADAPTIVE_GRAVSOFT_FORGAS
+      if(ptype == 0)
+      {
+	     soft = GravDataGet[target].Soft;
+#if PRICE_GRAV_SOFT
+        h_i = soft;
+      }
+      else
+      {
+        h_i = All.ForceSoftening[ptype];
+#endif
+      }
+#endif
+    }
+
+
+
+#ifndef UNEQUALSOFTENINGS
+  h = All.ForceSoftening[ptype];
+  h_inv = 1.0 / h;
+  h3_inv = h_inv * h_inv;
+#endif
+  no = All.MaxPart;		/* root node */
+
+  while(no >= 0)
+    {
+      if(no < All.MaxPart)	/* single particle */
+	{
+	  /* the index of the node is the index of the particle */
+	  /* observe the sign */
+
+	  dx = P[no].Pos[0] - pos_x;
+	  dy = P[no].Pos[1] - pos_y;
+
+	  mass = P[no].Mass;
+	}
+      else
+	{
+	  if(no >= All.MaxPart + MaxNodes)	/* pseudo particle */
+	    {
+	      if(mode == 0)
+		{
+		  Exportflag[DomainTask[no - (All.MaxPart + MaxNodes)]] = 1;
+		}
+	      no = Nextnode[no - MaxNodes];
+	      continue;
+	    }
+	  nop = &Nodes[no];
+	  dx = nop->u.d.s[0] - pos_x;
+	  dy = nop->u.d.s[1] - pos_y;
+
+	  mass = nop->u.d.mass;
+	}
+#ifdef PERIODIC
+      dx = NEAREST(dx);
+      dy = NEAREST(dy);
+#endif
+      r2 = dx * dx + dy * dy;
+
+      if(no < All.MaxPart)
+	{
+#ifdef UNEQUALSOFTENINGS
+#ifdef ADAPTIVE_GRAVSOFT_FORGAS
+	  if(ptype == 0)
+	    h = soft;
+	  else
+	    h = All.ForceSoftening[ptype];
+	  if(P[no].Type == 0)
+	    {
+#ifdef PRICE_GRAV_SOFT
+         h_j=SphP[no].Hsml;
+#endif
+	      if(h < SphP[no].Hsml)
+		h = SphP[no].Hsml;
+	    }
+	  else
+	    {
+#ifdef PRICE_GRAV_SOFT
+         h_j=All.ForceSoftening[P[no].Type];
+#endif
+	      if(h < All.ForceSoftening[P[no].Type])
+		h = All.ForceSoftening[P[no].Type];
+	    }
+#else
+	  h = All.ForceSoftening[ptype];
+	  if(h < All.ForceSoftening[P[no].Type])
+	    h = All.ForceSoftening[P[no].Type];
+#endif
+#endif
+	  no = Nextnode[no];
+	}
+      else			/* we have an  internal node. Need to check opening criterion */
+	{
+	  if(mode == 1)
+	    {
+	      if((nop->u.d.bitflags & 3) == 1)	/* if it's a top-level node
+						 * which does not contain
+						 * local particles we can
+						 * continue to do a short-cut */
+		{
+		  no = nop->u.d.sibling;
+		  continue;
+		}
+	    }
+
+
+	  if(All.ErrTolTheta)	/* check Barnes-Hut opening criterion */
+	    {
+	      if(nop->len * nop->len > r2 * All.ErrTolTheta * All.ErrTolTheta)
+		{
+		  /* open cell */
+		  no = nop->u.d.nextnode;
+		  continue;
+		}
+	    }
+	  else			/* check relative opening criterion */
+	    {
+#ifdef EXACT_STAR_GRAV
+         /* Always open up star all the way... */
+         if(mass >= 1.0 || ptype==1 )
+         {
+           no = nop->u.d.nextnode;
+           continue;
+         }
+#endif
+	      if(mass * nop->len * nop->len > r2 * r2 * aold)
+		{
+		  /* open cell */
+		  no = nop->u.d.nextnode;
+		  continue;
+		}
+
+#ifdef EXTRA_CRITERIA
+	      if(fabs(nop->center[0] - pos_x) < 1.60 * nop->len)
+         {
+		     if(fabs(nop->center[1] - pos_y) < 1.60 * nop->len)
+		     {
+			      no = nop->u.d.nextnode;
+			      continue;
+		     }
+		   }
+         /*  final check if we're too close for comfort */
+         h_tmp= All.ForceSoftening[ptype];
+#ifdef ADPATIVE_GRAVSOFT_FORGAS
+         if(ptype==0)
+         {
+           h_tmp=soft;
+         }
+#endif
+         if(((pos_x-h_tmp) <= (nop->center[0] + 1.0 * nop->len)) && ((pos_x+h_tmp) >= (nop->center[0] - 1.0 * nop->len)))
+         {
+           if(((pos_y-h_tmp) <= (nop->center[1] + 1.0 * nop->len)) && ((pos_y+h_tmp) >= (nop->center[1] - 1.0 * nop->len)))
+           {
+               no = nop->u.d.nextnode;
+               continue;
+           }
+         }
+#else
+	      /* check in addition whether we lie inside the cell */
+	      if(fabs(nop->center[0] - pos_x) < 0.60 * nop->len)
+		{
+		  if(fabs(nop->center[1] - pos_y) < 0.60 * nop->len)
+		    {
+			  no = nop->u.d.nextnode;
+			  continue;
+		    }
+		}
+#endif
+	    }
+
+#ifdef UNEQUALSOFTENINGS
+#ifndef ADAPTIVE_GRAVSOFT_FORGAS
+	  h = All.ForceSoftening[ptype];
+          maxsofttype = (nop->u.d.bitflags >> 2) & 7;
+          if(maxsofttype == 7) /* may only occur for zero mass top-level nodes */
+            {
+              if(mass > 0)
+                endrun(986);
+              no = nop->u.d.nextnode;
+              continue;
+            }
+          else
+            {
+              if(h < All.ForceSoftening[maxsofttype])
+                {
+                  h = All.ForceSoftening[maxsofttype];
+                  if(r2 < h * h)
+                    {
+                      if(((nop->u.d.bitflags >> 5) & 1))	/* bit-5 signals that there are particles of different softening in the node */
+                        {
+                          no = nop->u.d.nextnode;
+                          continue;
+                        }
+                    }
+                }
+            }
+#else
+	  if(ptype == 0)
+	    h = soft;
+	  else
+	    h = All.ForceSoftening[ptype];
+     //If the "j" particle isn't a particle but a big blob, set the smoothing length to the maximum of the smoothing lengths in this blob...
+#ifdef PRICE_GRAV_SOFT
+     h_j = nop->maxsoft;
+     //Shouldn't ever happen, but it does.  Weird.
+     if(h_j==0)
+     {
+       //printf("weirdness in force routine\n");
+       h_j=h;
+     }
+#endif
+
+     //This seems to be broken (I don't really understand how it works) so leave it out for now.  I *think* the code should already do what it was intended to do anyway, but without it being included it *might* lead to a separate bug where the nodes are not opened...
+//#ifdef PRICE_GRAV_SOFT
+//     //This should ensure that if there's any chance of any particle in the cell being within the interaction radius of our particle (and hence needing to be smoothed) we will open up the box
+//     if(h < nop->maxsoft)
+//       h=nop->maxsoft;
+//     if(r2 < h*h)
+//     {
+//       no = nop->u.d.nextnode;
+//       continue;
+//     }
+//#else
+     //We're already in a branch of the code where we know we're in a box.  So what is the purpose of this first condition?  I guess if h is already the maximum softening length, we will already have opened up the box if we need to?
+	  if(h < nop->maxsoft)
+	    {
+	      h = nop->maxsoft;
+	      if(r2 < h * h)
+		{
+		  no = nop->u.d.nextnode;
+		  continue;
+		}
+	    }
+//#endif
+#endif
+#endif
+
+	  no = nop->u.d.sibling;	/* ok, node can be used */
+
+	  if(mode == 1)
+	    {
+	      if(((nop->u.d.bitflags) & 1))	/* Bit 0 signals that this node belongs to top-level tree */
+		continue;
+	    }
+	}
+
+      r = sqrt(r2);
+     //Make sure we're using the particle smoothing and not "h" which is some maximum of h over neighbours
+#ifdef PRICE_GRAV_SOFT
+     h=h_i;
+#endif
+
+      if(r >= h)
+	fac = mass / (r2 * r);
+      else
+      {
+        fac= mass / (pow(r2 +h*h,1.5));
+      }
+//      else
+//	{
+//#ifdef UNEQUALSOFTENINGS
+//	  h_inv = 1.0 / h;
+//	  h3_inv = h_inv * h_inv;
+//#endif
+//
+//	  u = r * h_inv;
+//	  if(u < 0.5)
+//	    fac = mass * h3_inv * (10.666666666667 + u * u * (32.0 * u - 38.4));
+//	  else
+//	    fac =
+//	      mass * h3_inv * (21.333333333333 - 48.0 * u +
+//			       38.4 * u * u - 10.666666666667 * u * u * u - 0.066666666667 / (u * u * u));
+//   }
+//     //The Price correction terms need a symmetric gravitational force...
+//#ifdef PRICE_GRAV_SOFT
+//     fac *= 0.5;
+//     //This shouldn't ever happen...
+//     if(h_j==0)
+//     {
+//       h_j=h_i;
+//       printf("This should never happen! In the force calc.\n");
+//       exit(0);
+//     }
+//     if(r >= h_j)
+//       fac += mass / (r2*r*2.0);
+//     else
+//     {
+//#ifdef UNEQUALSOFTENINGS
+//	  h_inv = 1.0 / h_j;
+//	  h3_inv = h_inv * h_inv;
+//#endif
+//
+//	  u = r * h_inv;
+//	  if(u < 0.5)
+//	    fac += 0.5*mass * h3_inv * (10.666666666667 + u * u * (32.0 * u - 38.4));
+//	  else
+//	    fac +=
+//	      0.5*mass * h3_inv * (21.333333333333 - 48.0 * u +
+//			       38.4 * u * u - 10.666666666667 * u * u * u - 0.066666666667 / (u * u * u));
+//     }
+//#endif
+      if(r==0)
+         fac = 0;
+
+      //printf("Mass of %g and factor of %g.\n",mass,fac);
+      acc_x += dx * fac;
+      acc_y += dy * fac;
+      //if(ThisTask ==0)
+      //  printf("The factor, mass are %g and %g.\n",fac,mass);
+      //if(ThisTask ==0)
+      //  printf("The Types are %d, %d.\n",ptype,ptype_j);
+
+
+      ninteractions++;
+    }
+
+
+  /* store result at the proper place */
+  //printf("Final forces are (%g,%g,%g).\n",acc_x,acc_y,acc_z);
+  if(mode == 0)
+    {
+      P[target].GravAccel[0] = acc_x;
+      P[target].GravAccel[1] = acc_y;
+      P[target].GravAccel[2] = acc_z;
+      P[target].GravCost = ninteractions;
+    }
+  else
+    {
+      GravDataResult[target].u.Acc[0] = acc_x;
+      GravDataResult[target].u.Acc[1] = acc_y;
+      GravDataResult[target].u.Acc[2] = acc_z;
+      GravDataResult[target].w.Ninteractions = ninteractions;
+    }
+
+#ifdef PERIODIC
+  *ewaldcountsum += force_treeevaluate_ewald_correction(target, mode, pos_x, pos_y, pos_z, aold);
+#endif
+
+  return ninteractions;
+}
+#else
 int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 {
   struct NODE *nop = 0;
@@ -1537,6 +1939,7 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 
   return ninteractions;
 }
+#endif
 
 
 

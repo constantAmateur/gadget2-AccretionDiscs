@@ -654,7 +654,8 @@ void density_evaluate(int target, int mode)
 #ifndef  TWODIMS
   hinv3 = hinv * hinv * hinv;
 #else
-  hinv3 = hinv * hinv / boxSize_Z;
+  //hinv3 = hinv * hinv / boxSize_Z;
+  hinv3 = hinv * hinv;
 #endif
   hinv4 = hinv3 * hinv;
 
