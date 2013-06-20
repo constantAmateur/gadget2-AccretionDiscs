@@ -1438,53 +1438,55 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 
       if(r >= h)
 	fac = mass / (r2 * r);
-      else
-      {
-        fac= mass / (pow(r2 +h*h,1.5));
-      }
 //      else
-//	{
-//#ifdef UNEQUALSOFTENINGS
-//	  h_inv = 1.0 / h;
-//	  h3_inv = h_inv * h_inv;
-//#endif
-//
-//	  u = r * h_inv;
-//	  if(u < 0.5)
-//	    fac = mass * h3_inv * (10.666666666667 + u * u * (32.0 * u - 38.4));
-//	  else
-//	    fac =
-//	      mass * h3_inv * (21.333333333333 - 48.0 * u +
-//			       38.4 * u * u - 10.666666666667 * u * u * u - 0.066666666667 / (u * u * u));
-//   }
-//     //The Price correction terms need a symmetric gravitational force...
-//#ifdef PRICE_GRAV_SOFT
-//     fac *= 0.5;
-//     //This shouldn't ever happen...
-//     if(h_j==0)
-//     {
-//       h_j=h_i;
-//       printf("This should never happen! In the force calc.\n");
-//       exit(0);
-//     }
-//     if(r >= h_j)
-//       fac += mass / (r2*r*2.0);
-//     else
-//     {
-//#ifdef UNEQUALSOFTENINGS
-//	  h_inv = 1.0 / h_j;
-//	  h3_inv = h_inv * h_inv;
-//#endif
-//
-//	  u = r * h_inv;
-//	  if(u < 0.5)
-//	    fac += 0.5*mass * h3_inv * (10.666666666667 + u * u * (32.0 * u - 38.4));
-//	  else
-//	    fac +=
-//	      0.5*mass * h3_inv * (21.333333333333 - 48.0 * u +
-//			       38.4 * u * u - 10.666666666667 * u * u * u - 0.066666666667 / (u * u * u));
-//     }
-//#endif
+//      {
+//        fac= mass / (pow(r2 +h*h,1.5));
+//      }
+      else
+	{
+#ifdef UNEQUALSOFTENINGS
+	  h_inv = 1.0 / h;
+	  h3_inv = h_inv * h_inv;
+#endif
+
+	  u = r * h_inv;
+	  if(u < 0.5)
+	    fac = mass * h3_inv * (7.619047619047619 + u * u * (22.85714285714285 * u - 27.4285714285714));
+	  else
+	    fac =
+	      mass * h3_inv * (15.238095238095 - 34.285714285714 * u +
+			        27.4285714285714* u * u -  7.619047619047619* u * u * u - 0.04761904761904761 / (u * u * u));
+   }
+     //The Price correction terms need a symmetric gravitational force...
+#ifdef PRICE_GRAV_SOFT
+     fac *= 0.5;
+     //This shouldn't ever happen...
+     if(h_j==0)
+     {
+       h_j=h_i;
+       printf("This should never happen! In the force calc.\n");
+       exit(0);
+     }
+     if(r >= h_j)
+       fac += mass / (r2*r*2.0);
+     else
+     {
+#ifdef UNEQUALSOFTENINGS
+	  h_inv = 1.0 / h_j;
+	  h3_inv = h_inv * h_inv;
+#endif
+
+	  u = r * h_inv;
+	  if(u < 0.5)
+	    fac = 0.5*mass * h3_inv * (7.619047619047619 + u * u * (22.85714285714285 * u - 27.4285714285714));
+	  else
+     {
+	    fac +=
+    0.5*mass * h3_inv * (15.238095238095 - 34.285714285714 * u +
+			        27.4285714285714* u * u -  7.619047619047619* u * u * u - 0.04761904761904761 / (u * u * u));
+     }
+     }
+#endif
       if(r==0)
          fac = 0;
 
