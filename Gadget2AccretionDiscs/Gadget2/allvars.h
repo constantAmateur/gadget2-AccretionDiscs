@@ -704,7 +704,7 @@ extern struct io_header
  header;                               /*!< holds header for snapshot files */
 
 
-#define IO_NBLOCKS 13   /*!< total number of defined information blocks for snapshot files.
+#define IO_NBLOCKS 14   /*!< total number of defined information blocks for snapshot files.
                              Must be equal to the number of entries in "enum iofields" */
 
 enum iofields           /*!< this enumeration lists the defined output blocks in snapshot files. Not all of them need to be present. */
@@ -718,6 +718,7 @@ enum iofields           /*!< this enumeration lists the defined output blocks in
   IO_HSML,
   IO_POT,
   IO_ACCEL,
+  IO_VORTICITY,
   IO_DTENTR,
   IO_TSTP,
   IO_ALPHA,
@@ -773,6 +774,9 @@ extern struct gravdata_in
 #ifdef ADAPTIVE_GRAVSOFT_FORGAS
   FLOAT Soft;
 #endif
+#endif
+#ifdef TWODIMS
+  FLOAT intEnergy;
 #endif
   union
   {

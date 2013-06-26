@@ -1130,6 +1130,7 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
   int no, ninteractions, ptype;
   double r2, dx, dy, dz, mass, r, fac, u, h, h_inv, h3_inv;
   double acc_x, acc_y, acc_z, pos_x, pos_y, pos_z, aold;
+  double intEnergy;
 #if defined(UNEQUALSOFTENINGS) && !defined(ADAPTIVE_GRAVSOFT_FORGAS)
   int maxsofttype;
 #endif
@@ -1160,6 +1161,10 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
       pos_y = P[target].Pos[1];
       ptype = P[target].Type;
       aold = All.ErrTolForceAcc * P[target].OldAcc;
+      if(ptype==0)
+      {
+        intEnergy = SphP[target].Entropy*pow(SphP[target].Density,GAMMA_MINUS1)*GAMMA;
+      }
 #ifdef ADAPTIVE_GRAVSOFT_FORGAS
       if(ptype == 0)
       {
@@ -1184,6 +1189,10 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
       ptype = P[0].Type;
 #endif
       aold = All.ErrTolForceAcc * GravDataGet[target].w.OldAcc;
+      if(ptype==0)
+      {
+        intEnergy = GravDataGet[target].intEnergy;
+      }
 #ifdef ADAPTIVE_GRAVSOFT_FORGAS
       if(ptype == 0)
       {
@@ -1436,6 +1445,13 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
      h=h_i;
 #endif
 
+     //Use the centre of mass and the internal energy to calculate H, and smooth by it
+#ifdef H_SMOOTHING
+     if(ptype==0)
+     {
+       h=sqrt((intEnergy*pow((pos_x-SysState.CenterOfMass[0])*(pos_x-SysState.CenterOfMass[0])+(pos_y-SysState.CenterOfMass[1])*(pos_y-SysState.CenterOfMass[1]),1.5))/(All.G*SysState.MassComp[1]));
+     }
+#endif
       if(r >= h)
 	fac = mass / (r2 * r);
 //      else

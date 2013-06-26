@@ -42,6 +42,14 @@ void compute_accelerations(int mode)
 #endif
 
   tstart = second();		/* measure the time for the full force computation */
+#ifdef TWODIMS
+  //Make sure we have a currentish estimate of the centre of mass and the energy of the particles
+  if(All.Ti_Current ==0)
+  {
+    density();
+    compute_global_quantities_of_system();
+  }
+#endif
 
   gravity_tree();		/* computes gravity accel. */
 

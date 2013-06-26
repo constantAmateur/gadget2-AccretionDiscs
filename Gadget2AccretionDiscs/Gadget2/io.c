@@ -328,7 +328,22 @@ void fill_write_buffer(enum iofields blocknr, int *startindex, int pc, int type)
         }
 #endif
       break;
-      
+
+    case IO_VORTICITY:		/* vorticity */
+#ifdef OUTPUTVORTICITY
+      for(n = 0; n < pc; pindex++)
+        if(P[pindex].Type == type)
+        {
+          for(k=0; k<3; k++)
+          {
+            fp[k] = SphP[pindex].Rot[k]/SphP[pindex].Density;
+          }
+          fp += 3;
+          n++;
+        }
+#endif
+      break;
+
     case IO_DTENTR:		/* rate of change of entropy */
 #ifdef OUTPUTCHANGEOFENTROPY
       for(n = 0; n < pc; pindex++)
@@ -382,6 +397,7 @@ void fill_write_buffer(enum iofields blocknr, int *startindex, int pc, int type)
 #endif
       break;
 
+ 
   }
   
   *startindex = pindex;
@@ -402,6 +418,7 @@ int get_bytes_per_blockelement(enum iofields blocknr)
   {
     case IO_POS:
     case IO_VEL:
+    case IO_VORTICITY:
     case IO_ACCEL:
       bytes_per_blockelement = 3 * sizeof(float);
       break;
@@ -470,6 +487,7 @@ int get_values_per_blockelement(enum iofields blocknr)
   {
     case IO_POS:
     case IO_VEL:
+    case IO_VORTICITY:
     case IO_ACCEL:
       values = 3;
       break;
@@ -526,6 +544,7 @@ int get_particles_in_block(enum iofields blocknr, int *typelist)
   {
     case IO_POS:
     case IO_VEL:
+    case IO_VORTICITY:
     case IO_ACCEL:
     case IO_TSTP:
     case IO_ID:
@@ -576,6 +595,11 @@ int blockpresent(enum iofields blocknr)
   
 #ifndef OUTPUTACCELERATION
   if(blocknr == IO_ACCEL)
+    return 0;
+#endif
+
+#ifndef OUTPUTVORTICITY
+  if(blocknr == IO_VORTICITY)
     return 0;
 #endif
   
@@ -644,6 +668,9 @@ void fill_Tab_IO_Labels(void)
     case IO_ACCEL:
       strncpy(Tab_IO_Labels[IO_ACCEL], "ACCE", 4);
       break;
+    case IO_VORTICITY:
+      strncpy(Tab_IO_Labels[IO_VORTICITY], "VORT", 4);
+      break;
     case IO_DTENTR:
       strncpy(Tab_IO_Labels[IO_DTENTR], "ENDT", 4);
       break;
@@ -697,6 +724,9 @@ void get_dataset_name(enum iofields blocknr, char *buf)
       break;
     case IO_ACCEL:
       strcpy(buf, "Acceleration");
+      break;
+    case IO_VORTICITY:
+      strcpy(buf, "Vorticity");
       break;
     case IO_DTENTR:
       strcpy(buf, "RateOfChangeOfEntropy");
@@ -832,6 +862,9 @@ void write_file(char *fname, int writeTask, int lastTask)
 #endif
 #ifdef OUTPUTRADIATEDENERGY
   header.extra_output += 32;
+#endif
+#ifdef OUTPUTVORTICITY
+  header.extra_output += 64;
 #endif
   
   header.num_files = All.NumFilesPerSnapshot;
