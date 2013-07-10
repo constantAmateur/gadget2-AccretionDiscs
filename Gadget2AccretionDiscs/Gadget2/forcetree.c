@@ -1453,7 +1453,7 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
      }
 #endif
       if(r >= h)
-	fac = mass / (r2 * r);
+	fac = mass / (r2 );
 //      else
 //      {
 //        fac= mass / (pow(r2 +h*h,1.5));
@@ -1466,12 +1466,16 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 #endif
 
 	  u = r * h_inv;
-	  if(u < 0.5)
-	    fac = mass * h3_inv * (7.619047619047619 + u * u * (22.85714285714285 * u - 27.4285714285714));
-	  else
-	    fac =
-	      mass * h3_inv * (15.238095238095 - 34.285714285714 * u +
-			        27.4285714285714* u * u -  7.619047619047619* u * u * u - 0.04761904761904761 / (u * u * u));
+     if(u < 0.5)
+       fac = mass* h3_inv * (11.428571428571429-34.285714285714285*u*u+27.428571428571427*u*u*u-4.0/(u*u));
+     else
+       fac = mass* h3_inv * (22.857142857142858-45.714285714285715*u+34.285714285714285*u*u+9.142857142857142*u*u*u-4.571428571428571/(u*u));
+	//  if(u < 0.5)
+	//    fac = mass * h3_inv * (7.619047619047619 + u * u * (22.85714285714285 * u - 27.4285714285714));
+	//  else
+	//    fac =
+	//      mass * h3_inv * (15.238095238095 - 34.285714285714 * u +
+	//		        27.4285714285714* u * u -  7.619047619047619* u * u * u - 0.04761904761904761 / (u * u * u));
    }
      //The Price correction terms need a symmetric gravitational force...
 #ifdef PRICE_GRAV_SOFT
