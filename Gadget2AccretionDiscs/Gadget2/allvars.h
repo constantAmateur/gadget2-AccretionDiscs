@@ -775,9 +775,6 @@ extern struct gravdata_in
   FLOAT Soft;
 #endif
 #endif
-#ifdef TWODIMS
-  FLOAT intEnergy;
-#endif
   union
   {
     FLOAT OldAcc;

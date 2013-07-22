@@ -1161,10 +1161,6 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
       pos_y = P[target].Pos[1];
       ptype = P[target].Type;
       aold = All.ErrTolForceAcc * P[target].OldAcc;
-      if(ptype==0)
-      {
-        intEnergy = SphP[target].Entropy*pow(SphP[target].Density,GAMMA_MINUS1)*GAMMA;
-      }
 #ifdef ADAPTIVE_GRAVSOFT_FORGAS
       if(ptype == 0)
       {
@@ -1189,10 +1185,6 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
       ptype = P[0].Type;
 #endif
       aold = All.ErrTolForceAcc * GravDataGet[target].w.OldAcc;
-      if(ptype==0)
-      {
-        intEnergy = GravDataGet[target].intEnergy;
-      }
 #ifdef ADAPTIVE_GRAVSOFT_FORGAS
       if(ptype == 0)
       {
@@ -1281,6 +1273,29 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 	  if(h < All.ForceSoftening[P[no].Type])
 	    h = All.ForceSoftening[P[no].Type];
 #endif
+#endif
+#ifdef H_SMOOTHING
+     if(P[no].Type==0)
+     {
+       h=1.*sqrt((GAMMA*SphP[no].Entropy*pow(SphP[no].Density,GAMMA_MINUS1)*pow((P[no].Pos[0]-SysState.CenterOfMass[0])*(P[no].Pos[0]-SysState.CenterOfMass[0])+(P[no].Pos[1]-SysState.CenterOfMass[1])*(P[no].Pos[1]-SysState.CenterOfMass[1]),1.5))/(All.G*SysState.MassComp[1]));
+       //if((SphP[no].Entropy>0 && SphP[no].Density>0))
+       //{
+       //  ////Smooth by this many times the smoothing length for close particles
+       //  //printf("Entropy %g\n",SphP[no].Entropy);
+       //  //printf("Density %g\n",SphP[no].Density);
+       //  ////printf("IntEnergy %g\n",GAMMA*SphP[no].Entropy*pow(SphP[no].Density,GAMMA_MINUS1));
+       //  //printf("COM %g,%g\n",SysState.CenterOfMass[0],SysState.CenterOfMass[1]);
+       //}
+       //else
+       //{
+       //  h=0;
+       //}
+     }
+     else
+     {
+       //Don't smooth the star
+       h=0;
+     }
 #endif
 	  no = Nextnode[no];
 	}
@@ -1437,6 +1452,11 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 	      if(((nop->u.d.bitflags) & 1))	/* Bit 0 signals that this node belongs to top-level tree */
 		continue;
 	    }
+#ifdef H_SMOOTHING
+   //If we're far enough away to not open the node, then assume R>>H and so H=0 should
+   //give the same answer
+   h=0;
+#endif
 	}
 
       r = sqrt(r2);
@@ -1447,17 +1467,12 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 
      //Use the centre of mass and the internal energy to calculate H, and smooth by it
 #ifdef H_SMOOTHING
-     if(ptype==0)
-     {
-       h=sqrt((intEnergy*pow((pos_x-SysState.CenterOfMass[0])*(pos_x-SysState.CenterOfMass[0])+(pos_y-SysState.CenterOfMass[1])*(pos_y-SysState.CenterOfMass[1]),1.5))/(All.G*SysState.MassComp[1]));
-     }
-#endif
+     //Assume that we're in the limit where R>>H if we haven't opened the tree
+     fac = mass/pow(r2+h*h,1.5);
+     //printf("Smoothing by %g\n",h);
+#else
       if(r >= h)
-	fac = mass / (r2 );
-//      else
-//      {
-//        fac= mass / (pow(r2 +h*h,1.5));
-//      }
+	fac = mass / (r2*r);
       else
 	{
 #ifdef UNEQUALSOFTENINGS
@@ -1467,9 +1482,9 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 
 	  u = r * h_inv;
      if(u < 0.5)
-       fac = mass* h3_inv * (11.428571428571429-34.285714285714285*u*u+27.428571428571427*u*u*u-4.0/(u*u));
+       fac = mass* h3_inv * (11.428571428571429-34.285714285714285*u*u+27.428571428571427*u*u*u);
      else
-       fac = mass* h3_inv * (22.857142857142858-45.714285714285715*u+34.285714285714285*u*u+9.142857142857142*u*u*u-4.571428571428571/(u*u));
+       fac = mass* h3_inv * (22.857142857142858-45.714285714285715*u+34.285714285714285*u*u+9.142857142857142*u*u*u-0.06666666666666667/(u*u));
 	//  if(u < 0.5)
 	//    fac = mass * h3_inv * (7.619047619047619 + u * u * (22.85714285714285 * u - 27.4285714285714));
 	//  else
@@ -1506,6 +1521,7 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 			        27.4285714285714* u * u -  7.619047619047619* u * u * u - 0.04761904761904761 / (u * u * u));
      }
      }
+#endif
 #endif
       if(r==0)
          fac = 0;

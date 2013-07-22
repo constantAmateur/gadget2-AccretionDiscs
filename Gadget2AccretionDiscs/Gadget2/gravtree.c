@@ -130,12 +130,6 @@ void gravity_tree(void)
 		  {
 		    for(k = 0; k < 3; k++)
 		      GravDataGet[nexport].u.Pos[k] = P[i].Pos[k];
-#ifdef TWODIMS
-          if(P[i].Type == 0)
-          {
-            GravDataGet[nexport].intEnergy = SphP[i].Entropy*pow(SphP[i].Density,GAMMA_MINUS1)*GAMMA;
-          }
-#endif
 #ifdef UNEQUALSOFTENINGS
 		    GravDataGet[nexport].Type = P[i].Type;
 #ifdef ADAPTIVE_GRAVSOFT_FORGAS

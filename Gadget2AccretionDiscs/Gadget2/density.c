@@ -739,6 +739,7 @@ void density_evaluate(int target, int mode)
 	      weighted_numngb += NORM_COEFF * wk / hinv3;
 
 	      dhsmlrho += -mass_j * (NUMDIMS * hinv * wk + u * dwk);
+
 #ifdef CDAV
          if(P[j].Type==0)
          {
