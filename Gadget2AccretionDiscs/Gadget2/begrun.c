@@ -618,6 +618,11 @@ void read_parameter_file(char *fname)
       addr[nt] = &All.CoolingRate;
       id[nt++] = DOUBLE;
 #endif
+#ifdef H_SMOOTHING
+      strcpy(tag[nt], "SmoothingMultiple");
+      addr[nt] = &All.H_frac;
+      id[nt++] = DOUBLE;
+#endif
       if((fd = fopen(fname, "r")))
 	{
 	  sprintf(buf, "%s%s", fname, "-usedvalues");

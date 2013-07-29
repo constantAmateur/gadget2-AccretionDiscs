@@ -1131,6 +1131,9 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
   double r2, dx, dy, dz, mass, r, fac, u, h, h_inv, h3_inv;
   double acc_x, acc_y, acc_z, pos_x, pos_y, pos_z, aold;
   double intEnergy;
+#ifdef H_SMOOTHING
+  double H;
+#endif
 #if defined(UNEQUALSOFTENINGS) && !defined(ADAPTIVE_GRAVSOFT_FORGAS)
   int maxsofttype;
 #endif
@@ -1277,7 +1280,10 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 #ifdef H_SMOOTHING
      if(P[no].Type==0)
      {
-       h=1.*sqrt((GAMMA*SphP[no].Entropy*pow(SphP[no].Density,GAMMA_MINUS1)*pow((P[no].Pos[0]-SysState.CenterOfMass[0])*(P[no].Pos[0]-SysState.CenterOfMass[0])+(P[no].Pos[1]-SysState.CenterOfMass[1])*(P[no].Pos[1]-SysState.CenterOfMass[1]),1.5))/(All.G*SysState.MassComp[1]));
+       //Smooth by whichever is greater.  Should always be H, but want to catch the bad cases
+       H=All.H_frac*sqrt((GAMMA*SphP[no].Entropy*pow(SphP[no].Density,GAMMA_MINUS1)*pow((P[no].Pos[0]-SysState.CenterOfMass[0])*(P[no].Pos[0]-SysState.CenterOfMass[0])+(P[no].Pos[1]-SysState.CenterOfMass[1])*(P[no].Pos[1]-SysState.CenterOfMass[1]),1.5))/(All.G*SysState.MassComp[1]));
+       if(H>h)
+         h=H;
        //if((SphP[no].Entropy>0 && SphP[no].Density>0))
        //{
        //  ////Smooth by this many times the smoothing length for close particles
@@ -1454,8 +1460,8 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 	    }
 #ifdef H_SMOOTHING
    //If we're far enough away to not open the node, then assume R>>H and so H=0 should
-   //give the same answer
-   h=0;
+   //give the same answer.  But smooth by the kernel smoothing anyway, but use the H smoothing form
+   //h=0;
 #endif
 	}
 

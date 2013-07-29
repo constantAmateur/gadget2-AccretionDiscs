@@ -518,6 +518,9 @@ extern struct global_data_all_processes
   double Accretion_pot;
   double Accretion_angmom[3];
 #endif
+#ifdef H_SMOOTHING
+  double H_frac;
+#endif
 }
  All;                                          /*!< a container variable for global variables that are equal on all processors */
 
