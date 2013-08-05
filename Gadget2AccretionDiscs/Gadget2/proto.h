@@ -204,4 +204,9 @@ void   destroy_doomed_particles(void);
 int    index_compare_key(const void *a, const void *b);
 #endif
 
-
+#ifdef SURFACE
+void   sur_density(void);
+void   sur_density_evaluate(int target,int mode);
+int    ngb_treefind_variable_2D(FLOAT searchcenter[3], FLOAT hsml, int *startnode);
+int    ngb_clear_buf_2D(FLOAT searchcenter[3], FLOAT hsml,int numngb);
+#endif

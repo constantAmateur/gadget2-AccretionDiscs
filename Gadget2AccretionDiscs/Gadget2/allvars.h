@@ -94,7 +94,7 @@ typedef  long long  peanokey;    /*!< defines the variable type used for Peano-H
 
 #define DRIFT_TABLE_LENGTH  1000   /*!< length of the lookup table used to hold the drift and kick factors */ 
 
-#define MAXITER             150    /*!< maxmimum number of steps for SPH neighbour iteration */
+#define MAXITER             300    /*!< maxmimum number of steps for SPH neighbour iteration */
 
 
 #ifdef DOUBLEPRECISION             /*!< If defined, the variable type FLOAT is set to "double", otherwise to FLOAT */
@@ -618,6 +618,13 @@ extern struct sph_particle_data
 #ifdef PRICE_GRAV_SOFT
   FLOAT Zeta;             /* The factor needed to calculate the grav softening correction */
 #endif
+#ifdef SURFACE
+  FLOAT SurHsml;        //The 2D smoothing length
+  FLOAT SurDivVel;      //The 2D divergence of velocity
+  FLOAT SurDensity;     //Durrr...
+  FLOAT ScaleHeight;    //Scale height of the disc
+  FLOAT SurEntropy;     //The entropy smoothed in 2D
+#endif
 }
  *SphP,                        	/*!< holds SPH particle data on local processor */
  *DomainSphBuf;                 /*!< buffer for SPH particle data in domain decomposition */
@@ -707,7 +714,7 @@ extern struct io_header
  header;                               /*!< holds header for snapshot files */
 
 
-#define IO_NBLOCKS 14   /*!< total number of defined information blocks for snapshot files.
+#define IO_NBLOCKS 16   /*!< total number of defined information blocks for snapshot files.
                              Must be equal to the number of entries in "enum iofields" */
 
 enum iofields           /*!< this enumeration lists the defined output blocks in snapshot files. Not all of them need to be present. */
@@ -726,6 +733,8 @@ enum iofields           /*!< this enumeration lists the defined output blocks in
   IO_TSTP,
   IO_ALPHA,
   IO_RAD_ENERGY,
+  IO_SUR_DENSITY,
+  IO_SCALE_HEIGHT,
 };
 
 

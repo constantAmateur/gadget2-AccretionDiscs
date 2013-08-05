@@ -281,9 +281,19 @@ void check_omega(void)
 void setup_smoothinglengths(void)
 {
   int i, no, p;
+#ifdef SURFACE
+  double sur_tgt,sur_deviation;
+#endif
 
   if(RestartFlag == 0)
     {
+
+#ifdef SURFACE
+      sur_tgt = 1.2089939655123523 * pow(All.DesNumNgb,2.0/3.0);
+      sur_deviation = dmax(
+          1.2089939655123523 *pow(All.DesNumNgb+All.MaxNumNgbDeviation,2.0/3.0)-sur_tgt,
+          sur_tgt - 1.2089939655123523 *pow(All.DesNumNgb-All.MaxNumNgbDeviation,2.0/3.0));
+#endif
 
       for(i = 0; i < N_gas; i++)
 	{
@@ -305,9 +315,17 @@ void setup_smoothinglengths(void)
 	  SphP[i].Hsml =
 	    pow(1.0 / (M_PI) * All.DesNumNgb * P[i].Mass / Nodes[no].u.d.mass, 1.0 / 2) * Nodes[no].len;
 #endif
+#ifdef SURFACE
+  SphP[i].SurHsml =
+    //pow(1.0 / (M_PI) * All.DesNumNgb * P[i].Mass / Nodes[no].u.d.mass, 1.0 / 2) * Nodes[no].len;
+    pow(1.0 / (M_PI) * sur_tgt * P[i].Mass / Nodes[no].u.d.mass, 1.0 / 2) * Nodes[no].len;
+#endif
 	}
     }
   
+#ifdef SURFACE
+  sur_density();
+#endif
   density();
 }
 

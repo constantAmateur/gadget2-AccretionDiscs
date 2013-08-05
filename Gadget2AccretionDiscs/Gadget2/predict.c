@@ -77,6 +77,10 @@ void move_particles(int time0, int time1)
 #endif
 	  SphP[i].Density *= exp(-SphP[i].DivVel * dt_drift);
 	  SphP[i].Hsml *= exp(0.333333333333 * SphP[i].DivVel * dt_drift);
+#ifdef SURFACE
+     SphP[i].SurDensity *= exp(-SphP[i].SurDivVel * dt_drift);
+     SphP[i].SurHsml *= exp(0.333333333333 * SphP[i].SurDivVel * dt_drift);
+#endif
 
 	  if(SphP[i].Hsml < All.MinGasHsml)
 	    SphP[i].Hsml = All.MinGasHsml;

@@ -246,9 +246,12 @@ void empty_read_buffer(enum iofields blocknr, int offset, int pc, int type)
        initial conditions of the code */
       
     case IO_POT:
+    case IO_SUR_DENSITY:
+    case IO_SCALE_HEIGHT:
     case IO_ACCEL:
     case IO_DTENTR:
     case IO_TSTP:
+    case IO_VORTICITY:
     case IO_RAD_ENERGY:
       break;
   }

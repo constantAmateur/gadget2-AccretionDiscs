@@ -42,6 +42,7 @@ static double boxSize_Z, boxHalf_Z;
 #endif
 
 
+
 /*! This function computes the local density for each active SPH particle,
  *  the number of neighbours in the current smoothing radius, and the
  *  divergence and curl of the velocity field.  The pressure is updated as
@@ -340,84 +341,94 @@ void density(void)
 #ifdef CDAV
       SphP[i].R /= SphP[i].Density;
       //Inverse of determinate of T
-      fac = 1/(SphP[i].T[0]*(SphP[i].T[3]*SphP[i].T[5]-SphP[i].T[4]*SphP[i].T[4]) +
+      fac = (SphP[i].T[0]*(SphP[i].T[3]*SphP[i].T[5]-SphP[i].T[4]*SphP[i].T[4]) +
         SphP[i].T[1]*(SphP[i].T[2]*SphP[i].T[4]-SphP[i].T[1]*SphP[i].T[5]) +
         SphP[i].T[2]*(SphP[i].T[1]*SphP[i].T[4]-SphP[i].T[2]*SphP[i].T[3]));
-      //The inverse of the matrix T
-      Tinv[0]=fac*(SphP[i].T[3]*SphP[i].T[5]-SphP[i].T[4]*SphP[i].T[4]);
-      Tinv[1]=fac*(SphP[i].T[2]*SphP[i].T[4]-SphP[i].T[1]*SphP[i].T[5]);
-      Tinv[2]=fac*(SphP[i].T[1]*SphP[i].T[4]-SphP[i].T[2]*SphP[i].T[3]);
-      Tinv[3]=fac*(SphP[i].T[0]*SphP[i].T[5]-SphP[i].T[2]*SphP[i].T[2]);
-      Tinv[4]=fac*(SphP[i].T[1]*SphP[i].T[2]-SphP[i].T[0]*SphP[i].T[4]);
-      Tinv[5]=fac*(SphP[i].T[0]*SphP[i].T[3]-SphP[i].T[1]*SphP[i].T[1]);
-      //The velocity matrix D.  There's actually a mistake in the paper.  D.Tinv = V^t not V
-      V[0]=SphP[i].D[0]*Tinv[0]+SphP[i].D[1]*Tinv[1]+SphP[i].D[2]*Tinv[2];
-      V[3]=SphP[i].D[0]*Tinv[1]+SphP[i].D[1]*Tinv[3]+SphP[i].D[2]*Tinv[4];
-      V[6]=SphP[i].D[0]*Tinv[2]+SphP[i].D[1]*Tinv[4]+SphP[i].D[2]*Tinv[5];
-      V[1]=SphP[i].D[3]*Tinv[0]+SphP[i].D[4]*Tinv[1]+SphP[i].D[5]*Tinv[2];
-      V[4]=SphP[i].D[3]*Tinv[1]+SphP[i].D[4]*Tinv[3]+SphP[i].D[5]*Tinv[4];
-      V[7]=SphP[i].D[3]*Tinv[2]+SphP[i].D[4]*Tinv[4]+SphP[i].D[5]*Tinv[5];
-      V[2]=SphP[i].D[6]*Tinv[0]+SphP[i].D[7]*Tinv[1]+SphP[i].D[8]*Tinv[2];
-      V[5]=SphP[i].D[6]*Tinv[1]+SphP[i].D[7]*Tinv[3]+SphP[i].D[8]*Tinv[4];
-      V[8]=SphP[i].D[6]*Tinv[2]+SphP[i].D[7]*Tinv[4]+SphP[i].D[8]*Tinv[5];
-      //DivVel is now trivially estimated
-      divv = V[0]+V[4]+V[8];
-      //DivAccel = tr(E.T^-1)-tr(V^2)
-      //This is the first part
-      diva = (SphP[i].E[1]+SphP[i].E[3])*Tinv[1]+(SphP[i].E[2]+SphP[i].E[6])*Tinv[2]+
-        (SphP[i].E[5]+SphP[i].E[7])*Tinv[4] + SphP[i].E[0]*Tinv[0] + 
-        SphP[i].E[4]*Tinv[3]+SphP[i].E[8]*Tinv[5];
-      //now subtract the second part...
-      diva =diva-(V[0]*V[0]+V[4]*V[4]+V[8]*V[8]+2*(V[1]*V[3]+V[2]*V[6]+V[5]*V[7]));
-      //div.v is only calculated at the force updates, hence the appropriate dt is the size of the current timestep
-      dt_alpha=(P[i].Ti_endstep-P[i].Ti_begstep)*All.Timebase_interval;
-      //Alternative method for calculating diva
-      //if(dt_alpha!=0)
-      //{
-      //  A=(divv-SphP[i].DivVelOld)/dt_alpha;
-      //}
-      //else
-      //{
-      //  A=0;
-      //}
-      //Test if the newly calculated quantities return more or less what we expect from the old estimates.  In the case of diva the "old" estimate is from the difference between timesteps.
-      //if(ThisTask==0)
-      //{
-      //  printf("(old,new,new/old) divv = (%g,%g,%g), diva = (%g,%g,%g)\n",SphP[i].DivVel,divv,divv/SphP[i].DivVel,A,diva,diva/A);
-      //  //Outputs old,new,new/old for divv,diva,curl_x,curl_y,curl_z
-      //  printf("sheemba%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",SphP[i].DivVel,divv,divv/SphP[i].DivVel,A,diva,diva/A,SphP[i].Rot[0]/SphP[i].Density,V[5]-V[7],(SphP[i].Density*(V[5]-V[7]))/SphP[i].Rot[0],SphP[i].Rot[1]/SphP[i].Density,V[6]-V[2],(SphP[i].Density*(V[6]-V[2]))/SphP[i].Rot[1],SphP[i].Rot[2]/SphP[i].Density,V[1]-V[3],(SphP[i].Density*(V[1]-V[3]))/SphP[i].Rot[2]);
-      //}
-      //diva=A;
-      //SphP[i].DivVel = divv;
+      if(fac!=0)
+      {
+        fac=1.0/fac;
+        //The inverse of the matrix T
+        Tinv[0]=fac*(SphP[i].T[3]*SphP[i].T[5]-SphP[i].T[4]*SphP[i].T[4]);
+        Tinv[1]=fac*(SphP[i].T[2]*SphP[i].T[4]-SphP[i].T[1]*SphP[i].T[5]);
+        Tinv[2]=fac*(SphP[i].T[1]*SphP[i].T[4]-SphP[i].T[2]*SphP[i].T[3]);
+        Tinv[3]=fac*(SphP[i].T[0]*SphP[i].T[5]-SphP[i].T[2]*SphP[i].T[2]);
+        Tinv[4]=fac*(SphP[i].T[1]*SphP[i].T[2]-SphP[i].T[0]*SphP[i].T[4]);
+        Tinv[5]=fac*(SphP[i].T[0]*SphP[i].T[3]-SphP[i].T[1]*SphP[i].T[1]);
+        //for(j=0;j<6;j++)
+        //  printf("[%d] fac=%g,T[%d]= %g.\n",ThisTask,j,fac,SphP[i].T[j]);
+        //The velocity matrix D.  There's actually a mistake in the paper.  D.Tinv = V^t not V
+        V[0]=SphP[i].D[0]*Tinv[0]+SphP[i].D[1]*Tinv[1]+SphP[i].D[2]*Tinv[2];
+        V[3]=SphP[i].D[0]*Tinv[1]+SphP[i].D[1]*Tinv[3]+SphP[i].D[2]*Tinv[4];
+        V[6]=SphP[i].D[0]*Tinv[2]+SphP[i].D[1]*Tinv[4]+SphP[i].D[2]*Tinv[5];
+        V[1]=SphP[i].D[3]*Tinv[0]+SphP[i].D[4]*Tinv[1]+SphP[i].D[5]*Tinv[2];
+        V[4]=SphP[i].D[3]*Tinv[1]+SphP[i].D[4]*Tinv[3]+SphP[i].D[5]*Tinv[4];
+        V[7]=SphP[i].D[3]*Tinv[2]+SphP[i].D[4]*Tinv[4]+SphP[i].D[5]*Tinv[5];
+        V[2]=SphP[i].D[6]*Tinv[0]+SphP[i].D[7]*Tinv[1]+SphP[i].D[8]*Tinv[2];
+        V[5]=SphP[i].D[6]*Tinv[1]+SphP[i].D[7]*Tinv[3]+SphP[i].D[8]*Tinv[4];
+        V[8]=SphP[i].D[6]*Tinv[2]+SphP[i].D[7]*Tinv[4]+SphP[i].D[8]*Tinv[5];
+        //DivVel is now trivially estimated
+        divv = V[0]+V[4]+V[8];
+        //DivAccel = tr(E.T^-1)-tr(V^2)
+        //This is the first part
+        diva = (SphP[i].E[1]+SphP[i].E[3])*Tinv[1]+(SphP[i].E[2]+SphP[i].E[6])*Tinv[2]+
+          (SphP[i].E[5]+SphP[i].E[7])*Tinv[4] + SphP[i].E[0]*Tinv[0] + 
+          SphP[i].E[4]*Tinv[3]+SphP[i].E[8]*Tinv[5];
+        //now subtract the second part...
+        diva =diva-(V[0]*V[0]+V[4]*V[4]+V[8]*V[8]+2*(V[1]*V[3]+V[2]*V[6]+V[5]*V[7]));
+        //div.v is only calculated at the force updates, hence the appropriate dt is the size of the current timestep
+        dt_alpha=(P[i].Ti_endstep-P[i].Ti_begstep)*All.Timebase_interval;
+        //Alternative method for calculating diva
+        //if(dt_alpha!=0)
+        //{
+        //  A=(divv-SphP[i].DivVelOld)/dt_alpha;
+        //}
+        //else
+        //{
+        //  A=0;
+        //}
+        //Test if the newly calculated quantities return more or less what we expect from the old estimates.  In the case of diva the "old" estimate is from the difference between timesteps.
+        //if(ThisTask==0)
+        //{
+        //  printf("(old,new,new/old) divv = (%g,%g,%g), diva = (%g,%g,%g)\n",SphP[i].DivVel,divv,divv/SphP[i].DivVel,A,diva,diva/A);
+        //  //Outputs old,new,new/old for divv,diva,curl_x,curl_y,curl_z
+        //  printf("sheemba%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",SphP[i].DivVel,divv,divv/SphP[i].DivVel,A,diva,diva/A,SphP[i].Rot[0]/SphP[i].Density,V[5]-V[7],(SphP[i].Density*(V[5]-V[7]))/SphP[i].Rot[0],SphP[i].Rot[1]/SphP[i].Density,V[6]-V[2],(SphP[i].Density*(V[6]-V[2]))/SphP[i].Rot[1],SphP[i].Rot[2]/SphP[i].Density,V[1]-V[3],(SphP[i].Density*(V[1]-V[3]))/SphP[i].Rot[2]);
+        //}
+        //diva=A;
+        //SphP[i].DivVel = divv;
 
-#ifdef NOBALSARA
-      xi=1;
+#ifdef   NOBALSARA
+        xi=1;
 #else
-      //Now calculate xi
-      xi=2*(1-SphP[i].R)*(1-SphP[i].R)*(1-SphP[i].R)*(1-SphP[i].R)*divv;
-      xi *= xi;
-      //The added bit is tr(S.S^T)
-      //This is just a temp variable, not really A
-      A=(V[0]*V[0]+V[4]*V[4]+V[8]*V[8]) + 
-        0.5*((V[1]+V[3])*(V[1]+V[3])+(V[2]+V[6])*(V[2]+V[6])+(V[5]+V[7])*(V[5]+V[7])) -
-        (divv*divv/3);
-      //If this is true, xi=0 already...
-      if(xi+A!=0)
-      {
-        xi = xi/(xi+A);
+        //Now calculate xi
+        xi=2*(1-SphP[i].R)*(1-SphP[i].R)*(1-SphP[i].R)*(1-SphP[i].R)*divv;
+        xi *= xi;
+        //The added bit is tr(S.S^T)
+        //This is just a temp variable, not really A
+        A=(V[0]*V[0]+V[4]*V[4]+V[8]*V[8]) + 
+          0.5*((V[1]+V[3])*(V[1]+V[3])+(V[2]+V[6])*(V[2]+V[6])+(V[5]+V[7])*(V[5]+V[7])) -
+          (divv*divv/3);
+        //If this is true, xi=0 already...
+        if(xi+A!=0)
+        {
+          xi = xi/(xi+A);
+        }
+#endif  
+        //Now calculate A_i
+        A=dmax(0,-1*diva)*xi;
+        //Now want to adapt alpha.  Need to be careful here as there is a possibility
+        //that this entire loop will have to repeat itself, in which case we want this
+        //adaption step to see the same current alpha every time.  This is the purpose
+        //of "alphaold" which is initialised to 0 at the start of each particle.
+        alphaloc = SphP[i].MaxSignalVel*SphP[i].MaxSignalVel + SphP[i].Hsml*SphP[i].Hsml*A;
+        //If everything is zero, leave alpha at 0
+        if(alphaloc!=0)
+        {
+          alphaloc = (All.ArtBulkViscConst*SphP[i].Hsml*SphP[i].Hsml*A)/alphaloc;
+        }
       }
-#endif
-      //Now calculate A_i
-      A=dmax(0,-1*diva)*xi;
-      //Now want to adapt alpha.  Need to be careful here as there is a possibility
-      //that this entire loop will have to repeat itself, in which case we want this
-      //adaption step to see the same current alpha every time.  This is the purpose
-      //of "alphaold" which is initialised to 0 at the start of each particle.
-      alphaloc = SphP[i].MaxSignalVel*SphP[i].MaxSignalVel + SphP[i].Hsml*SphP[i].Hsml*A;
-      //If everything is zero, leave alpha at 0
-      if(alphaloc!=0)
+      else
       {
-        alphaloc = (All.ArtBulkViscConst*SphP[i].Hsml*SphP[i].Hsml*A)/alphaloc;
+        alphaloc=0;
       }
       //This is so alpha isn't "set" twice if the density routine has to be rerun...
       if(SphP[i].AlphaOld==-1)
@@ -445,7 +456,6 @@ void density(void)
 #endif
          }
 
-
 	      /* now check whether we had enough neighbours */
 
 	      if(SphP[i].NumNgb < (All.DesNumNgb - All.MaxNumNgbDeviation) ||
@@ -455,6 +465,7 @@ void density(void)
 		  /* need to redo this particle */
 		  npleft++;
 
+        //If the lower and upper bounds are converged, we're done
 		  if(SphP[i].Left > 0 && SphP[i].Right > 0)
 		    if((SphP[i].Right - SphP[i].Left) < 1.0e-3 * SphP[i].Left)
 		      {
@@ -464,6 +475,8 @@ void density(void)
 			continue;
 		      }
 
+        //Set the lower and upper bounds depending on if this particle
+        //has too few or too many
 		  if(SphP[i].NumNgb < (All.DesNumNgb - All.MaxNumNgbDeviation))
 		    SphP[i].Left = dmax(SphP[i].Hsml, SphP[i].Left);
 		  else
@@ -487,25 +500,31 @@ void density(void)
 		      fflush(stdout);
 		    }
 
+        //Try this weird geometric mean like thing if we've got two bounds
 		  if(SphP[i].Right > 0 && SphP[i].Left > 0)
 		    SphP[i].Hsml = pow(0.5 * (pow(SphP[i].Left, 3) + pow(SphP[i].Right, 3)), 1.0 / 3);
 		  else
 		    {
+            //One of them should have been set already
 		      if(SphP[i].Right == 0 && SphP[i].Left == 0)
 			endrun(8188);	/* can't occur */
 
+            //If we only have a lower bound, then..
 		      if(SphP[i].Right == 0 && SphP[i].Left > 0)
 			{
 			  if(P[i].Type == 0 && fabs(SphP[i].NumNgb - All.DesNumNgb) < 0.5 * All.DesNumNgb)
 			    {
+               //Use some Newton-Raphson type thing if we're not too far off
 			      SphP[i].Hsml *=
 				1 - (SphP[i].NumNgb -
 				     All.DesNumNgb) / (NUMDIMS * SphP[i].NumNgb) * SphP[i].DhsmlDensityFactor;
 			    }
+           //Otherwise multiply by this magic number for some reason
 			  else
 			    SphP[i].Hsml *= 1.26;
 			}
 
+            //If we only have an upper bound..., do likewise but slightly different
 		      if(SphP[i].Right > 0 && SphP[i].Left == 0)
 			{
 			  if(P[i].Type == 0 && fabs(SphP[i].NumNgb - All.DesNumNgb) < 0.5 * All.DesNumNgb)
@@ -519,6 +538,7 @@ void density(void)
 			}
 		    }
 
+        //Don't let it fall below this
 		  if(SphP[i].Hsml < All.MinGasHsml)
 		    SphP[i].Hsml = All.MinGasHsml;
 		}
@@ -596,7 +616,6 @@ void density(void)
 }
 
 
-
 /*! This function represents the core of the SPH density computation. The
  *  target particle may either be local, or reside in the communication
  *  buffer.
@@ -645,6 +664,7 @@ void density_evaluate(int target, int mode)
       }
 #endif
     }
+
 
   h2 = h * h;
   hinv = 1.0 / h;
@@ -805,6 +825,7 @@ void density_evaluate(int target, int mode)
         T[3] += fac * (dy*dy);
         T[4] += fac * (dy*dz);
         T[5] += fac * (dz*dz);
+        //printf("[%d] fac,dx,dy,dz = %g,%g,%g,%g.\n",ThisTask,fac,dx,dy,dz);
 #endif
 
 		}
@@ -882,3 +903,539 @@ int dens_compare_key(const void *a, const void *b)
 
   return 0;
 }
+
+
+#ifdef SURFACE
+void sur_density(void)
+{
+  long long ntot, ntotleft;
+  int *noffset, *nbuffer, *nsend, *nsend_local, *numlist, *ndonelist;
+  int i, j, n, ndone, npleft, maxfill, source, iter = 0;
+  int level, ngrp, sendTask, recvTask, place, nexport;
+  double dt_entr, tstart, tend, tstart_ngb = 0, tend_ngb = 0;
+  double sumt, sumcomm, timengb, sumtimengb;
+  double timecomp = 0, timeimbalance = 0, timecommsumm = 0, sumimbalance;
+  double sur_tgt,sur_deviation,dumb_update;
+  MPI_Status status;
+
+  //Calculate the constraints on the 2D search from the 3D parameters
+  sur_tgt = 1.2089939655123523 * pow(All.DesNumNgb,2.0/3.0);
+  sur_deviation = dmax(
+      1.2089939655123523 *pow(All.DesNumNgb+All.MaxNumNgbDeviation,2.0/3.0)-sur_tgt,
+      sur_tgt - 1.2089939655123523 *pow(All.DesNumNgb-All.MaxNumNgbDeviation,2.0/3.0));
+  dumb_update= sqrt(sur_tgt/(1.0*M_PI));
+
+  noffset = malloc(sizeof(int) * NTask);	/* offsets of bunches in common list */
+  nbuffer = malloc(sizeof(int) * NTask);
+  nsend_local = malloc(sizeof(int) * NTask);
+  nsend = malloc(sizeof(int) * NTask * NTask);
+  ndonelist = malloc(sizeof(int) * NTask);
+
+  for(n = 0, NumSphUpdate = 0; n < N_gas; n++)
+    {
+      SphP[n].Left = SphP[n].Right = 0;
+
+      if(P[n].Ti_endstep == All.Ti_Current)
+	NumSphUpdate++;
+    }
+
+  numlist = malloc(NTask * sizeof(int) * NTask);
+  MPI_Allgather(&NumSphUpdate, 1, MPI_INT, numlist, 1, MPI_INT, MPI_COMM_WORLD);
+  for(i = 0, ntot = 0; i < NTask; i++)
+    ntot += numlist[i];
+  free(numlist);
+
+
+  /* we will repeat the whole thing for those particles where we didn't
+   * find enough neighbours
+   */
+  do
+    {
+      i = 0;			/* begin with this index */
+      ntotleft = ntot;		/* particles left for all tasks together */
+
+      while(ntotleft > 0)
+	{
+	  for(j = 0; j < NTask; j++)
+	    nsend_local[j] = 0;
+
+	  /* do local particles and prepare export list */
+	  tstart = second();
+	  for(nexport = 0, ndone = 0; i < N_gas && nexport < All.BunchSizeDensity - NTask; i++)
+	    if(P[i].Ti_endstep == All.Ti_Current)
+	      {
+		ndone++;
+
+
+		for(j = 0; j < NTask; j++)
+		  Exportflag[j] = 0;
+
+		sur_density_evaluate(i, 0);
+
+		for(j = 0; j < NTask; j++)
+		  {
+		    if(Exportflag[j])
+		      {
+			DensDataIn[nexport].Pos[0] = P[i].Pos[0];
+			DensDataIn[nexport].Pos[1] = P[i].Pos[1];
+			DensDataIn[nexport].Pos[2] = P[i].Pos[2];
+			DensDataIn[nexport].Vel[0] = SphP[i].VelPred[0];
+			DensDataIn[nexport].Vel[1] = SphP[i].VelPred[1];
+			DensDataIn[nexport].Vel[2] = SphP[i].VelPred[2];
+			DensDataIn[nexport].Hsml = SphP[i].SurHsml;
+			DensDataIn[nexport].Index = i;
+			DensDataIn[nexport].Task = j;
+			nexport++;
+			nsend_local[j]++;
+		      }
+		  }
+	      }
+	  tend = second();
+	  timecomp += timediff(tstart, tend);
+
+	  qsort(DensDataIn, nexport, sizeof(struct densdata_in), dens_compare_key);
+
+	  for(j = 1, noffset[0] = 0; j < NTask; j++)
+	    noffset[j] = noffset[j - 1] + nsend_local[j - 1];
+
+	  tstart = second();
+
+	  MPI_Allgather(nsend_local, NTask, MPI_INT, nsend, NTask, MPI_INT, MPI_COMM_WORLD);
+
+	  tend = second();
+	  timeimbalance += timediff(tstart, tend);
+
+
+	  /* now do the particles that need to be exported */
+
+	  for(level = 1; level < (1 << PTask); level++)
+	    {
+	      tstart = second();
+	      for(j = 0; j < NTask; j++)
+		nbuffer[j] = 0;
+	      for(ngrp = level; ngrp < (1 << PTask); ngrp++)
+		{
+		  maxfill = 0;
+		  for(j = 0; j < NTask; j++)
+		    {
+		      if((j ^ ngrp) < NTask)
+			if(maxfill < nbuffer[j] + nsend[(j ^ ngrp) * NTask + j])
+			  maxfill = nbuffer[j] + nsend[(j ^ ngrp) * NTask + j];
+		    }
+		  if(maxfill >= All.BunchSizeDensity)
+		    break;
+
+		  sendTask = ThisTask;
+		  recvTask = ThisTask ^ ngrp;
+
+		  if(recvTask < NTask)
+		    {
+		      if(nsend[ThisTask * NTask + recvTask] > 0 || nsend[recvTask * NTask + ThisTask] > 0)
+			{
+			  /* get the particles */
+			  MPI_Sendrecv(&DensDataIn[noffset[recvTask]],
+				       nsend_local[recvTask] * sizeof(struct densdata_in), MPI_BYTE,
+				       recvTask, TAG_DENS_A,
+				       &DensDataGet[nbuffer[ThisTask]],
+				       nsend[recvTask * NTask + ThisTask] * sizeof(struct densdata_in),
+				       MPI_BYTE, recvTask, TAG_DENS_A, MPI_COMM_WORLD, &status);
+			}
+		    }
+
+		  for(j = 0; j < NTask; j++)
+		    if((j ^ ngrp) < NTask)
+		      nbuffer[j] += nsend[(j ^ ngrp) * NTask + j];
+		}
+	      tend = second();
+	      timecommsumm += timediff(tstart, tend);
+
+
+	      tstart = second();
+	      for(j = 0; j < nbuffer[ThisTask]; j++)
+		     sur_density_evaluate(j, 1);
+	      tend = second();
+	      timecomp += timediff(tstart, tend);
+
+	      /* do a block to explicitly measure imbalance */
+	      tstart = second();
+	      MPI_Barrier(MPI_COMM_WORLD);
+	      tend = second();
+	      timeimbalance += timediff(tstart, tend);
+
+	      /* get the result */
+	      tstart = second();
+	      for(j = 0; j < NTask; j++)
+		nbuffer[j] = 0;
+	      for(ngrp = level; ngrp < (1 << PTask); ngrp++)
+		{
+		  maxfill = 0;
+		  for(j = 0; j < NTask; j++)
+		    {
+		      if((j ^ ngrp) < NTask)
+			if(maxfill < nbuffer[j] + nsend[(j ^ ngrp) * NTask + j])
+			  maxfill = nbuffer[j] + nsend[(j ^ ngrp) * NTask + j];
+		    }
+		  if(maxfill >= All.BunchSizeDensity)
+		    break;
+
+		  sendTask = ThisTask;
+		  recvTask = ThisTask ^ ngrp;
+
+		  if(recvTask < NTask)
+		    {
+		      if(nsend[ThisTask * NTask + recvTask] > 0 || nsend[recvTask * NTask + ThisTask] > 0)
+			{
+			  /* send the results */
+			  MPI_Sendrecv(&DensDataResult[nbuffer[ThisTask]],
+				       nsend[recvTask * NTask + ThisTask] * sizeof(struct densdata_out),
+				       MPI_BYTE, recvTask, TAG_DENS_B,
+				       &DensDataPartialResult[noffset[recvTask]],
+				       nsend_local[recvTask] * sizeof(struct densdata_out),
+				       MPI_BYTE, recvTask, TAG_DENS_B, MPI_COMM_WORLD, &status);
+
+			  /* add the result to the particles */
+			  for(j = 0; j < nsend_local[recvTask]; j++)
+			    {
+			      source = j + noffset[recvTask];
+			      place = DensDataIn[source].Index;
+
+			      SphP[place].NumNgb += DensDataPartialResult[source].Ngb;
+			      SphP[place].SurDensity += DensDataPartialResult[source].Rho;
+			      SphP[place].DhsmlDensityFactor += DensDataPartialResult[source].DhsmlDensity;
+			      SphP[place].SurDivVel += DensDataPartialResult[source].Div;
+               //Re-using things already allocated for 3D
+			      SphP[place].SurEntropy += DensDataPartialResult[source].Rot[0];
+               SphP[place].ScaleHeight += DensDataPartialResult[source].Rot[1];
+			    }
+			}
+		    }
+
+		  for(j = 0; j < NTask; j++)
+		    if((j ^ ngrp) < NTask)
+		      nbuffer[j] += nsend[(j ^ ngrp) * NTask + j];
+		}
+	      tend = second();
+	      timecommsumm += timediff(tstart, tend);
+
+	      level = ngrp - 1;
+	    }
+
+	  MPI_Allgather(&ndone, 1, MPI_INT, ndonelist, 1, MPI_INT, MPI_COMM_WORLD);
+	  for(j = 0; j < NTask; j++)
+	    ntotleft -= ndonelist[j];
+	}
+
+
+
+      /* do final operations on results */
+      tstart = second();
+      for(i = 0, npleft = 0; i < N_gas; i++)
+	{
+	  if(P[i].Ti_endstep == All.Ti_Current)
+	    {
+         SphP[i].DhsmlDensityFactor =
+           1 / (1 + SphP[i].SurHsml * SphP[i].DhsmlDensityFactor / (2 * SphP[i].SurDensity));
+		   SphP[i].SurDivVel /= SphP[i].SurDensity;
+         //Finish scale height estimate
+         SphP[i].ScaleHeight *= 
+           sqrt(GAMMA/(All.G*SysState.MassComp[1])*pow(SphP[i].SurDensity,GAMMA-3));
+         //And new entropy
+         SphP[i].SurEntropy /= SphP[i].SurDensity;
+
+	      /* now check whether we had enough neighbours */
+
+	      if(SphP[i].NumNgb < (sur_tgt - sur_deviation) ||
+		 (SphP[i].NumNgb > (sur_tgt + sur_deviation)
+		  && SphP[i].SurHsml > (1.01 * All.MinGasHsml)))
+		{
+        //printf
+		  // ("Starts update at i=%d task=%d ID=%d SurHsml=%g Left=%g Right=%g Ngbs=%g Right-Left=%g\n   pos=(%g|%g|%g)\n",
+		  //  i, ThisTask, (int) P[i].ID, SphP[i].SurHsml, SphP[i].Left, SphP[i].Right,
+		  //  (float) SphP[i].NumNgb, SphP[i].Right - SphP[i].Left, P[i].Pos[0], P[i].Pos[1],
+		  //  P[i].Pos[2]);
+        //printf("tgt=%g,deviation=%g,dhsml=%g.\n",sur_tgt,sur_deviation,SphP[i].DhsmlDensityFactor);
+
+		  /* need to redo this particle */
+		  npleft++;
+
+        //If the lower and upper bounds are converged, we're done
+		  if(SphP[i].Left > 0 && SphP[i].Right > 0)
+		    if((SphP[i].Right - SphP[i].Left) < 1.0e-3 * SphP[i].Left)
+		      {
+			/* this one should be ok */
+			npleft--;
+			P[i].Ti_endstep = -P[i].Ti_endstep - 1;	/* Mark as inactive */
+			continue;
+		      }
+
+        //Set the lower and upper bounds depending on if this particle
+        //has too few or too many
+		  if(SphP[i].NumNgb < (sur_tgt - sur_deviation))
+		    SphP[i].Left = dmax(SphP[i].SurHsml, SphP[i].Left);
+		  else
+		    {
+		      if(SphP[i].Right != 0)
+			{
+			  if(SphP[i].SurHsml < SphP[i].Right)
+			    SphP[i].Right = SphP[i].SurHsml;
+			}
+		      else
+			SphP[i].Right = SphP[i].SurHsml;
+		    }
+
+		  if(iter >= MAXITER - 10)
+		    {
+		      printf
+			("i=%d task=%d ID=%d SurHsml=%g Left=%g Right=%g Ngbs=%g Right-Left=%g\n   pos=(%g|%g|%g)\n",
+			 i, ThisTask, (int) P[i].ID, SphP[i].SurHsml, SphP[i].Left, SphP[i].Right,
+			 (float) SphP[i].NumNgb, SphP[i].Right - SphP[i].Left, P[i].Pos[0], P[i].Pos[1],
+			 P[i].Pos[2]);
+		      fflush(stdout);
+		    }
+
+        //Try this weird geometric mean like thing if we've got two bounds
+		  if(SphP[i].Right > 0 && SphP[i].Left > 0)
+        {
+		    SphP[i].SurHsml = pow(0.5 * (pow(SphP[i].Left, 3) + pow(SphP[i].Right, 3)), 1.0 / 3);
+               if(SphP[i].SurHsml<=0)
+               {
+                 printf("Impossible up here.\n");
+                 endrun(10);
+               }
+
+
+        }
+		  else
+		    {
+            //One of them should have been set already
+		      if(SphP[i].Right == 0 && SphP[i].Left == 0)
+			endrun(8188);	/* can't occur */
+
+            //If we only have a lower bound, then..
+		      if(SphP[i].Right == 0 && SphP[i].Left > 0)
+			{
+			  if(P[i].Type == 0 && fabs(SphP[i].NumNgb - sur_tgt) < 0.5 * sur_tgt)
+			    {
+               //Dumbest possible update
+               SphP[i].SurHsml = dumb_update * sqrt(P[i].Mass/SphP[i].SurDensity);
+               //Use some Newton-Raphson type thing if we're not too far off
+			      //SphP[i].SurHsml *=
+				   //1- (SphP[i].NumNgb -
+				   //  sur_tgt) / (2 * SphP[i].NumNgb) * SphP[i].DhsmlDensityFactor;
+			    }
+           //Otherwise multiply by this magic number for some reason
+			  else
+			    SphP[i].SurHsml *= 1.26;
+			}
+
+            //If we only have an upper bound..., do likewise but slightly different
+		      if(SphP[i].Right > 0 && SphP[i].Left == 0)
+			{
+			  if(P[i].Type == 0 && fabs(SphP[i].NumNgb - sur_tgt) < 0.5 * sur_tgt)
+			    {
+               SphP[i].SurHsml = dumb_update * sqrt(P[i].Mass/SphP[i].SurDensity);
+			      //SphP[i].SurHsml *=
+				   //1- (SphP[i].NumNgb -
+				   //  sur_tgt) / (2 * SphP[i].NumNgb) * SphP[i].DhsmlDensityFactor;
+			    }
+			  else
+			    SphP[i].SurHsml /= 1.26;
+			}
+		    }
+
+        //Don't let it fall below this
+		  if(SphP[i].SurHsml < All.MinGasHsml)
+		    SphP[i].SurHsml = All.MinGasHsml;
+		}
+	      else
+		P[i].Ti_endstep = -P[i].Ti_endstep - 1;	/* Mark as inactive */
+	    }
+	}
+      tend = second();
+      timecomp += timediff(tstart, tend);
+
+
+      numlist = malloc(NTask * sizeof(int) * NTask);
+      MPI_Allgather(&npleft, 1, MPI_INT, numlist, 1, MPI_INT, MPI_COMM_WORLD);
+      for(i = 0, ntot = 0; i < NTask; i++)
+	ntot += numlist[i];
+      free(numlist);
+
+      if(ntot > 0)
+	{
+	  if(iter == 0)
+	    tstart_ngb = second();
+
+	  iter++;
+
+	  if(iter > 0 && ThisTask == 0)
+	    {
+	      printf("ngb iteration %d: need to repeat for %d%09d particles.\n", iter,
+		     (int) (ntot / 1000000000), (int) (ntot % 1000000000));
+	      fflush(stdout);
+	    }
+
+	  if(iter > MAXITER)
+	    {
+	      printf("failed to converge in neighbour iteration in sur_density()\n");
+	      fflush(stdout);
+	      endrun(1155);
+	    }
+	}
+      else
+	tend_ngb = second();
+    }
+  while(ntot > 0);
+
+
+  /* mark as active again */
+  for(i = 0; i < NumPart; i++)
+    if(P[i].Ti_endstep < 0)
+      P[i].Ti_endstep = -P[i].Ti_endstep - 1;
+
+  free(ndonelist);
+  free(nsend);
+  free(nsend_local);
+  free(nbuffer);
+  free(noffset);
+
+
+  /* collect some timing information */
+  if(iter > 0)
+    timengb = timediff(tstart_ngb, tend_ngb);
+  else
+    timengb = 0;
+
+  MPI_Reduce(&timengb, &sumtimengb, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&timecomp, &sumt, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&timecommsumm, &sumcomm, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&timeimbalance, &sumimbalance, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+  if(ThisTask == 0)
+    {
+      All.CPU_HydCompWalk += sumt / NTask;
+      All.CPU_HydCommSumm += sumcomm / NTask;
+      All.CPU_HydImbalance += sumimbalance / NTask;
+      All.CPU_EnsureNgb += sumtimengb / NTask;
+    }
+}
+
+void sur_density_evaluate(int target, int mode)
+{
+  int j, n, startnode, numngb, numngb_inbox;
+  double h, h2, hinv, hinv2,hinv3;
+  double rho, wk,dwk;
+  double dx, dy, dz, r, r2, u, mass_j;
+  double weighted_numngb;
+  double scale_height,new_entropy,dhsmlrho,divv;
+  FLOAT *pos, *vel;
+
+  if(mode == 0)
+    {
+      pos = P[target].Pos;
+      vel = SphP[target].VelPred;
+      h = SphP[target].SurHsml;
+    }
+  else
+    {
+      pos = DensDataGet[target].Pos;
+      vel = DensDataGet[target].Vel;
+      h = DensDataGet[target].Hsml;
+    }
+
+  h2 = h * h;
+  hinv = 1.0 / h;
+  hinv2 = hinv * hinv;
+  hinv3 = hinv2*hinv;
+
+  //we just reuse divv for the scale height H and rotv[0] for the internal energy
+  rho = scale_height = new_entropy = dhsmlrho = divv=0;
+
+  //This is for the convergence algorithm and so is needed
+  weighted_numngb = 0;
+
+  //Find neighbours, starting at root
+  startnode = All.MaxPart;
+  numngb = 0;
+  do
+    {
+      numngb_inbox = ngb_treefind_variable_2D(&pos[0], h, &startnode);
+
+      for(n = 0; n < numngb_inbox; n++)
+   {
+     j = Ngblist[n];
+
+     dx = pos[0] - P[j].Pos[0];
+     dy = pos[1] - P[j].Pos[1];
+
+     r2 = dx * dx + dy * dy;
+
+     //ngb find only returns those in a bounding box
+     if(r2 < h2)
+       {
+         numngb++;
+
+         r = sqrt(r2);
+
+         //dz is actually the cylindrical radius from the centre of mass.  Used for
+         //calculating the scale height
+         dz = sqrt((P[j].Pos[0] - SysState.CenterOfMass[0])*(P[j].Pos[0] - SysState.CenterOfMass[0])+(P[j].Pos[1] - SysState.CenterOfMass[1])*(P[j].Pos[1] - SysState.CenterOfMass[1]));
+
+         u = r * hinv;
+
+         //We will continue to use the retarded h=h/2 convention in 2D
+         if(u < 0.5)
+   	{
+        wk = hinv2 * (1.8189136353359467 + 10.91348181201568*u*u*(u-1));
+		  dwk = hinv3 * u * (32.740445436047146 * u - 21.82696362403143);
+   	}
+         else
+   	{
+        wk = hinv2 * 3.6378272706718935*(1.0-u)*(1.0-u)*(1.0-u);
+		  dwk = hinv3 * -10.913481812015714 * (1.0 - u) * (1.0 - u);
+   	}
+
+         mass_j = P[j].Mass;
+
+         rho += mass_j * wk;
+
+         weighted_numngb += M_PI * wk / hinv2;
+
+         scale_height += mass_j * sqrt(SphP[j].Entropy*dz*dz*dz)*wk;
+
+         new_entropy += mass_j * wk * SphP[j].Entropy;
+
+	      dhsmlrho += -mass_j * (2 * hinv * wk + u * dwk);
+
+         if(r>0)
+         {
+           divv -= mass_j * dwk * (dx *(vel[0]-SphP[j].VelPred[0]) + dy * (vel[1]-SphP[j].VelPred[1])) /r;
+         }
+       }
+   }
+    }
+  //Repeat until we've done all neighbours
+  while(startnode >= 0);
+
+  //Store the things for return
+  if(mode == 0)
+    {
+      SphP[target].NumNgb  = weighted_numngb;
+      SphP[target].SurDensity = rho;
+      SphP[target].SurEntropy = new_entropy;
+      SphP[target].SurDivVel = divv;
+      SphP[target].ScaleHeight = scale_height;
+      SphP[target].DhsmlDensityFactor = dhsmlrho;
+    }
+  else
+    {
+      DensDataResult[target].Ngb = weighted_numngb;
+      DensDataResult[target].Rho = rho;
+      DensDataResult[target].DhsmlDensity = dhsmlrho;
+      DensDataResult[target].Div = divv;
+      //Just re-use what's already there
+      DensDataResult[target].Rot[0] = new_entropy;
+      DensDataResult[target].Rot[1] = scale_height;
+    }
+}
+#endif

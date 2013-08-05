@@ -397,7 +397,31 @@ void fill_write_buffer(enum iofields blocknr, int *startindex, int pc, int type)
 #endif
       break;
 
- 
+    case IO_SUR_DENSITY:
+#ifdef OUTPUTSURFACE
+      for(n=0;n< pc;pindex++)
+      {
+        if(P[pindex].Type==type)
+        {
+          *fp++ = SphP[pindex].SurDensity;
+          n++;
+        }
+      }
+#endif
+      break;
+
+    case IO_SCALE_HEIGHT:
+#ifdef OUTPUTSURFACE
+      for(n=0;n< pc;pindex++)
+      {
+        if(P[pindex].Type==type)
+        {
+          *fp++ = SphP[pindex].ScaleHeight;
+          n++;
+        }
+      }
+#endif
+      break;
   }
   
   *startindex = pindex;
@@ -439,6 +463,8 @@ int get_bytes_per_blockelement(enum iofields blocknr)
     case IO_DTENTR:
     case IO_ALPHA:
     case IO_RAD_ENERGY:
+    case IO_SUR_DENSITY:
+    case IO_SCALE_HEIGHT:
     case IO_TSTP:
       bytes_per_blockelement = sizeof(float);
       break;
@@ -501,6 +527,8 @@ int get_values_per_blockelement(enum iofields blocknr)
     case IO_DTENTR:
     case IO_ALPHA:
     case IO_RAD_ENERGY:
+    case IO_SUR_DENSITY:
+    case IO_SCALE_HEIGHT:
     case IO_TSTP:
       values = 1;
       break;
@@ -563,6 +591,8 @@ int get_particles_in_block(enum iofields blocknr, int *typelist)
       break;
       
     case IO_U:
+    case IO_SUR_DENSITY:
+    case IO_SCALE_HEIGHT:
     case IO_RHO:
     case IO_HSML:
     case IO_ALPHA:
@@ -620,6 +650,14 @@ int blockpresent(enum iofields blocknr)
 
 #ifndef OUTPUTRADIATEDENERGY
   if(blocknr == IO_RAD_ENERGY)
+    return 0;
+#endif
+
+#ifndef OUTPUTSURFACE
+  if(blocknr == IO_SUR_DENSITY)
+    return 0;
+
+  if(blocknr == IO_SCALE_HEIGHT)
     return 0;
 #endif
   
@@ -683,7 +721,12 @@ void fill_Tab_IO_Labels(void)
     case IO_RAD_ENERGY:
       strncpy(Tab_IO_Labels[IO_RAD_ENERGY], "RADU", 4);
       break;
-
+    case IO_SUR_DENSITY:
+      strncpy(Tab_IO_Labels[IO_SUR_DENSITY], "SIGM", 4);
+      break;
+    case IO_SCALE_HEIGHT:
+      strncpy(Tab_IO_Labels[IO_SCALE_HEIGHT], "SCLH", 4);
+      break;
   }
 }
 
@@ -739,6 +782,12 @@ void get_dataset_name(enum iofields blocknr, char *buf)
       break;
     case IO_RAD_ENERGY:
       strcpy(buf, "RadiatedEnergy");
+      break;
+    case IO_SUR_DENSITY:
+      strcpy(buf, "SurfaceDensity");
+      break;
+    case IO_SCALE_HEIGHT:
+      strcpy(buf, "ScaleHeight");
       break;
 
   }
@@ -865,6 +914,9 @@ void write_file(char *fname, int writeTask, int lastTask)
 #endif
 #ifdef OUTPUTVORTICITY
   header.extra_output += 64;
+#endif
+#ifdef OUTPUTSURFACE
+  header.extra_output += 128;
 #endif
   
   header.num_files = All.NumFilesPerSnapshot;

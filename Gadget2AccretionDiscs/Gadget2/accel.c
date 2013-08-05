@@ -24,6 +24,9 @@
 void compute_accelerations(int mode)
 {
   double tstart, tend;
+#ifdef SURFACE
+  int i;
+#endif
 
   if(ThisTask == 0)
     {
@@ -42,8 +45,9 @@ void compute_accelerations(int mode)
 #endif
 
   tstart = second();		/* measure the time for the full force computation */
-#ifdef TWODIMS
+#if defined TWODIMS || defined SURFACE
   //Make sure we have a currentish estimate of the centre of mass and the energy of the particles
+  //Needs to happen before gravity if we're going to smooth using H which depends on the entropy
   if(All.Ti_Current ==0)
   {
     density();
@@ -81,6 +85,12 @@ void compute_accelerations(int mode)
 	}
 
       tstart = second();
+#ifdef SURFACE
+      //Calculate the surface quantities and smooth out the energy
+      sur_density();
+      for(i=0;i<N_gas;i++)
+        SphP[i].Entropy=SphP[i].SurEntropy;
+#endif
       density();		/* computes density, and pressure */
       tend = second();
       All.CPU_Hydro += timediff(tstart, tend);
