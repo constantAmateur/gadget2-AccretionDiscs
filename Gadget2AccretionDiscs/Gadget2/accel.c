@@ -26,6 +26,7 @@ void compute_accelerations(int mode)
   double tstart, tend;
 #ifdef SURFACE
   int i;
+  double dt_entr;
 #endif
 
   if(ThisTask == 0)
@@ -85,14 +86,47 @@ void compute_accelerations(int mode)
 	}
 
       tstart = second();
-#ifdef SURFACE
-      //Calculate the surface quantities and smooth out the energy
-      sur_density();
-      for(i=0;i<N_gas;i++)
-        SphP[i].Entropy=SphP[i].SurEntropy;
-#endif
       density();		/* computes density, and pressure */
       tend = second();
+#ifdef SURFACE
+      double tot,bigtot;
+      //Want to do it after density, so we have accurate density values for calculating energy
+      sur_density();
+      //Pre update value
+      tot=0;
+      for(i=0;i<N_gas;i++)
+      {
+        dt_entr = (All.Ti_Current - .5*(P[i].Ti_endstep+P[i].Ti_begstep)) * All.Timebase_interval;
+        tot += P[i].Mass * (SphP[i].Entropy+dt_entr*SphP[i].DtEntropy)*pow(SphP[i].Density,GAMMA_MINUS1) / GAMMA_MINUS1;
+      }
+      MPI_Allreduce(&tot,&bigtot,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+      if(ThisTask==0)
+        printf("Pre update total energy = %g.\n",bigtot);
+
+      for(i=0;i<N_gas;i++)
+      {
+        if(P[i].Ti_endstep == All.Ti_Current)
+        {
+          //Set the pressure to the new value
+          SphP[i].Pressure = SphP[i].SurEntropy * pow(SphP[i].Density,GAMMA);
+          //Set the entropy such that K+dK*dt = K required for current internal energy
+          dt_entr = (All.Ti_Current - .5*(P[i].Ti_endstep+P[i].Ti_begstep)) * All.Timebase_interval;
+          SphP[i].Entropy = (SphP[i].SurEntropy * GAMMA_MINUS1 / pow(SphP[i].Density,GAMMA_MINUS1)) - SphP[i].DtEntropy*dt_entr;
+        }
+      }
+
+      //Post update value
+      tot=0;
+      for(i=0;i<N_gas;i++)
+      {
+        dt_entr = (All.Ti_Current - .5*(P[i].Ti_endstep+P[i].Ti_begstep)) * All.Timebase_interval;
+        tot += P[i].Mass * (SphP[i].Entropy+dt_entr*SphP[i].DtEntropy)*pow(SphP[i].Density,GAMMA_MINUS1) / GAMMA_MINUS1;
+      }
+      MPI_Allreduce(&tot,&bigtot,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+      if(ThisTask==0)
+        printf("Post update total energy = %g.\n",bigtot);
+#endif
+
       All.CPU_Hydro += timediff(tstart, tend);
 
       tstart = second();
@@ -111,6 +145,7 @@ void compute_accelerations(int mode)
       hydro_force();		/* adds hydrodynamical accelerations and computes viscous entropy injection  */
       tend = second();
       All.CPU_Hydro += timediff(tstart, tend);
+
     }
 
   if(ThisTask == 0)

@@ -1133,8 +1133,6 @@ void sur_density(void)
 	{
 	  if(P[i].Ti_endstep == All.Ti_Current)
 	    {
-         SphP[i].DhsmlDensityFactor =
-           1 / (1 + SphP[i].SurHsml * SphP[i].DhsmlDensityFactor / (2 * SphP[i].SurDensity));
 		   SphP[i].SurDivVel /= SphP[i].SurDensity;
          //Finish scale height estimate
          SphP[i].ScaleHeight *= 
@@ -1328,6 +1326,7 @@ void sur_density_evaluate(int target, int mode)
   double dx, dy, dz, r, r2, u, mass_j;
   double weighted_numngb;
   double scale_height,new_entropy,dhsmlrho,divv;
+  double dt_entr;
   FLOAT *pos, *vel;
 
   if(mode == 0)
@@ -1403,7 +1402,9 @@ void sur_density_evaluate(int target, int mode)
 
          scale_height += mass_j * sqrt(SphP[j].Entropy*dz*dz*dz)*wk;
 
-         new_entropy += mass_j * wk * SphP[j].Entropy;
+         //Calculate what the internal energy of each particle should be right now
+         dt_entr = (All.Ti_Current - .5*(P[j].Ti_endstep+P[j].Ti_begstep)) * All.Timebase_interval;
+         new_entropy += mass_j * wk * (SphP[j].Entropy+dt_entr*SphP[j].DtEntropy) * pow(SphP[j].Density,GAMMA_MINUS1)/GAMMA_MINUS1;
 
 	      dhsmlrho += -mass_j * (2 * hinv * wk + u * dwk);
 
@@ -1425,13 +1426,11 @@ void sur_density_evaluate(int target, int mode)
       SphP[target].SurEntropy = new_entropy;
       SphP[target].SurDivVel = divv;
       SphP[target].ScaleHeight = scale_height;
-      SphP[target].DhsmlDensityFactor = dhsmlrho;
     }
   else
     {
       DensDataResult[target].Ngb = weighted_numngb;
       DensDataResult[target].Rho = rho;
-      DensDataResult[target].DhsmlDensity = dhsmlrho;
       DensDataResult[target].Div = divv;
       //Just re-use what's already there
       DensDataResult[target].Rot[0] = new_entropy;
