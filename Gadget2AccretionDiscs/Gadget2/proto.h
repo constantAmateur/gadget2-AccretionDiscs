@@ -208,3 +208,11 @@ void   sur_density_evaluate(int target,int mode);
 int    ngb_treefind_variable_2D(FLOAT searchcenter[3], FLOAT hsml, int *startnode);
 int    ngb_clear_buf_2D(FLOAT searchcenter[3], FLOAT hsml,int numngb);
 #endif
+
+#ifdef SINK_GRAV_ONLY
+void   sink_grav(void);
+#endif
+#ifdef DEAD_GAS
+void   kill_gas(void);
+void   ressurect(void);
+#endif

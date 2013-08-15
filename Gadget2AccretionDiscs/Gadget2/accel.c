@@ -55,13 +55,23 @@ void compute_accelerations(int mode)
   }
 #endif
 
+#ifdef DEAD_GAS
+  if(All.Ti_Current ==0)
+    compute_global_quantities_of_system();
+  kill_gas();
+#endif
   gravity_tree();		/* computes gravity accel. */
 
   if(All.TypeOfOpeningCriterion == 1 && All.Ti_Current == 0)
+  {
+#ifdef DEAD_GAS
+    kill_gas();
+#endif
     gravity_tree();		/* For the first timestep, we redo it
 				 * to allow usage of relative opening
 				 * criterion for consistent accuracy.
 				 */
+  }
   tend = second();
   All.CPU_Gravity += timediff(tstart, tend);
 
@@ -88,8 +98,12 @@ void compute_accelerations(int mode)
 #ifdef SURFACE
       //Calculate the surface quantities and smooth out the energy
       sur_density();
+      //What is the total energy, pre spread
       for(i=0;i<N_gas;i++)
         SphP[i].Entropy=SphP[i].SurEntropy;
+#endif
+#ifdef DEAD_GAS
+      kill_gas();
 #endif
       density();		/* computes density, and pressure */
       tend = second();
@@ -108,7 +122,13 @@ void compute_accelerations(int mode)
 	}
 
       tstart = second();
+#ifdef DEAD_GAS
+      kill_gas();
+#endif
       hydro_force();		/* adds hydrodynamical accelerations and computes viscous entropy injection  */
+#ifdef DEAD_GAS
+      ressurect();
+#endif
       tend = second();
       All.CPU_Hydro += timediff(tstart, tend);
     }

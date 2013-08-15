@@ -521,6 +521,9 @@ extern struct global_data_all_processes
 #ifdef H_SMOOTHING
   double H_frac;
 #endif
+#ifdef DEAD_GAS
+  double Doom_radius;
+#endif
 }
  All;                                          /*!< a container variable for global variables that are equal on all processors */
 

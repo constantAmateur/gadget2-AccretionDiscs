@@ -623,6 +623,11 @@ void read_parameter_file(char *fname)
       addr[nt] = &All.H_frac;
       id[nt++] = DOUBLE;
 #endif
+#ifdef DEAD_GAS
+      strcpy(tag[nt], "DoomRadius");
+      addr[nt] = &All.Doom_radius;
+      id[nt++] = DOUBLE;
+#endif
       if((fd = fopen(fname, "r")))
 	{
 	  sprintf(buf, "%s%s", fname, "-usedvalues");

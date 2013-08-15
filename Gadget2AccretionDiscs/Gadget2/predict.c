@@ -64,6 +64,11 @@ void move_particles(int time0, int time1)
     {
       for(j = 0; j < 3; j++)
 	P[i].Pos[j] += P[i].Vel[j] * dt_drift;
+      if(P[i].Type==1)
+      {
+        printf("Drifting particle %d with vel %g,%g,%g.\n",i,P[i].Vel[0],P[i].Vel[1],P[i].Vel[2]);
+        printf("New pos is %g,%g,%g.\n",P[i].Pos[0],P[i].Pos[1],P[i].Pos[2]);
+      }
 
       if(P[i].Type == 0)
 	{

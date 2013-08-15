@@ -49,7 +49,6 @@ void gravity_tree(void)
   int numsinks,root,globalroot,liveStar,liveStarGlobal;
   double starData[4],r,h,h_inv,h3_inv,u,starGrav[3],starGravGlobal[3];
 #endif
-
   /* set new softening lengths */
   if(All.ComovingIntegrationOn)
     set_softenings();
@@ -73,6 +72,11 @@ void gravity_tree(void)
   All.CPU_TreeConstruction += timediff(tstart, tend);
 
   costtotal = ewaldcount = 0;
+#ifdef SINK_GRAV_ONLY
+  sink_grav();
+  return;
+#endif
+
 
   /* Note: 'NumForceUpdate' has already been determined in find_next_sync_point_and_drift() */
   numlist = malloc(NTask * sizeof(int) * NTask);
@@ -289,7 +293,6 @@ void gravity_tree(void)
   free(nsend_local);
   free(nbuffer);
   free(noffset);
-
   /* now add things for comoving integration */
 
 #ifndef PERIODIC
@@ -646,3 +649,102 @@ int grav_tree_compare_key(const void *a, const void *b)
 
   return 0;
 }
+
+#ifdef SINK_GRAV_ONLY
+void sink_grav(void)
+{
+  int *noffset;
+  int *nbuffer;
+  struct particle_data * sinks;
+  int i,j;
+  double dx,dy,dz,r,fac,u,h;
+  //Get all the type 1 particles on all processors
+  sinks = malloc(Ntype[1]*sizeof(struct particle_data));
+  noffset = malloc(NTask * sizeof(int));
+  nbuffer = malloc(NTask * sizeof(int));
+  MPI_Allgather(&NtypeLocal[1],1,MPI_INT,
+      nbuffer,1,MPI_INT,MPI_COMM_WORLD);
+  for(j=1,noffset[0]=0,nbuffer[0]=nbuffer[0]*sizeof(struct particle_data);j<NTask;j++)
+  {
+    nbuffer[j] = nbuffer[j] * sizeof(struct particle_data);
+    noffset[j] = noffset[j-1] + nbuffer[j-1];
+  }
+  MPI_Allgatherv(&P[N_gas],sizeof(struct particle_data) * NtypeLocal[1],MPI_BYTE,
+      sinks,nbuffer,noffset,MPI_BYTE,MPI_COMM_WORLD);
+
+  //The force softening for type 1 particles...
+  //The usual GADGET factor of 2.8 is included (even though I don't
+  //know why it's used)
+  h=2.8*All.SofteningHalo;
+  for(i=0;i<NumPart;i++)
+  {
+    if(P[i].Ti_endstep == All.Ti_Current)
+    {
+      //This particle needs doing
+      P[i].GravAccel[0] = P[i].GravAccel[1] = P[i].GravAccel[2] = 0;
+      //Add the gravitational force due to each type 1 particle
+      for(j=0;j<Ntype[1];j++)
+      {
+        if(P[i].ID==sinks[j].ID)
+        {
+          continue;
+        }
+        dx = sinks[j].Pos[0]-P[i].Pos[0];
+        dy = sinks[j].Pos[1]-P[i].Pos[1];
+        dz = sinks[j].Pos[2]-P[i].Pos[2];
+        r = sqrt(dx*dx+dy*dy+dz*dz);
+        if(r >= h)
+        {
+	         fac = 1.0 / (r*r*r);
+        }
+        else
+        {
+          //Plumber sphere!
+          fac = 1.0 / pow(r*r+h*h,1.5);
+          //Usual crap
+  	       //u = r / h;
+  	       //if(u < 0.5)
+          //{
+  	       //  fac = (1.0/(h*h*h)) * (10.666666666667 + u * u * (32.0 * u - 38.4));
+          //}
+  	       //else
+          //{
+  	       //  fac = (1.0/(h*h*h)) * (21.333333333333 - 48.0 * u +
+  		  	 //  38.4 * u * u - 10.666666666667 * u * u * u - 0.066666666667 / (u * u * u));
+          //}
+        }
+        if(P[i].Type==1 && P[i].Mass>1)
+        {
+          if(sinks[j].Mass>1)
+          {
+            printf("Self gravity factor %g! close approach = %d \n",fac,r<h);
+          }
+          else
+          {
+            printf("factor due to companion %g. close approach = %d \n",fac,r<h);
+          }
+        }
+
+        fac *= All.G*sinks[j].Mass;
+        P[i].GravAccel[0] += fac * dx;
+        P[i].GravAccel[1] += fac * dy;
+        P[i].GravAccel[2] += fac * dz;
+      }
+      if(P[i].Type==1)
+        printf("[%d] P[%d] gravity = (%g,%g,%g).\n",ThisTask,i,P[i].GravAccel[0],P[i].GravAccel[1],P[i].GravAccel[2]);
+    }
+  }
+  //Resurrect gas
+  for(i = 0; i < NumPart; i++)
+  {
+    if(P[i].Ti_endstep < 0)
+    {
+      P[i].Ti_endstep = -P[i].Ti_endstep - 1;
+    }
+  }
+  //Freedom!
+  free(sinks);
+  free(nbuffer);
+  free(noffset);
+}
+#endif
