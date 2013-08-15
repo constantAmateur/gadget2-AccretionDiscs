@@ -1403,8 +1403,7 @@ void sur_density_evaluate(int target, int mode)
          scale_height += mass_j * sqrt(SphP[j].Entropy*dz*dz*dz)*wk;
 
          //Calculate what the internal energy of each particle should be right now
-         dt_entr = (All.Ti_Current - .5*(P[j].Ti_endstep+P[j].Ti_begstep)) * All.Timebase_interval;
-         new_entropy += mass_j * wk * (SphP[j].Entropy+dt_entr*SphP[j].DtEntropy) * pow(SphP[j].Density,GAMMA_MINUS1)/GAMMA_MINUS1;
+         new_entropy += mass_j * wk * (SphP[j].Entropy) * pow(SphP[j].Density,GAMMA_MINUS1)/GAMMA_MINUS1;
 
 	      dhsmlrho += -mass_j * (2 * hinv * wk + u * dwk);
 

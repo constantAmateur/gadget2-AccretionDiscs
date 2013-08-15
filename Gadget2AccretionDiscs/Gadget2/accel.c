@@ -84,10 +84,6 @@ void compute_accelerations(int mode)
 	  printf("Start density computation...\n");
 	  fflush(stdout);
 	}
-
-      tstart = second();
-      density();		/* computes density, and pressure */
-      tend = second();
 #ifdef SURFACE
       double tot,bigtot;
       //Want to do it after density, so we have accurate density values for calculating energy
@@ -97,6 +93,7 @@ void compute_accelerations(int mode)
       for(i=0;i<N_gas;i++)
       {
         dt_entr = (All.Ti_Current - .5*(P[i].Ti_endstep+P[i].Ti_begstep)) * All.Timebase_interval;
+        dt_entr = 0;
         tot += P[i].Mass * (SphP[i].Entropy+dt_entr*SphP[i].DtEntropy)*pow(SphP[i].Density,GAMMA_MINUS1) / GAMMA_MINUS1;
       }
       MPI_Allreduce(&tot,&bigtot,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
@@ -108,10 +105,10 @@ void compute_accelerations(int mode)
         if(P[i].Ti_endstep == All.Ti_Current)
         {
           //Set the pressure to the new value
-          SphP[i].Pressure = SphP[i].SurEntropy * pow(SphP[i].Density,GAMMA);
+          //SphP[i].Pressure = SphP[i].SurEntropy * pow(SphP[i].Density,GAMMA);
           //Set the entropy such that K+dK*dt = K required for current internal energy
-          dt_entr = (All.Ti_Current - .5*(P[i].Ti_endstep+P[i].Ti_begstep)) * All.Timebase_interval;
-          SphP[i].Entropy = (SphP[i].SurEntropy * GAMMA_MINUS1 / pow(SphP[i].Density,GAMMA_MINUS1)) - SphP[i].DtEntropy*dt_entr;
+          //dt_entr = (All.Ti_Current - .5*(P[i].Ti_endstep+P[i].Ti_begstep)) * All.Timebase_interval;
+          SphP[i].Entropy = (SphP[i].SurEntropy * GAMMA_MINUS1) / pow(SphP[i].Density,GAMMA_MINUS1);// - SphP[i].DtEntropy*dt_entr;
         }
       }
 
@@ -120,6 +117,7 @@ void compute_accelerations(int mode)
       for(i=0;i<N_gas;i++)
       {
         dt_entr = (All.Ti_Current - .5*(P[i].Ti_endstep+P[i].Ti_begstep)) * All.Timebase_interval;
+        dt_entr = 0;
         tot += P[i].Mass * (SphP[i].Entropy+dt_entr*SphP[i].DtEntropy)*pow(SphP[i].Density,GAMMA_MINUS1) / GAMMA_MINUS1;
       }
       MPI_Allreduce(&tot,&bigtot,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
@@ -127,6 +125,9 @@ void compute_accelerations(int mode)
         printf("Post update total energy = %g.\n",bigtot);
 #endif
 
+      tstart = second();
+      density();		/* computes density, and pressure */
+      tend = second();
       All.CPU_Hydro += timediff(tstart, tend);
 
       tstart = second();
