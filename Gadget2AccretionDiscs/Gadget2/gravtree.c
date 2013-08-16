@@ -689,9 +689,9 @@ void sink_grav(void)
         {
           continue;
         }
-        dx = sinks[j].Pos[0]-P[i].Pos[0];
-        dy = sinks[j].Pos[1]-P[i].Pos[1];
-        dz = sinks[j].Pos[2]-P[i].Pos[2];
+        dx = P[i].Pos[0]-sinks[j].Pos[0];
+        dy = P[i].Pos[1]-sinks[j].Pos[1];
+        dz = P[i].Pos[2]-sinks[j].Pos[2];
         r = sqrt(dx*dx+dy*dy+dz*dz);
         if(r >= h)
         {
@@ -726,9 +726,9 @@ void sink_grav(void)
         }
 
         fac *= All.G*sinks[j].Mass;
-        P[i].GravAccel[0] += fac * dx;
-        P[i].GravAccel[1] += fac * dy;
-        P[i].GravAccel[2] += fac * dz;
+        P[i].GravAccel[0] -= fac * dx;
+        P[i].GravAccel[1] -= fac * dy;
+        P[i].GravAccel[2] -= fac * dz;
       }
       if(P[i].Type==1)
         printf("[%d] P[%d] gravity = (%g,%g,%g).\n",ThisTask,i,P[i].GravAccel[0],P[i].GravAccel[1],P[i].GravAccel[2]);

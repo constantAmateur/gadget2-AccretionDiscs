@@ -62,8 +62,27 @@ void move_particles(int time0, int time1)
 
   for(i = 0; i < NumPart; i++)
     {
+#ifdef DEAD_GAS
+      double r;
+      r=sqrt(P[i].Pos[0]*P[i].Pos[0]+P[i].Pos[1]*P[i].Pos[1]+P[i].Pos[2]*P[i].Pos[2]);
+      if(r>All.Doom_radius)
+      {
+        for(j=0;j<3;j++)
+        {
+          P[i].Pos[j] -= All.Drift_speed*(P[i].Pos[j]/r)*dt_drift;
+        }
+      }
+      else
+      {
+        for(j=0;j<3;j++)
+        {
+	       P[i].Pos[j] += P[i].Vel[j] * dt_drift;
+        }
+      }
+#else
       for(j = 0; j < 3; j++)
 	P[i].Pos[j] += P[i].Vel[j] * dt_drift;
+#endif
       if(P[i].Type==1)
       {
         printf("Drifting particle %d with vel %g,%g,%g.\n",i,P[i].Vel[0],P[i].Vel[1],P[i].Vel[2]);

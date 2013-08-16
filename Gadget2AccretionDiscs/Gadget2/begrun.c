@@ -627,6 +627,10 @@ void read_parameter_file(char *fname)
       strcpy(tag[nt], "DoomRadius");
       addr[nt] = &All.Doom_radius;
       id[nt++] = DOUBLE;
+
+      strcpy(tag[nt], "DriftSpeed");
+      addr[nt] = &All.Drift_speed;
+      id[nt++] = DOUBLE;
 #endif
       if((fd = fopen(fname, "r")))
 	{

@@ -126,6 +126,10 @@ void compute_accelerations(int mode)
       kill_gas();
 #endif
       hydro_force();		/* adds hydrodynamical accelerations and computes viscous entropy injection  */
+      //int i;
+      //for(i=0;i<N_gas;i++)
+      //  SphP[i].HydroAccel[0] = SphP[i].HydroAccel[1] =SphP[i].HydroAccel[2]=0;
+
 #ifdef DEAD_GAS
       ressurect();
 #endif

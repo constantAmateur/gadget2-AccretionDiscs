@@ -523,6 +523,7 @@ extern struct global_data_all_processes
 #endif
 #ifdef DEAD_GAS
   double Doom_radius;
+  double Drift_speed;
 #endif
 }
  All;                                          /*!< a container variable for global variables that are equal on all processors */
