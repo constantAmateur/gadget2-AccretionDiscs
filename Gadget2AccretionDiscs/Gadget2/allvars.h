@@ -525,6 +525,16 @@ extern struct global_data_all_processes
   double Doom_radius;
   double Drift_speed;
 #endif
+#ifdef INJECT_GAS
+  int LastInjectionTime;
+  int MaxID;
+  int MaxInject;
+  int Injected;
+  double Injection_j;
+  double InjectionRadius;
+  double DriftVelocity;
+  double Mdot;
+#endif
 }
  All;                                          /*!< a container variable for global variables that are equal on all processors */
 

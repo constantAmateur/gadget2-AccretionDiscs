@@ -67,6 +67,7 @@ void move_particles(int time0, int time1)
       r=sqrt(P[i].Pos[0]*P[i].Pos[0]+P[i].Pos[1]*P[i].Pos[1]+P[i].Pos[2]*P[i].Pos[2]);
       if(r>All.Doom_radius)
       {
+        //printf("Damn! Particle at (%g,%g,%g) r = %g is dead.\n",P[i].Pos[0],P[i].Pos[1],P[i].Pos[2],r);
         for(j=0;j<3;j++)
         {
           P[i].Pos[j] -= All.Drift_speed*(P[i].Pos[j]/r)*dt_drift;
@@ -74,6 +75,7 @@ void move_particles(int time0, int time1)
       }
       else
       {
+        //printf("Hooray! Particle at (%g,%g,%g) r = %g is alive.\n",P[i].Pos[0],P[i].Pos[1],P[i].Pos[2],r);
         for(j=0;j<3;j++)
         {
 	       P[i].Pos[j] += P[i].Vel[j] * dt_drift;
@@ -703,7 +705,7 @@ void destroy_doomed_particles(void)
           
           //Add the mass to the sink
           P[j].Mass = dmasstot;
-          //printf("ID %d task %d accnum %d final vel, pos, mass: (%e|%e|%e), (%e|%e|%e), %e\n", \
+          printf("ID %d task %d accnum %d final vel, pos, mass: (%e|%e|%e), (%e|%e|%e), %e\n", \
                  P[j].ID,ThisTask,AccNum,P[j].Vel[0],P[j].Vel[1],P[j].Vel[2], \
                  P[j].Pos[0],P[j].Pos[1],P[j].Pos[2],P[j].Mass);
           P[j].Ti_endstep = All.Ti_Current;

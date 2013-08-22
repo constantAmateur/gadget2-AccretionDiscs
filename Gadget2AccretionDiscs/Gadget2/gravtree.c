@@ -72,11 +72,6 @@ void gravity_tree(void)
   All.CPU_TreeConstruction += timediff(tstart, tend);
 
   costtotal = ewaldcount = 0;
-#ifdef SINK_GRAV_ONLY
-  sink_grav();
-  return;
-#endif
-
 
   /* Note: 'NumForceUpdate' has already been determined in find_next_sync_point_and_drift() */
   numlist = malloc(NTask * sizeof(int) * NTask);
@@ -371,6 +366,11 @@ void gravity_tree(void)
 
 #endif
 
+#ifdef SINK_GRAV_ONLY
+  sink_grav();
+#endif
+
+
 #ifdef ADD_CENTRAL_GRAVITY
   /* Get the position and mass of the central object and send it to everyone */
   numsinks=NumPart - N_gas;
@@ -655,21 +655,27 @@ void sink_grav(void)
 {
   int *noffset;
   int *nbuffer;
+  int nsinks;
   struct particle_data * sinks;
   int i,j;
   double dx,dy,dz,r,fac,u,h;
-  //Get all the type 1 particles on all processors
-  sinks = malloc(Ntype[1]*sizeof(struct particle_data));
   noffset = malloc(NTask * sizeof(int));
   nbuffer = malloc(NTask * sizeof(int));
-  MPI_Allgather(&NtypeLocal[1],1,MPI_INT,
-      nbuffer,1,MPI_INT,MPI_COMM_WORLD);
+
+  nsinks = NumPart-N_gas;
+  MPI_Allgather(&nsinks,1,MPI_INT,nbuffer,1,MPI_INT,MPI_COMM_WORLD);
+  nsinks=0;
+  for(i=0;i<NTask;i++)
+    nsinks+=nbuffer[i];
+  //Get all the type 1 particles on all processors
+  sinks = malloc(nsinks*sizeof(struct particle_data));
   for(j=1,noffset[0]=0,nbuffer[0]=nbuffer[0]*sizeof(struct particle_data);j<NTask;j++)
   {
     nbuffer[j] = nbuffer[j] * sizeof(struct particle_data);
     noffset[j] = noffset[j-1] + nbuffer[j-1];
   }
-  MPI_Allgatherv(&P[N_gas],sizeof(struct particle_data) * NtypeLocal[1],MPI_BYTE,
+
+  MPI_Allgatherv(&P[N_gas],sizeof(struct particle_data) * (NumPart-N_gas),MPI_BYTE,
       sinks,nbuffer,noffset,MPI_BYTE,MPI_COMM_WORLD);
 
   //The force softening for type 1 particles...
@@ -683,7 +689,7 @@ void sink_grav(void)
       //This particle needs doing
       P[i].GravAccel[0] = P[i].GravAccel[1] = P[i].GravAccel[2] = 0;
       //Add the gravitational force due to each type 1 particle
-      for(j=0;j<Ntype[1];j++)
+      for(j=0;j<nsinks;j++)
       {
         if(P[i].ID==sinks[j].ID)
         {
@@ -700,7 +706,7 @@ void sink_grav(void)
         else
         {
           //Plumber sphere!
-          fac = 1.0 / pow(r*r+h*h,1.5);
+          fac = 1.0 / pow((r*r)+(h*h),1.5);
           //Usual crap
   	       //u = r / h;
   	       //if(u < 0.5)
@@ -742,6 +748,7 @@ void sink_grav(void)
       P[i].Ti_endstep = -P[i].Ti_endstep - 1;
     }
   }
+  MPI_Barrier(MPI_COMM_WORLD);
   //Freedom!
   free(sinks);
   free(nbuffer);

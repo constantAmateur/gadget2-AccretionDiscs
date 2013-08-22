@@ -632,6 +632,31 @@ void read_parameter_file(char *fname)
       addr[nt] = &All.Drift_speed;
       id[nt++] = DOUBLE;
 #endif
+#ifdef INJECT_GAS
+      strcpy(tag[nt], "MaxInject");
+      addr[nt] = &All.MaxInject;
+      id[nt++] = INT;
+
+      strcpy(tag[nt], "InjectionAngularMomentum");
+      addr[nt] = &All.Injection_j;
+      id[nt++] = DOUBLE;
+
+      strcpy(tag[nt], "InjectionRadius");
+      addr[nt] = &All.InjectionRadius;
+      id[nt++] = DOUBLE;
+
+      strcpy(tag[nt], "DriftVelocity");
+      addr[nt] = &All.DriftVelocity;
+      id[nt++] = DOUBLE;
+
+      strcpy(tag[nt], "MassAccretionRate");
+      addr[nt] = &All.Mdot;
+      id[nt++] = DOUBLE;
+#endif
+
+
+
+
       if((fd = fopen(fname, "r")))
 	{
 	  sprintf(buf, "%s%s", fname, "-usedvalues");

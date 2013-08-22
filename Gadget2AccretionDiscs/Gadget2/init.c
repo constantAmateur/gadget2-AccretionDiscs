@@ -27,6 +27,11 @@ void init(void)
 #endif
 
   All.Time = All.TimeBegin;
+#ifdef INJECT_GAS
+  All.LastInjectionTime = All.TimeBegin;
+  All.MaxID = All.TotNumPart;
+  All.Injected = 0;
+#endif
 #ifdef SINK_PARTICLES
   All.AccreteFlag = 1;
 #ifdef TRACK_ACCRETION_LOSSES

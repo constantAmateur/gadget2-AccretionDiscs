@@ -109,7 +109,11 @@ void allocate_memory(void)
 
   if(All.MaxPart > 0)
     {
+#ifdef INJECT_GAS
+      if(!(P = malloc(bytes = (All.MaxPart+All.MaxInject) * sizeof(struct particle_data))))
+#else
       if(!(P = malloc(bytes = All.MaxPart * sizeof(struct particle_data))))
+#endif
 	{
 	  printf("failed to allocate memory for `P' (%g MB).\n", bytes / (1024.0 * 1024.0));
 	  endrun(1);
@@ -124,7 +128,11 @@ void allocate_memory(void)
     {
       bytes_tot = 0;
 
+#ifdef INJECT_GAS
+      if(!(SphP = malloc(bytes = (All.MaxPartSph+All.MaxInject) * sizeof(struct sph_particle_data))))
+#else
       if(!(SphP = malloc(bytes = All.MaxPartSph * sizeof(struct sph_particle_data))))
+#endif
 	{
 	  printf("failed to allocate memory for `SphP' (%g MB) %lu.\n", bytes / (1024.0 * 1024.0), sizeof(struct sph_particle_data));
 	  endrun(1);
