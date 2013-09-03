@@ -422,6 +422,21 @@ void fill_write_buffer(enum iofields blocknr, int *startindex, int pc, int type)
       }
 #endif
       break;
+
+    case IO_GRAD_VEL:
+#ifdef OUTPUTGRADVEL
+      for(n = 0; n < pc; pindex++)
+        if(P[pindex].Type == type)
+        {
+          for(k=0; k<3; k++)
+          {
+            fp[k] = SphP[pindex].DivVelComps[k];
+          }
+          fp += 3;
+          n++;
+        }
+#endif
+      break;
   }
   
   *startindex = pindex;
@@ -443,6 +458,7 @@ int get_bytes_per_blockelement(enum iofields blocknr)
     case IO_POS:
     case IO_VEL:
     case IO_VORTICITY:
+    case IO_GRAD_VEL:
     case IO_ACCEL:
       bytes_per_blockelement = 3 * sizeof(float);
       break;
@@ -514,6 +530,7 @@ int get_values_per_blockelement(enum iofields blocknr)
     case IO_POS:
     case IO_VEL:
     case IO_VORTICITY:
+    case IO_GRAD_VEL:
     case IO_ACCEL:
       values = 3;
       break;
@@ -591,6 +608,7 @@ int get_particles_in_block(enum iofields blocknr, int *typelist)
       break;
       
     case IO_U:
+    case IO_GRAD_VEL:
     case IO_SUR_DENSITY:
     case IO_SCALE_HEIGHT:
     case IO_RHO:
@@ -660,6 +678,10 @@ int blockpresent(enum iofields blocknr)
   if(blocknr == IO_SCALE_HEIGHT)
     return 0;
 #endif
+#ifndef OUTPUTGRADVEL
+  if(blocknr == IO_GRAD_VEL)
+    return 0;
+#endif
   
   return 1;			/* default: present */
 }
@@ -727,6 +749,8 @@ void fill_Tab_IO_Labels(void)
     case IO_SCALE_HEIGHT:
       strncpy(Tab_IO_Labels[IO_SCALE_HEIGHT], "SCLH", 4);
       break;
+    case IO_GRAD_VEL:
+      strncpy(Tab_IO_Labels[IO_GRAD_VEL],"DVEL",4);
   }
 }
 
@@ -789,7 +813,9 @@ void get_dataset_name(enum iofields blocknr, char *buf)
     case IO_SCALE_HEIGHT:
       strcpy(buf, "ScaleHeight");
       break;
-
+    case IO_GRAD_VEL:
+      strcpy(buf, "VelocityGradient");
+      break;
   }
 }
 
@@ -917,6 +943,9 @@ void write_file(char *fname, int writeTask, int lastTask)
 #endif
 #ifdef OUTPUTSURFACE
   header.extra_output += 128;
+#endif
+#ifdef OUTPUTGRADVEL
+  header.extra_output += 256;
 #endif
   
   header.num_files = All.NumFilesPerSnapshot;

@@ -276,6 +276,11 @@ void density(void)
 			      SphP[place].DivVel += DensDataPartialResult[source].Div;
 
 			      SphP[place].DhsmlDensityFactor += DensDataPartialResult[source].DhsmlDensity;
+#ifdef OUTPUTGRADVEL
+               SphP[place].DivVelComps[0] += DensDataPartialResult[source].DivVel_x;
+               SphP[place].DivVelComps[1] += DensDataPartialResult[source].DivVel_y;
+               SphP[place].DivVelComps[2] += DensDataPartialResult[source].DivVel_z;
+#endif
 #ifdef PRICE_GRAV_SOFT
                SphP[place].Zeta += DensDataPartialResult[source].Zeta;
 #endif
@@ -333,6 +338,11 @@ void density(void)
 				       SphP[i].Rot[2] * SphP[i].Rot[2]) / SphP[i].Density;
 
 		SphP[i].DivVel /= SphP[i].Density;
+#ifdef OUTPUTGRADVEL
+      SphP[i].DivVelComps[0] /= SphP[i].Density;
+      SphP[i].DivVelComps[1] /= SphP[i].Density;
+      SphP[i].DivVelComps[2] /= SphP[i].Density;
+#endif
 		dt_entr = (All.Ti_Current - (P[i].Ti_begstep + P[i].Ti_endstep) / 2) * All.Timebase_interval;
 
 		SphP[i].Pressure =
@@ -628,6 +638,9 @@ void density_evaluate(int target, int mode)
   double dx, dy, dz, r, r2, u, mass_j;
   double dvx, dvy, dvz, rotv[3];
   double weighted_numngb, dhsmlrho;
+#ifdef OUTPUTGRADVEL
+  double divv_x,divv_y,divv_z;
+#endif
 #ifdef PRICE_GRAV_SOFT
   double zeta,dphi,hinv2;
 #endif
@@ -682,6 +695,9 @@ void density_evaluate(int target, int mode)
   rho = divv = rotv[0] = rotv[1] = rotv[2] = 0;
   weighted_numngb = 0;
   dhsmlrho = 0;
+#ifdef OUTPUTGRADVEL
+  divv_x = divv_y =divv_z =0;
+#endif
 #ifdef PRICE_GRAV_SOFT
   zeta = 0;
 #endif
@@ -789,6 +805,11 @@ void density_evaluate(int target, int mode)
 		  dvy = vel[1] - SphP[j].VelPred[1];
 		  dvz = vel[2] - SphP[j].VelPred[2];
 		  divv -= fac * (dx * dvx + dy * dvy + dz * dvz);
+#ifdef OUTPUTGRADVEL
+        divv_x -= fac *dx*dvx;
+        divv_y -= fac *dy*dvy;
+        divv_z -= fac *dz*dvz;
+#endif
 
 		  rotv[0] += fac * (dz * dvy - dy * dvz);
 		  rotv[1] += fac * (dx * dvz - dz * dvx);
@@ -843,6 +864,11 @@ void density_evaluate(int target, int mode)
       SphP[target].Rot[0] = rotv[0];
       SphP[target].Rot[1] = rotv[1];
       SphP[target].Rot[2] = rotv[2];
+#ifdef OUTPUTGRADVEL
+      SphP[target].DivVelComps[0] = divv_x;
+      SphP[target].DivVelComps[1] = divv_y;
+      SphP[target].DivVelComps[2] = divv_z;
+#endif
 #ifdef PRICE_GRAV_SOFT
       SphP[target].Zeta = zeta;
 #endif
@@ -869,6 +895,11 @@ void density_evaluate(int target, int mode)
       DensDataResult[target].Rot[0] = rotv[0];
       DensDataResult[target].Rot[1] = rotv[1];
       DensDataResult[target].Rot[2] = rotv[2];
+#ifdef OUTPUTGRADVEL
+      DensDataResult[target].DivVel_x = divv_x;
+      DensDataResult[target].DivVel_y = divv_y;
+      DensDataResult[target].DivVel_z = divv_z;
+#endif
 #ifdef PRICE_GRAV_SOFT
       DensDataResult[target].Zeta = zeta;
 #endif

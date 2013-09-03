@@ -625,6 +625,9 @@ extern struct sph_particle_data
   FLOAT ScaleHeight;    //Scale height of the disc
   FLOAT SurEntropy;     //The entropy smoothed in 2D
 #endif
+#ifdef OUTPUTGRADVEL
+  FLOAT DivVelComps[3];
+#endif
 }
  *SphP,                        	/*!< holds SPH particle data on local processor */
  *DomainSphBuf;                 /*!< buffer for SPH particle data in domain decomposition */
@@ -714,7 +717,7 @@ extern struct io_header
  header;                               /*!< holds header for snapshot files */
 
 
-#define IO_NBLOCKS 16   /*!< total number of defined information blocks for snapshot files.
+#define IO_NBLOCKS 17   /*!< total number of defined information blocks for snapshot files.
                              Must be equal to the number of entries in "enum iofields" */
 
 enum iofields           /*!< this enumeration lists the defined output blocks in snapshot files. Not all of them need to be present. */
@@ -735,6 +738,7 @@ enum iofields           /*!< this enumeration lists the defined output blocks in
   IO_RAD_ENERGY,
   IO_SUR_DENSITY,
   IO_SCALE_HEIGHT,
+  IO_GRAD_VEL,
 };
 
 
@@ -837,6 +841,11 @@ extern struct densdata_out
   FLOAT E[9];
   FLOAT T[6];
   FLOAT R;
+#endif
+#ifdef OUTPUTGRADVEL
+  FLOAT DivVel_x;
+  FLOAT DivVel_y;
+  FLOAT DivVel_z;
 #endif
 }
  *DensDataResult,               /*!< stores the locally computed SPH density results for imported particles */
