@@ -223,7 +223,7 @@ void hydro_force(void)
       qsort(HydroDataIn, nexport, sizeof(struct hydrodata_in), hydro_compare_key);
 
       for(j = 1, noffset[0] = 0; j < NTask; j++)
-	noffset[j] = noffset[j - 1] + nsend_local[j - 1];
+	     noffset[j] = noffset[j - 1] + nsend_local[j - 1];
 
       tstart = second();
 
@@ -237,116 +237,116 @@ void hydro_force(void)
       /* now do the particles that need to be exported */
 
       for(level = 1; level < (1 << PTask); level++)
-	{
-	  tstart = second();
-	  for(j = 0; j < NTask; j++)
-	    nbuffer[j] = 0;
-	  for(ngrp = level; ngrp < (1 << PTask); ngrp++)
-	    {
-	      maxfill = 0;
-	      for(j = 0; j < NTask; j++)
-		{
-		  if((j ^ ngrp) < NTask)
-		    if(maxfill < nbuffer[j] + nsend[(j ^ ngrp) * NTask + j])
-		      maxfill = nbuffer[j] + nsend[(j ^ ngrp) * NTask + j];
-		}
-	      if(maxfill >= All.BunchSizeHydro)
-		break;
-
-	      sendTask = ThisTask;
-	      recvTask = ThisTask ^ ngrp;
-
-	      if(recvTask < NTask)
-		{
-		  if(nsend[ThisTask * NTask + recvTask] > 0 || nsend[recvTask * NTask + ThisTask] > 0)
+	   {
+	     tstart = second();
+	     for(j = 0; j < NTask; j++)
+	       nbuffer[j] = 0;
+	     for(ngrp = level; ngrp < (1 << PTask); ngrp++)
+	     {
+	       maxfill = 0;
+	       for(j = 0; j < NTask; j++)
 		    {
-		      /* get the particles */
-		      MPI_Sendrecv(&HydroDataIn[noffset[recvTask]],
+		      if((j ^ ngrp) < NTask)
+		        if(maxfill < nbuffer[j] + nsend[(j ^ ngrp) * NTask + j])
+		          maxfill = nbuffer[j] + nsend[(j ^ ngrp) * NTask + j];
+		    }
+	       if(maxfill >= All.BunchSizeHydro)
+		      break;
+
+	       sendTask = ThisTask;
+	       recvTask = ThisTask ^ ngrp;
+
+	       if(recvTask < NTask)
+		    {
+		      if(nsend[ThisTask * NTask + recvTask] > 0 || nsend[recvTask * NTask + ThisTask] > 0)
+		      {
+		        /* get the particles */
+		        MPI_Sendrecv(&HydroDataIn[noffset[recvTask]],
 				   nsend_local[recvTask] * sizeof(struct hydrodata_in), MPI_BYTE,
 				   recvTask, TAG_HYDRO_A,
 				   &HydroDataGet[nbuffer[ThisTask]],
 				   nsend[recvTask * NTask + ThisTask] * sizeof(struct hydrodata_in), MPI_BYTE,
 				   recvTask, TAG_HYDRO_A, MPI_COMM_WORLD, &status);
+		      }
 		    }
-		}
 
-	      for(j = 0; j < NTask; j++)
-		if((j ^ ngrp) < NTask)
-		  nbuffer[j] += nsend[(j ^ ngrp) * NTask + j];
-	    }
-	  tend = second();
-	  timecommsumm += timediff(tstart, tend);
+	       for(j = 0; j < NTask; j++)
+		      if((j ^ ngrp) < NTask)
+		        nbuffer[j] += nsend[(j ^ ngrp) * NTask + j];
+	     }
+	     tend = second();
+	     timecommsumm += timediff(tstart, tend);
 
-	  /* now do the imported particles */
-	  tstart = second();
-	  for(j = 0; j < nbuffer[ThisTask]; j++)
-         hydro_evaluate(j, 1);
-	  tend = second();
-	  timecomp += timediff(tstart, tend);
+	     /* now do the imported particles */
+	     tstart = second();
+	     for(j = 0; j < nbuffer[ThisTask]; j++)
+          hydro_evaluate(j, 1);
+	     tend = second();
+	     timecomp += timediff(tstart, tend);
 
-	  /* do a block to measure imbalance */
-	  tstart = second();
-	  MPI_Barrier(MPI_COMM_WORLD);
-	  tend = second();
-	  timeimbalance += timediff(tstart, tend);
+	     /* do a block to measure imbalance */
+	     tstart = second();
+	     MPI_Barrier(MPI_COMM_WORLD);
+	     tend = second();
+	     timeimbalance += timediff(tstart, tend);
 
-	  /* get the result */
-	  tstart = second();
-	  for(j = 0; j < NTask; j++)
-	    nbuffer[j] = 0;
-	  for(ngrp = level; ngrp < (1 << PTask); ngrp++)
-	    {
-	      maxfill = 0;
-	      for(j = 0; j < NTask; j++)
-		{
-		  if((j ^ ngrp) < NTask)
-		    if(maxfill < nbuffer[j] + nsend[(j ^ ngrp) * NTask + j])
-		      maxfill = nbuffer[j] + nsend[(j ^ ngrp) * NTask + j];
-		}
-	      if(maxfill >= All.BunchSizeHydro)
-		break;
-
-	      sendTask = ThisTask;
-	      recvTask = ThisTask ^ ngrp;
-
-	      if(recvTask < NTask)
-		{
-		  if(nsend[ThisTask * NTask + recvTask] > 0 || nsend[recvTask * NTask + ThisTask] > 0)
+	     /* get the result */
+	     tstart = second();
+	     for(j = 0; j < NTask; j++)
+	       nbuffer[j] = 0;
+	     for(ngrp = level; ngrp < (1 << PTask); ngrp++)
+	     {
+	       maxfill = 0;
+	       for(j = 0; j < NTask; j++)
 		    {
-		      /* send the results */
-		      MPI_Sendrecv(&HydroDataResult[nbuffer[ThisTask]],
-				   nsend[recvTask * NTask + ThisTask] * sizeof(struct hydrodata_out),
-				   MPI_BYTE, recvTask, TAG_HYDRO_B,
-				   &HydroDataPartialResult[noffset[recvTask]],
-				   nsend_local[recvTask] * sizeof(struct hydrodata_out),
-				   MPI_BYTE, recvTask, TAG_HYDRO_B, MPI_COMM_WORLD, &status);
-
-		      /* add the result to the particles */
-		      for(j = 0; j < nsend_local[recvTask]; j++)
-			{
-			  source = j + noffset[recvTask];
-			  place = HydroDataIn[source].Index;
-
-			  for(k = 0; k < 3; k++)
-			    SphP[place].HydroAccel[k] += HydroDataPartialResult[source].Acc[k];
-
-			  SphP[place].DtEntropy += HydroDataPartialResult[source].DtEntropy;
-
-			  if(SphP[place].MaxSignalVel < HydroDataPartialResult[source].MaxSignalVel)
-			    SphP[place].MaxSignalVel = HydroDataPartialResult[source].MaxSignalVel;
-			}
+		      if((j ^ ngrp) < NTask)
+		        if(maxfill < nbuffer[j] + nsend[(j ^ ngrp) * NTask + j])
+		          maxfill = nbuffer[j] + nsend[(j ^ ngrp) * NTask + j];
 		    }
-		}
+	       if(maxfill >= All.BunchSizeHydro)
+		      break;
 
-	      for(j = 0; j < NTask; j++)
-		if((j ^ ngrp) < NTask)
-		  nbuffer[j] += nsend[(j ^ ngrp) * NTask + j];
-	    }
-	  tend = second();
-	  timecommsumm += timediff(tstart, tend);
+	       sendTask = ThisTask;
+	       recvTask = ThisTask ^ ngrp;
 
-	  level = ngrp - 1;
-	}
+	       if(recvTask < NTask)
+		    {
+		      if(nsend[ThisTask * NTask + recvTask] > 0 || nsend[recvTask * NTask + ThisTask] > 0)
+		      {
+		        /* send the results */
+		        MPI_Sendrecv(&HydroDataResult[nbuffer[ThisTask]],
+		    	   nsend[recvTask * NTask + ThisTask] * sizeof(struct hydrodata_out),
+		    	   MPI_BYTE, recvTask, TAG_HYDRO_B,
+		    	   &HydroDataPartialResult[noffset[recvTask]],
+		    	   nsend_local[recvTask] * sizeof(struct hydrodata_out),
+		    	   MPI_BYTE, recvTask, TAG_HYDRO_B, MPI_COMM_WORLD, &status);
+
+		        /* add the result to the particles */
+		        for(j = 0; j < nsend_local[recvTask]; j++)
+		        {
+		          source = j + noffset[recvTask];
+		          place = HydroDataIn[source].Index;
+
+		          for(k = 0; k < 3; k++)
+		            SphP[place].HydroAccel[k] += HydroDataPartialResult[source].Acc[k];
+  
+     	    	   SphP[place].DtEntropy += HydroDataPartialResult[source].DtEntropy;
+    
+		          if(SphP[place].MaxSignalVel < HydroDataPartialResult[source].MaxSignalVel)
+		            SphP[place].MaxSignalVel = HydroDataPartialResult[source].MaxSignalVel;
+		        }
+		      }
+		    }
+
+	       for(j = 0; j < NTask; j++)
+		      if((j ^ ngrp) < NTask)
+		        nbuffer[j] += nsend[(j ^ ngrp) * NTask + j];
+	     }
+	     tend = second();
+	     timecommsumm += timediff(tstart, tend);
+
+	     level = ngrp - 1;
+	  }
 
       MPI_Allgather(&ndone, 1, MPI_INT, ndonelist, 1, MPI_INT, MPI_COMM_WORLD);
       for(j = 0; j < NTask; j++)
@@ -658,6 +658,10 @@ void hydro_evaluate(int target, int mode)
 		    }
 		  else
 		    visc = 0;
+#ifdef ARTIFICIALCONDUCTIVITY
+        visc -= All.ArtCondConst * sqrt(fabs(pressure - SphP[j].Pressure)/rho_ij) * GAMMA
+          * ((pressure/rho) - (SphP[j].Pressure/SphP[j].Density));
+#endif
 
          // if(ThisTask==1)
          // {
