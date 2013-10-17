@@ -658,7 +658,7 @@ void hydro_evaluate(int target, int mode)
 		    }
 		  else
 		    visc = 0;
-#ifdef ARTIFICIALCONDUCTIVITY
+#ifdef ART_COND
         visc -= All.ArtCondConst * sqrt(fabs(pressure - SphP[j].Pressure)/rho_ij) * GAMMA
           * ((pressure/rho) - (SphP[j].Pressure/SphP[j].Density));
 #endif

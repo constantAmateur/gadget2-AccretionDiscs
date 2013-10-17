@@ -466,7 +466,7 @@ void read_parameter_file(char *fname)
       addr[nt] = &All.ArtBulkViscConst;
       id[nt++] = DOUBLE;
 
-#ifdef ARTIFICIALCONDICUTIVITY
+#ifdef ART_COND
       strcpy(tag[nt], "ArtCondConst");
       addr[nt] = &All.ArtCondConst;
       id[nt++] = DOUBLE;

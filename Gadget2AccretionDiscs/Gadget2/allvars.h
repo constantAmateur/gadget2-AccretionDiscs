@@ -521,7 +521,7 @@ extern struct global_data_all_processes
 #ifdef H_SMOOTHING
   double H_frac;
 #endif
-#ifdef ARTIFICIALCONDUCTIVITY
+#ifdef ART_COND
   double ArtCondConst;
 #endif
 }
