@@ -659,8 +659,8 @@ void hydro_evaluate(int target, int mode)
 		  else
 		    visc = 0;
 #ifdef ART_COND
-        visc -= All.ArtCondConst * sqrt(fabs(pressure - SphP[j].Pressure)/rho_ij) * GAMMA
-          * ((pressure/rho) - (SphP[j].Pressure/SphP[j].Density));
+        //visc -= All.ArtCondConst * sqrt(fabs(pressure - SphP[j].Pressure)/rho_ij) * GAMMA
+        //  * ((pressure/rho) - (SphP[j].Pressure/SphP[j].Density));
 #endif
 
          // if(ThisTask==1)
@@ -678,6 +678,14 @@ void hydro_evaluate(int target, int mode)
 		  acc[1] -= hfc * dy;
 		  acc[2] -= hfc * dz;
 		  dtEntropy += 0.5 * hfc_visc * vdotr2;
+#ifdef ART_COND
+        //Using signal velocity = |v_ij.r_ij/r|
+        if(r!=0)
+        {
+          dtEntropy -= 0.25 * P[j].Mass * (dwk_i + dwk_j) * fabs(vdotr2/r)*All.ArtCondConst *  
+            ((pressure/rho)-(SphP[j].Pressure/SphP[j].Density)) / (0.5 * (rho + SphP[j].Density)*GAMMA_MINUS1);
+        }
+#endif
 //#endif
 //#endif
 //The block for CD Method
