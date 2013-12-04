@@ -682,7 +682,7 @@ void hydro_evaluate(int target, int mode)
         //Using signal velocity = |v_ij.r_ij/r|
         if(r!=0)
         {
-          dtEntropy -= 0.25 * P[j].Mass * (dwk_i + dwk_j) * fabs(vdotr2/r)*All.ArtCondConst *  
+          dtEntropy += 0.25 * P[j].Mass * (dwk_i + dwk_j) * fabs(vdotr2/r)*All.ArtCondConst *  
             ((pressure/rho)-(SphP[j].Pressure/SphP[j].Density)) / (0.5 * (rho + SphP[j].Density)*GAMMA_MINUS1);
         }
 #endif
