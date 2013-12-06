@@ -531,13 +531,18 @@ extern struct global_data_all_processes
   int MaxInject;
   int Injected;
   double Injection_j;
-  double InjectionRadius;
-  double DriftVelocity;
-  double Mdot;
+  double Injection_r;
+  double Injection_dMdt;
+  double Injection_m;
+  double Injection_drdt;
+  double Injection_T;
+  double Binary_M;
+  double Binary_q;
+  double Binary_a;
+  double Binary_j;
 #endif
 }
  All;                                          /*!< a container variable for global variables that are equal on all processors */
-
 
 
 /*! This structure holds all the information that is

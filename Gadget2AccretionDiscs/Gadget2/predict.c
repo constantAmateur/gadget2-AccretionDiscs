@@ -745,8 +745,8 @@ void destroy_doomed_particles(void)
   //Check each particle in array
   while(j<i)
   {
-    //Is it outside the box?
-    if((P[j].Pos[0]-starRtot[0])*(P[j].Pos[0]-starRtot[0])+(P[j].Pos[1]-starRtot[1])*(P[j].Pos[1]-starRtot[1]) > All.maxR2 || fabs(P[j].Pos[2]-starRtot[2]) > All.maxZ)
+    //Is it too far away?
+    if(P[j].Pos[0]*P[j].Pos[0]+P[j].Pos[1]*P[j].Pos[1]+P[j].Pos[2]*P[j].Pos[2] > All.maxZ*All.maxZ)
     {
       //It is, delete it.
       if(P[j].Ti_endstep == All.Ti_Current){
@@ -764,6 +764,25 @@ void destroy_doomed_particles(void)
       //There's one less particle to consider now, so stop loop a bit earlier
       i--;
     }
+    //Is it outside the box?
+    //if((P[j].Pos[0]-starRtot[0])*(P[j].Pos[0]-starRtot[0])+(P[j].Pos[1]-starRtot[1])*(P[j].Pos[1]-starRtot[1]) > All.maxR2 || fabs(P[j].Pos[2]-starRtot[2]) > All.maxZ)
+    //{
+    //  //It is, delete it.
+    //  if(P[j].Ti_endstep == All.Ti_Current){
+    //    NumForceUpdate--;
+    //    NumSphUpdate--;
+    //  }
+    //  for(k = j+1; k<=NumPart; k++){ // actually remove the particle here, 
+    //                                 // and shift everything down to fill the gap in the array.
+    //    P[k-1] = P[k];
+    //    if(P[k].Type == 0)
+    //      SphP[k-1] = SphP[k];      
+    //  }
+    //  NumPart--;   // decrement the local countrs of particles and gas particles
+    //  N_gas--;
+    //  //There's one less particle to consider now, so stop loop a bit earlier
+    //  i--;
+    //}
     j++;
   }
 #endif

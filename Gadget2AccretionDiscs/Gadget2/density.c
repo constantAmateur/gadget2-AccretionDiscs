@@ -132,6 +132,10 @@ void density(void)
 	    if(P[i].Ti_endstep == All.Ti_Current)
 	      {
 		ndone++;
+#ifdef INJECT_GAS
+      if(SphP[i].Hsml==0)
+        SphP[i].Hsml=0.1;
+#endif
 
 
 		for(j = 0; j < NTask; j++)
@@ -573,6 +577,9 @@ void density(void)
 	  if(iter > MAXITER)
 	    {
 	      printf("failed to converge in neighbour iteration in density()\n");
+#ifdef INJECT_GAS
+         break;
+#endif
 	      fflush(stdout);
 	      endrun(1155);
 	    }

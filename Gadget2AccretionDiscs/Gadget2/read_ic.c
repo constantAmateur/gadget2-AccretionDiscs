@@ -365,6 +365,11 @@ void read_file(char *fname, int readTask, int lastTask)
     All.MaxPart = All.PartAllocFactor * (All.TotNumPart / NTask);	/* sets the maximum number of particles that may */
     All.MaxPartSph = All.PartAllocFactor * (All.TotN_gas / NTask);	/* sets the maximum number of particles that may 
                                                                      reside on a processor */
+#ifdef INJECT_GAS
+    All.MaxPart = All.PartAllocFactor * ((All.TotNumPart + All.MaxInject) / NTask);
+    All.MaxPartSph = All.PartAllocFactor * ((All.TotN_gas + All.MaxInject) / NTask);
+#endif
+    
     allocate_memory();
     
     if(RestartFlag == 2)
