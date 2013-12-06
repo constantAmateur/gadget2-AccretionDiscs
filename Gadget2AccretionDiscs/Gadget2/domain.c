@@ -51,6 +51,119 @@ static struct topnode_exchange
 }
  *toplist, *toplist_local;
 
+//#ifdef INJECT_GAS
+////Need much better checking that there is space available to inject the particles
+//void inject_gas(void)
+//{
+//  double dt;
+//  double jpart,theta_min,theta_max;
+//  double min_r,max_r;
+//  double theta,phi,r,cyl_r,vphi,vr;
+//  int n_inject,offset,i,j,n_inject_tot,k;
+//  int skip;
+//  int* ntot;
+//  //How long has it been since we last injected some particles?
+//  dt = (All.Ti_Current-All.LastInjectionTime)*All.Timebase_interval;
+//  //Should we even be here?
+//  if(dt==0 || !Flag_FullStep)
+//    return;
+//  ntot = malloc(NTask*sizeof(int));
+//  //Inject the required number of gas particles at the boundary
+//  jpart = All.Injection_j * All.Binary_j;
+//  theta_min = 0;
+//  //Work out what theta range this wedge will create
+//  theta_max = .5*M_PI + theta_min;
+//  theta_min = .5*M_PI - theta_min;
+//  min_r = All.Injection_r-dt*All.Injection_drdt;
+//  max_r = All.Injection_r;
+//  //How many will I need to add?  Add roughly evenly across all processors
+//  n_inject = (int) (dt * All.Injection_dMdt / P[0].Mass/NTask);
+//  printf("Time to inject %d with dt=%g,M=%g \n",n_inject,dt,P[0].Mass,All.Injection_dMdt);
+//  //Make space for the new particles
+//  memmove(&P[N_gas+n_inject],&P[N_gas],(NumPart-N_gas)*sizeof(struct particle_data));
+//  //Need this to work out what IDs to give the new particles
+//  MPI_Allgather(&n_inject,1,MPI_INT,ntot,1,MPI_INT,MPI_COMM_WORLD);
+//  offset=0;
+//  for(i=0;i<ThisTask;i++)
+//  {
+//    offset+=ntot[i];
+//  }
+//  n_inject_tot = offset;
+//  for(i=ThisTask;i<NTask;i++)
+//    n_inject_tot += ntot[i];
+//  //Not injecting enough particles to worth bothering with...
+//  MPI_Allreduce(&n_inject,&skip,1,MPI_INT,MPI_MIN,MPI_COMM_WORLD);
+//  if(skip==0)
+//    return;
+//  if(All.Injected+n_inject_tot >= All.MaxInject)
+//  {
+//    if(ThisTask==0)
+//      printf("Trying to inject more particles than space allows.\n");
+//    return;
+//  }
+//  if(ThisTask==0)
+//    printf("Injecting %d new gas particles.\n",(n_inject_tot));
+//  free(ntot);
+//  //Create the new particles in the gap we opened
+//  for(j=0;j<n_inject;j++)
+//  {
+//    i=j+N_gas;
+//    //Randomly generate a position
+//    theta = drand48()*(theta_max-theta_min)+theta_min;
+//    phi = drand48()*M_PI*2;
+//    r = drand48()*(max_r-min_r)+min_r;
+//    cyl_r = r*sin(theta);
+//    //And the corresponding velocity is...
+//    vphi = -jpart / cyl_r;
+//    vr = All.Injection_drdt;
+//    //Translate them into cartesian coordinates
+//    P[i].Pos[0]=r*sin(theta)*cos(phi);
+//    P[i].Pos[1]=r*sin(theta)*sin(phi);
+//    P[i].Pos[2]=r*cos(theta);
+//    P[i].Mass = P[i-1].Mass;
+//    P[i].Vel[0]= (-P[i].Pos[1]/cyl_r) * vphi + (P[i].Pos[0]/r)*vr;
+//    P[i].Vel[1]= (P[i].Pos[0]/cyl_r) * vphi + (P[i].Pos[1]/r)*vr;
+//    P[i].Vel[2]=  (P[i].Pos[2]/r)*vr;
+//    //Inherit some other properties
+//    P[i].GravAccel[0]=0;
+//    P[i].GravAccel[1]=0;
+//    P[i].GravAccel[2]=0;
+//#ifdef CDAV
+//    P[i].GravAccelOld[0]=P[i-1].GravAccelOld[0];
+//    P[i].GravAccelOld[1]=P[i-1].GravAccelOld[1];
+//    P[i].GravAccelOld[2]=P[i-1].GravAccelOld[2];
+//#endif
+//    P[i].OldAcc = 0;
+//    P[i].ID = All.MaxID+offset+j;  
+//    P[i].Type = 0;
+//    P[i].Ti_endstep = P[i-1].Ti_endstep;
+//    P[i].Ti_begstep = P[i-1].Ti_begstep;
+//    P[i].Potential = 0;
+//    //Add SPH properties
+//    SphP[i].Density = 0;
+//    SphP[i].Hsml = SphP[i-1].Hsml;
+//    SphP[i].Entropy = SphP[i-1].Entropy;
+//    SphP[i].DtEntropy = 0;
+//    for(k=0;k<3;k++)
+//    {
+//      SphP[i].VelPred[k] = P[i].Vel[k];
+//      SphP[i].HydroAccel[k] = 0;
+//    }
+//  }
+//
+//  //Local counters
+//  NumPart = NumPart+n_inject;
+//  N_gas= N_gas+n_inject;
+//  NtypeLocal[0] += n_inject;
+//  //The total number of new particles...
+//  Ntype[0] += n_inject_tot;
+//  All.MaxID += n_inject_tot;
+//  All.Injected += n_inject_tot;
+//  All.TotNumPart += n_inject_tot;
+//  All.TotN_gas += n_inject_tot;
+//  All.LastInjectionTime = All.Ti_Current;
+//}
+//#endif
 
 #ifdef INJECT_GAS
 //Need much better checking that there is space available to inject the particles
@@ -78,8 +191,8 @@ void inject_gas(void)
   //angular momentum and a is the binary separation
   //Injection radius given in number of binary separations
   //printf("[%d] Injection R=%g,Binary a=%g,q=%g.\n",ThisTask,All.Injection_r,All.Binary_a,All.Binary_q);
-  max_r = All.Injection_r * All.Binary_a / (1.0 + All.Binary_q);
-  min_r = max_r - dt*All.Injection_drdt;
+  min_r = All.Injection_r * All.Binary_a / (1.0 + All.Binary_q);
+  max_r = min_r + dt*All.Injection_drdt;
   //The smaller radius gives the stronger constraint...
   theta_min = asin(All.Injection_j*sqrt(All.Binary_a/(.2*min_r)));
   theta_max = M_PI - theta_min;
@@ -128,7 +241,6 @@ void inject_gas(void)
     phi = drand48()*M_PI*2;
     //theta = drand48()*(theta_max-theta_min)+theta_min;
     theta = acos(zonr_range*(drand48()*2-1));
-    theta = M_PI*0.5;
     r = drand48()*(max_r-min_r)+min_r;
     cyl_r = r*sin(theta);
     //And the corresponding velocity is (minus sign for direction of orbit)...
@@ -162,7 +274,7 @@ void inject_gas(void)
     P[i].Potential = 0;
     //Add SPH properties
     SphP[i].Density = SphP[i-1].Density;
-    SphP[i].Hsml = SphP[i-1].Hsml ;
+    SphP[i].Hsml = SphP[0].Hsml ;
     //This assumes an isothermal equation of state
     //SphP[i].Entropy = (BOLTZMANN / PROTONMASS) * All.Injection_T * (All.UnitMass_in_g / All.UnitEnergy_in_cgs) ;
     SphP[i].Entropy = entr;
