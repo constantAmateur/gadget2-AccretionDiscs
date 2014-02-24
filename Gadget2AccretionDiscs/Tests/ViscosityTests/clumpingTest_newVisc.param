@@ -1,0 +1,107 @@
+%Filenames and file formats
+
+InitCondFile ../Tests/ViscosityTests/HighQDisc.IC
+OutputDir	/home/myoung/Output/Tests/ViscosityTests/clumping/newVisc/
+SnapshotFileBase	clumping
+SnapFormat	1
+NumFilesPerSnapshot	1
+ICFormat	1
+RestartFile	restart
+InfoFile	info.txt
+TimingsFile	timings.txt
+CpuFile	cpu.txt
+EnergyFile	energy.txt
+
+%CPU-time limit and restart options
+
+TimeLimitCPU	40000.0
+ResubmitCommand	xyz
+ResubmitOn	0
+CpuTimeBetRestartFile	7200
+
+%Simulation specific parameters
+
+TimeBegin	0.0
+TimeMax	300.0
+BoxSize	10000.0
+PeriodicBoundariesOn	0
+ComovingIntegrationOn	0
+
+%Cosmological parameters (These are ignored for my stuff)
+
+HubbleParam	0.7
+Omega0	0.3
+OmegaLambda	0.7
+OmegaBaryon	0.04
+
+%Memory allocation
+
+BufferSize	1024
+PartAllocFactor	2.5
+TreeAllocFactor	.9
+
+%Gravitational force accuracy
+
+TypeOfOpeningCriterion	0
+ErrTolTheta	0.3
+ErrTolForceAcc	0.005
+
+%Time integration accuracy
+
+MaxSizeTimestep	0.1
+MinSizeTimestep	0.0
+TypeOfTimestepCriterion	0
+ErrTolIntAccuracy	0.025
+TreeDomainUpdateFrequency	0.25
+MaxRMSDisplacementFac	0.25
+
+%Output of snapshot files
+
+OutputListOn	0
+OutputListFilename	output_times.txt
+TimeOfFirstSnapshot	0
+TimeBetSnapshot	.25
+TimeBetStatistics	.25
+NumFilesWrittenInParallel	1
+
+%Unit system
+
+UnitVelocity_in_cm_per_s	1e5	
+UnitLength_in_cm	1.496e13
+UnitMass_in_g	1.989e33
+GravityConstantInternal	0
+
+%SPH parameters
+
+DesNumNgb	64
+MaxNumNgbDeviation	1
+CourantFac	0.15
+InitGasTemp	0
+MinGasTemp	20
+MinGasHsmlFractional	0.0
+
+%Artificial viscosity
+
+ArtViscPropConst  1.5
+ArtBulkViscConst	2.0
+VariableViscAlphaMin  .1
+VariableViscDecayLength  .1
+
+
+%Gravitational Softening
+
+SofteningGas	1
+SofteningHalo	1
+SofteningDisk	1
+SofteningBulge	1
+SofteningStars	1
+SofteningBndry	1
+SofteningGasMaxPhys	0
+SofteningHaloMaxPhys	0
+SofteningDiskMaxPhys	0
+SofteningBulgeMaxPhys	0
+SofteningStarsMaxPhys	0
+SofteningBndryMaxPhys	0
+
+%Particle accretion
+AccretionRadius  5.0

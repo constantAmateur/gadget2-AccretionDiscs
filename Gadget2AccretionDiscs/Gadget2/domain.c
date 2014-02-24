@@ -135,6 +135,21 @@ void domain_Decomposition(void)
       }
 #endif	
 
+#ifdef VARIABLE_BETA
+      //Update beta to the latest value based on global time
+      if(All.Time<=All.BetaChangeStart)
+      {
+        All.CoolingRate = All.BetaStart;
+      }
+      else if(All.Time>=All.BetaChangeEnd)
+      {
+        All.CoolingRate = All.BetaEnd;
+      }
+      else
+      {
+        All.CoolingRate = ((All.Time-All.BetaChangeStart)/(All.BetaChangeEnd-All.BetaChangeStart))*(All.BetaEnd-All.BetaStart) + All.BetaStart;
+      }
+#endif
 
       maxload = All.MaxPart * REDUC_FAC;
       maxloadsph = All.MaxPartSph * REDUC_FAC;

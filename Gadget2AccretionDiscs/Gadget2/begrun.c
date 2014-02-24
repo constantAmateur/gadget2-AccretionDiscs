@@ -624,6 +624,26 @@ void read_parameter_file(char *fname)
       addr[nt] = &All.CoolingRate;
       id[nt++] = DOUBLE;
 #endif
+#ifdef VARIABLE_BETA
+      strcpy(tag[nt],"BetaChangeStart");
+      addr[nt] = &All.BetaChangeStart;
+      id[nt++] = DOUBLE;
+
+      strcpy(tag[nt],"BetaChangeEnd");
+      addr[nt] = &All.BetaChangeEnd;
+      id[nt++] = DOUBLE;
+
+      strcpy(tag[nt],"BetaStart");
+      addr[nt] = &All.BetaStart;
+      id[nt++] = DOUBLE;
+
+      strcpy(tag[nt],"BetaEnd");
+      addr[nt] = &All.BetaEnd;
+      id[nt++] = DOUBLE;
+#endif
+
+
+
 #ifdef H_SMOOTHING
       strcpy(tag[nt], "SmoothingMultiple");
       addr[nt] = &All.H_frac;

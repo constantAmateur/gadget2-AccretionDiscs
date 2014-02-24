@@ -375,6 +375,12 @@ extern struct global_data_all_processes
 #ifdef BETA_COOLING
   double CoolingRate;             /* "Beta".  The number of dynamical times the cooling rate is set to */
 #endif
+#ifdef VARIABLE_BETA
+  double BetaChangeStart;
+  double BetaChangeEnd;
+  double BetaStart;
+  double BetaEnd;
+#endif
 
   /* Current time of the simulation, global step, and end of simulation */
 
