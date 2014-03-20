@@ -706,7 +706,7 @@ void sink_grav(void)
         else
         {
           //Plumber sphere!
-          fac = 1.0 / pow((r*r)+(h*h),1.5);
+          fac = 1.0 / (h*h*h*pow(1.0+(r/h)*(r/h),1.5));
           //Usual crap
   	       //u = r / h;
   	       //if(u < 0.5)
