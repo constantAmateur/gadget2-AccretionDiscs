@@ -683,11 +683,11 @@ void hydro_evaluate(int target, int mode)
         //or price sign vel = sqrt(|P_i-P_j]/rho_ij)
         if(r!=0)
         {
-          dtEntropy += 0.25 * P[j].Mass * (dwk_i + dwk_j) *
-          sqrt(fabs(pressure-SphP[j].Pressure)/(0.5*(rho+SphP[j].Density)))*
+          dtEntropy -= 0.5 * P[j].Mass * (dwk_i + dwk_j) *
+          sqrt(fabs(pressure-SphP[j].Pressure)/rho_ij)*
           All.ArtCondConst *
           ((pressure/rho)-(SphP[j].Pressure/SphP[j].Density)) / 
-          (0.5 * (rho + SphP[j].Density)*GAMMA_MINUS1);
+          (rho_ij*GAMMA_MINUS1*r);
         }
 #endif
 //#endif
