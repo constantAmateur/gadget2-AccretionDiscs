@@ -367,6 +367,7 @@ void hydro_force(void)
   for(i = 0; i < N_gas; i++)
     if(P[i].Ti_endstep == All.Ti_Current)
       {
+ 
 	SphP[i].DtEntropy *= GAMMA_MINUS1 / (hubble_a2 * pow(SphP[i].Density, GAMMA_MINUS1));
 #ifdef BETA_COOLING
    //The conversion factor from dK/dt to du/dt cancel with the conversion factor from u to K in du/dt = -u / beta/Omega.  This is why we do the above line before the cooling...
@@ -683,11 +684,17 @@ void hydro_evaluate(int target, int mode)
         //or price sign vel = sqrt(|P_i-P_j]/rho_ij)
         if(r!=0)
         {
-          dtEntropy -= 0.5 * P[j].Mass * (dwk_i + dwk_j) *
+		    rho_ij = 0.5 * (rho + SphP[j].Density);
+          //This should really be 0.5, but I'll leave it as it is for now
+          //to avoid re-running all the simulations over a factor2 difference
+          hfc = 0.25 * P[j].Mass * (dwk_i + dwk_j) *
+          //fabs(vdotr2/r) * 
           sqrt(fabs(pressure-SphP[j].Pressure)/rho_ij)*
-          All.ArtCondConst *
+          All.ArtCondConst * 
           ((pressure/rho)-(SphP[j].Pressure/SphP[j].Density)) / 
-          (rho_ij*GAMMA_MINUS1*r);
+          (rho_ij*GAMMA_MINUS1);
+          dtEntropy += hfc;
+
         }
 #endif
 //#endif
