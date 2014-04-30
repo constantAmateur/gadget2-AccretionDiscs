@@ -373,7 +373,7 @@ void hydro_force(void)
  
 	SphP[i].DtEntropy *= GAMMA_MINUS1 / (hubble_a2 * pow(SphP[i].Density, GAMMA_MINUS1));
 #ifdef OUTPUTCOND
-   SphP[i].Cond *= GAMMA_MINUS1 / (hubble_a2 * pow(SphP[i].Density,GAMMA_MIUNS1));
+   SphP[i].Cond *= GAMMA_MINUS1 / (hubble_a2 * pow(SphP[i].Density,GAMMA_MINUS1));
 #endif
 #ifdef BETA_COOLING
    //The conversion factor from dK/dt to du/dt cancel with the conversion factor from u to K in du/dt = -u / beta/Omega.  This is why we do the above line before the cooling...

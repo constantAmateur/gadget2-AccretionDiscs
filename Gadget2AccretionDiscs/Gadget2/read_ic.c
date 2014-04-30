@@ -253,6 +253,8 @@ void empty_read_buffer(enum iofields blocknr, int offset, int pc, int type)
     case IO_TSTP:
     case IO_VORTICITY:
     case IO_RAD_ENERGY:
+    case IO_GRAD_VEL:
+    case IO_COND:
       break;
   }
 }
