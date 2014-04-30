@@ -331,6 +331,9 @@ void hydro_force(void)
 		            SphP[place].HydroAccel[k] += HydroDataPartialResult[source].Acc[k];
   
      	    	   SphP[place].DtEntropy += HydroDataPartialResult[source].DtEntropy;
+#ifdef OUTPUTCOND
+               SphP[place].Cond += HydroDataPartialResult[source].Cond;
+#endif
     
 		          if(SphP[place].MaxSignalVel < HydroDataPartialResult[source].MaxSignalVel)
 		            SphP[place].MaxSignalVel = HydroDataPartialResult[source].MaxSignalVel;
@@ -369,6 +372,9 @@ void hydro_force(void)
       {
  
 	SphP[i].DtEntropy *= GAMMA_MINUS1 / (hubble_a2 * pow(SphP[i].Density, GAMMA_MINUS1));
+#ifdef OUTPUTCOND
+   SphP[i].Cond *= GAMMA_MINUS1 / (hubble_a2 * pow(SphP[i].Density,GAMMA_MIUNS1));
+#endif
 #ifdef BETA_COOLING
    //The conversion factor from dK/dt to du/dt cancel with the conversion factor from u to K in du/dt = -u / beta/Omega.  This is why we do the above line before the cooling...
    for(j=0,R=0,v2=0;j<3;j++)
@@ -441,6 +447,9 @@ void hydro_evaluate(int target, int mode)
   double p_over_rho2_i, p_over_rho2_j, soundspeed_i, soundspeed_j;
   double hfc, dwk_i, vdotr, vdotr2, visc, mu_ij, rho_ij, vsig;
   double h_j, dwk_j, r, r2, u, hfc_visc;
+#ifdef OUTPUTCOND
+  double cond=0;
+#endif
 
 #ifndef NOVISCOSITYLIMITER
   double dt;
@@ -694,7 +703,9 @@ void hydro_evaluate(int target, int mode)
           ((pressure/rho)-(SphP[j].Pressure/SphP[j].Density)) / 
           (rho_ij*GAMMA_MINUS1);
           dtEntropy += hfc;
-
+#ifdef OUTPUTCOND
+          cond += hfc;
+#endif
         }
 #endif
 //#endif
@@ -813,6 +824,9 @@ void hydro_evaluate(int target, int mode)
 	     SphP[target].HydroAccel[k] = acc[k];
       SphP[target].DtEntropy = dtEntropy;
       SphP[target].MaxSignalVel = maxSignalVel;
+#ifdef COND
+      SphP[target].Cond = cond;
+#endif
     }
   else
     {
@@ -820,6 +834,9 @@ void hydro_evaluate(int target, int mode)
 	HydroDataResult[target].Acc[k] = acc[k];
       HydroDataResult[target].DtEntropy = dtEntropy;
       HydroDataResult[target].MaxSignalVel = maxSignalVel;
+#ifdef COND
+      HydroDataResult[targt].Cond = cond;
+#endif
     }
 }
 

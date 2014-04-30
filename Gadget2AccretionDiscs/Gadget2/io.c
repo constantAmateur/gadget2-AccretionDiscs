@@ -437,6 +437,17 @@ void fill_write_buffer(enum iofields blocknr, int *startindex, int pc, int type)
         }
 #endif
       break;
+    case IO_COND:
+#ifdef OUTPUTCOND
+      for(n = 0; n < pc; pindex++)
+        if(P[pindex].Type == type)
+        {
+          *fp++ = SphP[pindex].Cond;
+          n++;
+        }
+#endif
+      break;
+
   }
   
   *startindex = pindex;
@@ -482,6 +493,7 @@ int get_bytes_per_blockelement(enum iofields blocknr)
     case IO_SUR_DENSITY:
     case IO_SCALE_HEIGHT:
     case IO_TSTP:
+    case IO_COND:
       bytes_per_blockelement = sizeof(float);
       break;
   }
@@ -547,6 +559,7 @@ int get_values_per_blockelement(enum iofields blocknr)
     case IO_SUR_DENSITY:
     case IO_SCALE_HEIGHT:
     case IO_TSTP:
+    case IO_COND:
       values = 1;
       break;
   }
@@ -616,6 +629,7 @@ int get_particles_in_block(enum iofields blocknr, int *typelist)
     case IO_ALPHA:
     case IO_RAD_ENERGY:
     case IO_DTENTR:
+    case IO_COND:
       for(i = 1; i < 6; i++)
         typelist[i] = 0;
       return ngas;
@@ -682,7 +696,10 @@ int blockpresent(enum iofields blocknr)
   if(blocknr == IO_GRAD_VEL)
     return 0;
 #endif
-  
+#ifndef OUTPUTCOND
+  if(blocknr == IO_COND)
+    return 0;
+#endif
   return 1;			/* default: present */
 }
 
@@ -751,6 +768,8 @@ void fill_Tab_IO_Labels(void)
       break;
     case IO_GRAD_VEL:
       strncpy(Tab_IO_Labels[IO_GRAD_VEL],"DVEL",4);
+    case IO_COND:
+      strncpy(Tab_IO_Labels[IO_COND],"COND",4);
   }
 }
 
@@ -815,6 +834,9 @@ void get_dataset_name(enum iofields blocknr, char *buf)
       break;
     case IO_GRAD_VEL:
       strcpy(buf, "VelocityGradient");
+      break;
+    case IO_COND:
+      strcpy(buf, "ConductedEnergy");
       break;
   }
 }

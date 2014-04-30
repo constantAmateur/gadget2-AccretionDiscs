@@ -637,6 +637,9 @@ extern struct sph_particle_data
 #ifdef OUTPUTGRADVEL
   FLOAT DivVelComps[3];
 #endif
+#ifdef OUTPUTCOND
+  FLOAT Cond;
+#endif
 }
  *SphP,                        	/*!< holds SPH particle data on local processor */
  *DomainSphBuf;                 /*!< buffer for SPH particle data in domain decomposition */
@@ -726,7 +729,7 @@ extern struct io_header
  header;                               /*!< holds header for snapshot files */
 
 
-#define IO_NBLOCKS 17   /*!< total number of defined information blocks for snapshot files.
+#define IO_NBLOCKS 18   /*!< total number of defined information blocks for snapshot files.
                              Must be equal to the number of entries in "enum iofields" */
 
 enum iofields           /*!< this enumeration lists the defined output blocks in snapshot files. Not all of them need to be present. */
@@ -748,6 +751,7 @@ enum iofields           /*!< this enumeration lists the defined output blocks in
   IO_SUR_DENSITY,
   IO_SCALE_HEIGHT,
   IO_GRAD_VEL,
+  IO_COND,
 };
 
 
@@ -893,6 +897,9 @@ extern struct hydrodata_out
   FLOAT Acc[3];
   FLOAT DtEntropy;
   FLOAT MaxSignalVel;
+#ifdef OUTPUTCOND
+  FLOAT Cond;
+#endif
 #ifdef NK_AV
   int NumN,NumNK;         //Counters for the number of neighbours and non-keplerian neighbours
 #endif
