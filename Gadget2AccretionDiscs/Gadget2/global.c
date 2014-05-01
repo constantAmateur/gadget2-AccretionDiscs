@@ -225,3 +225,43 @@ void compute_global_quantities_of_system(void)
   /* give everyone the result, maybe the want to do something with it */
   MPI_Bcast(&SysState, sizeof(struct state_of_system), MPI_BYTE, 0, MPI_COMM_WORLD);
 }
+
+#ifdef DEAD_GAS
+//Disables the particles that aren't ready to have forces calculated on them yet
+void kill_gas(void)
+{
+  int i,j;
+  double r2,d2;
+
+  d2=All.Doom_radius*All.Doom_radius;
+  for(i=0;i<N_gas;i++)
+  {
+    r2=(P[i].Pos[0]-SysState.CenterOfMass[0])*(P[i].Pos[0]-SysState.CenterOfMass[0])+(P[i].Pos[1]-SysState.CenterOfMass[1])*(P[i].Pos[1]-SysState.CenterOfMass[1])+(P[i].Pos[2]-SysState.CenterOfMass[2])*(P[i].Pos[2]-SysState.CenterOfMass[2]);
+    if(r2>d2 && P[i].Ti_endstep>=0)
+    {
+      P[i].Ti_endstep = -P[i].Ti_endstep -1;
+    }
+    if(r2>d2)
+    {
+      for(j=0;j<3;j++)
+      {
+        P[i].GravAccel[j]=0;
+        SphP[i].HydroAccel[j]=0;
+      }
+    }
+    else
+    {
+      //printf("Particle %d at %g,%g,%g is alive with drift %g!\n",i,P[i].Pos[0],P[i].Pos[1],P[i].Pos[2],sqrt(P[i].Vel[0]*P[i].Vel[0]+P[i].Vel[1]*P[i].Vel[1]+P[i].Vel[2]*P[i].Vel[2]));
+    }
+  }
+}
+
+//Sometimes there's no ressurection built into the routines
+void ressurect(void)
+{
+  int i;
+  for(i=0;i<N_gas;i++)
+    if(P[i].Ti_endstep<0)
+      P[i].Ti_endstep = -P[i].Ti_endstep -1;
+}
+#endif

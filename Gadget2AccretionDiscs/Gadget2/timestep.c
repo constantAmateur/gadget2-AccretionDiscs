@@ -318,6 +318,9 @@ void advance_and_find_timesteps(void)
 
 
 	  /* do the kick */
+  //printf("Particle %d, grav = %g,%g,%g hydro = %g,%g,%g vel = %g,%g,%g.\n",i,P[i].GravAccel[0],P[i].GravAccel[1],P[i].GravAccel[2],SphP[i].HydroAccel[0],SphP[i].HydroAccel[1],SphP[i].HydroAccel[2],P[i].Vel[0],P[i].Vel[1],P[i].Vel[2]);
+     if(P[i].Type==1 && P[i].Mass>1)
+       printf("Big star has position (%g,%g,%g), vel (%g,%g,%g) and accel (%g,%g,%g) and R=%g.\n",P[i].Pos[0],P[i].Pos[1],P[i].Pos[2],P[i].Vel[0],P[i].Vel[1],P[i].Vel[2],P[i].GravAccel[0],P[i].GravAccel[1],P[i].GravAccel[2],sqrt(P[i].Pos[0]*P[i].Pos[0]+P[i].Pos[1]*P[i].Pos[1]+P[i].Pos[2]+P[i].Pos[2]));
 
 	  for(j = 0; j < 3; j++)
 	    {
@@ -329,7 +332,6 @@ void advance_and_find_timesteps(void)
 	    {
 #ifdef MMAV
 	      soundspeed  = sqrt(GAMMA * SphP[i].Pressure / SphP[i].Density);
-#ifndef NK_AV
 #ifdef NOBALSARA
          f_fac = 1.0;
 #else
@@ -338,9 +340,6 @@ void advance_and_find_timesteps(void)
          //Soundspeed being 0 really screws up everything...
          if(soundspeed==0 && SphP[i].DivVel==0 && SphP[i].CurlVel==0)
            f_fac=0.0;
-#endif
-#else
-         f_fac = (( 1.0 / SphP[i].NumN) * SphP[i].NumNK);
 #endif
          //Tau is expanded and included in the expression below
 	      SphP[i].DtAlpha = f_fac*dmax(-SphP[i].DivVel, 0) * (All.ArtBulkViscConst - SphP[i].Alpha) + ((All.VariableViscAlphaMin - SphP[i].Alpha)*soundspeed*2*All.VariableViscDecayLength)/SphP[i].Hsml;

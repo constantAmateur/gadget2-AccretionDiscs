@@ -530,9 +530,27 @@ extern struct global_data_all_processes
 #ifdef ART_COND
   double ArtCondConst;
 #endif
+#ifdef DEAD_GAS
+  double Doom_radius;
+  double Drift_speed;
+#endif
+#ifdef INJECT_GAS
+  int LastInjectionTime;
+  int MaxID;
+  int MaxInject;
+  int Injected;
+  double Injection_j;
+  double Injection_r;
+  double Injection_dNdt;
+  double Binary_M;
+  double Binary_q;
+  double Binary_a;
+  double Binary_j;
+  double Efficiency_f;
+  double Efficiency_g;
+#endif
 }
  All;                                          /*!< a container variable for global variables that are equal on all processors */
-
 
 
 /*! This structure holds all the information that is

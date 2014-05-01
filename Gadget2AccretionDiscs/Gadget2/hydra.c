@@ -274,6 +274,7 @@ void hydro_force(void)
 		      if((j ^ ngrp) < NTask)
 		        nbuffer[j] += nsend[(j ^ ngrp) * NTask + j];
 	     }
+
 	     tend = second();
 	     timecommsumm += timediff(tstart, tend);
 
@@ -281,6 +282,7 @@ void hydro_force(void)
 	     tstart = second();
 	     for(j = 0; j < nbuffer[ThisTask]; j++)
           hydro_evaluate(j, 1);
+
 	     tend = second();
 	     timecomp += timediff(tstart, tend);
 
@@ -338,6 +340,7 @@ void hydro_force(void)
 		          if(SphP[place].MaxSignalVel < HydroDataPartialResult[source].MaxSignalVel)
 		            SphP[place].MaxSignalVel = HydroDataPartialResult[source].MaxSignalVel;
 		        }
+
 		      }
 		    }
 
@@ -353,7 +356,7 @@ void hydro_force(void)
 
       MPI_Allgather(&ndone, 1, MPI_INT, ndonelist, 1, MPI_INT, MPI_COMM_WORLD);
       for(j = 0; j < NTask; j++)
-	ntotleft -= ndonelist[j];
+	     ntotleft -= ndonelist[j];
     }
 
   free(ndonelist);
@@ -377,7 +380,7 @@ void hydro_force(void)
 #endif
 #ifdef BETA_COOLING
    //The conversion factor from dK/dt to du/dt cancel with the conversion factor from u to K in du/dt = -u / beta/Omega.  This is why we do the above line before the cooling...
-   for(j=0,R=0,v2=0;j<3;j++)
+   for(j=0,R=0,v2=0;j<2;j++)
    {
      R+=(P[i].Pos[j]-starData[j])*(P[i].Pos[j]-starData[j]);
      v2+=SphP[i].VelPred[j]*SphP[i].VelPred[j];

@@ -21,9 +21,14 @@ void init(void)
 {
   int i, j;
   double a3;
-#if defined BETA_COOLING || defined ADD_CENTRAL_GRAVITY
+#if defined BETA_COOLING || defined ADD_CENTRAL_GRAVITY 
   int starID,*list_starID;
   double starMass,*list_starMass;
+#endif
+#ifdef INJECT_GAS
+  double binaryMasses[2];
+  double binaryPositions[6];
+  double *list_starPos,*list_starMass;
 #endif
 
   All.Time = All.TimeBegin;
@@ -153,6 +158,47 @@ void init(void)
   free(list_starID);
 #endif
 
+#ifdef INJECT_GAS
+  All.LastInjectionTime = All.TimeBegin;
+  All.MaxID = All.TotNumPart;
+  All.Injected = 0;
+  //Determine Binary mass, a and j
+  binaryMasses[0]=binaryMasses[1]=-1;
+  for(i=N_gas;i<NumPart;i++)
+  {
+    binaryMasses[i-N_gas]=P[i].Mass;
+    binaryPositions[(i-N_gas)*3+0] = P[i].Pos[0];
+    binaryPositions[(i-N_gas)*3+1] = P[i].Pos[1];
+    binaryPositions[(i-N_gas)*3+2] = P[i].Pos[2];
+  }
+  //Gather them all together
+  list_starMass = malloc(NTask * 2 *sizeof(double));
+  list_starPos = malloc(NTask * 6 *sizeof(double));
+  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Allgather(&binaryMasses,2,MPI_DOUBLE,list_starMass,2,MPI_DOUBLE,MPI_COMM_WORLD);
+  MPI_Allgather(&binaryPositions,6,MPI_DOUBLE,list_starPos,6,MPI_DOUBLE,MPI_COMM_WORLD);
+  j=0;
+  for(i=0;i<2*NTask;i++)
+  {
+    if(list_starMass[i]!=-1)
+    {
+      binaryMasses[j]=list_starMass[i];
+      binaryPositions[j*3+0] = list_starPos[i*3+0];
+      binaryPositions[j*3+1] = list_starPos[i*3+1];
+      binaryPositions[j*3+2] = list_starPos[i*3+2];
+      j++;
+    }
+  }
+  //Calculate the mass,a and j and store them
+  All.Binary_M = binaryMasses[0]+binaryMasses[1];
+  All.Binary_a = sqrt((binaryPositions[0]-binaryPositions[3])*(binaryPositions[0]-binaryPositions[3]) + (binaryPositions[1]-binaryPositions[4])*(binaryPositions[1]-binaryPositions[4]) + (binaryPositions[2]-binaryPositions[5])*(binaryPositions[2]-binaryPositions[5]));
+  All.Binary_j = sqrt(All.G * All.Binary_M * All.Binary_a);
+  All.Binary_q = binaryMasses[0] > binaryMasses[1] ? binaryMasses[1]/binaryMasses[0] : binaryMasses[0]/binaryMasses[1];
+  if(ThisTask==0)
+    printf("Binary has M=%g,a=%g,j=%g,q=%g\n",All.Binary_M,All.Binary_a,All.Binary_j,All.Binary_q);
+  free(list_starMass);
+  free(list_starPos);
+#endif
 
 
 #ifdef PMGRID

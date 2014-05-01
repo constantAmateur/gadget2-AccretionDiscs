@@ -209,3 +209,7 @@ struct hydrodata_out
  *HydroDataPartialResult;       /*!< imported partial SPH hydro-force results from other processors */
 
 
+//To do with binary
+double BinaryMass;
+double Binaryj;
+double Binarya;

@@ -37,6 +37,10 @@ void begrun(void)
 
   read_parameter_file(ParameterFile);	/* ... read in parameters for this run */
 
+#ifdef INJECT_GAS
+  All.MaxInject = (int) (1.1*((All.Injection_dNdt * All.TimeMax)));
+#endif
+
   allocate_commbuffers();	/* ... allocate buffer-memory for particle 
 				   exchange during force computation */
   set_units();
@@ -649,6 +653,45 @@ void read_parameter_file(char *fname)
       addr[nt] = &All.H_frac;
       id[nt++] = DOUBLE;
 #endif
+#ifdef DEAD_GAS
+      strcpy(tag[nt], "DoomRadius");
+      addr[nt] = &All.Doom_radius;
+      id[nt++] = DOUBLE;
+
+      strcpy(tag[nt], "DriftSpeed");
+      addr[nt] = &All.Drift_speed;
+      id[nt++] = DOUBLE;
+#endif
+#ifdef INJECT_GAS
+      strcpy(tag[nt], "InjectionAngularMomentum");
+      addr[nt] = &All.Injection_j;
+      id[nt++] = DOUBLE;
+
+      strcpy(tag[nt], "InjectionRadius");
+      addr[nt] = &All.Injection_r;
+      id[nt++] = DOUBLE;
+
+      strcpy(tag[nt], "PcleInjectionRate");
+      addr[nt] = &All.Injection_dNdt;
+      id[nt++] = DOUBLE;
+
+      strcpy(tag[nt], "Efficiency_f");
+      addr[nt] = &All.Efficiency_f;
+      id[nt++] = DOUBLE;
+
+      strcpy(tag[nt], "Efficiency_g");
+      addr[nt] = &All.Efficiency_g;
+      id[nt++] = DOUBLE;
+      
+      //strcpy(tag[nt], "Temperature");
+      //addr[nt] = &All.Injection_T;
+      //id[nt++] = DOUBLE;
+
+#endif
+
+
+
+
       if((fd = fopen(fname, "r")))
 	{
 	  sprintf(buf, "%s%s", fname, "-usedvalues");

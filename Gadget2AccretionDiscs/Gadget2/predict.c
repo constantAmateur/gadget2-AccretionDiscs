@@ -62,8 +62,34 @@ void move_particles(int time0, int time1)
 
   for(i = 0; i < NumPart; i++)
     {
+#ifdef DEAD_GAS
+      double r;
+      r=sqrt(P[i].Pos[0]*P[i].Pos[0]+P[i].Pos[1]*P[i].Pos[1]+P[i].Pos[2]*P[i].Pos[2]);
+      if(r>All.Doom_radius)
+      {
+        //printf("Damn! Particle at (%g,%g,%g) r = %g is dead.\n",P[i].Pos[0],P[i].Pos[1],P[i].Pos[2],r);
+        for(j=0;j<3;j++)
+        {
+          P[i].Pos[j] -= All.Drift_speed*(P[i].Pos[j]/r)*dt_drift;
+        }
+      }
+      else
+      {
+        //printf("Hooray! Particle at (%g,%g,%g) r = %g is alive.\n",P[i].Pos[0],P[i].Pos[1],P[i].Pos[2],r);
+        for(j=0;j<3;j++)
+        {
+	       P[i].Pos[j] += P[i].Vel[j] * dt_drift;
+        }
+      }
+#else
       for(j = 0; j < 3; j++)
 	P[i].Pos[j] += P[i].Vel[j] * dt_drift;
+#endif
+      if(P[i].Type==1)
+      {
+        printf("Drifting particle %d with vel %g,%g,%g.\n",i,P[i].Vel[0],P[i].Vel[1],P[i].Vel[2]);
+        printf("New pos is %g,%g,%g.\n",P[i].Pos[0],P[i].Pos[1],P[i].Pos[2]);
+      }
 
       if(P[i].Type == 0)
 	{
@@ -679,7 +705,7 @@ void destroy_doomed_particles(void)
           
           //Add the mass to the sink
           P[j].Mass = dmasstot;
-          //printf("ID %d task %d accnum %d final vel, pos, mass: (%e|%e|%e), (%e|%e|%e), %e\n", \
+          printf("ID %d task %d accnum %d final vel, pos, mass: (%e|%e|%e), (%e|%e|%e), %e\n", \
                  P[j].ID,ThisTask,AccNum,P[j].Vel[0],P[j].Vel[1],P[j].Vel[2], \
                  P[j].Pos[0],P[j].Pos[1],P[j].Pos[2],P[j].Mass);
           P[j].Ti_endstep = All.Ti_Current;
@@ -719,8 +745,8 @@ void destroy_doomed_particles(void)
   //Check each particle in array
   while(j<i)
   {
-    //Is it outside the box?
-    if((P[j].Pos[0]-starRtot[0])*(P[j].Pos[0]-starRtot[0])+(P[j].Pos[1]-starRtot[1])*(P[j].Pos[1]-starRtot[1]) > All.maxR2 || fabs(P[j].Pos[2]-starRtot[2]) > All.maxZ)
+    //Is it too far away?
+    if(P[j].Pos[0]*P[j].Pos[0]+P[j].Pos[1]*P[j].Pos[1]+P[j].Pos[2]*P[j].Pos[2] > All.maxZ*All.maxZ)
     {
       //It is, delete it.
       if(P[j].Ti_endstep == All.Ti_Current){
@@ -738,6 +764,25 @@ void destroy_doomed_particles(void)
       //There's one less particle to consider now, so stop loop a bit earlier
       i--;
     }
+    //Is it outside the box?
+    //if((P[j].Pos[0]-starRtot[0])*(P[j].Pos[0]-starRtot[0])+(P[j].Pos[1]-starRtot[1])*(P[j].Pos[1]-starRtot[1]) > All.maxR2 || fabs(P[j].Pos[2]-starRtot[2]) > All.maxZ)
+    //{
+    //  //It is, delete it.
+    //  if(P[j].Ti_endstep == All.Ti_Current){
+    //    NumForceUpdate--;
+    //    NumSphUpdate--;
+    //  }
+    //  for(k = j+1; k<=NumPart; k++){ // actually remove the particle here, 
+    //                                 // and shift everything down to fill the gap in the array.
+    //    P[k-1] = P[k];
+    //    if(P[k].Type == 0)
+    //      SphP[k-1] = SphP[k];      
+    //  }
+    //  NumPart--;   // decrement the local countrs of particles and gas particles
+    //  N_gas--;
+    //  //There's one less particle to consider now, so stop loop a bit earlier
+    //  i--;
+    //}
     j++;
   }
 #endif

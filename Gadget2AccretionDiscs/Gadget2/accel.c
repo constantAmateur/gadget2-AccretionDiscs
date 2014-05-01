@@ -56,13 +56,23 @@ void compute_accelerations(int mode)
   }
 #endif
 
+#ifdef DEAD_GAS
+  if(All.Ti_Current ==0)
+    compute_global_quantities_of_system();
+  kill_gas();
+#endif
   gravity_tree();		/* computes gravity accel. */
 
   if(All.TypeOfOpeningCriterion == 1 && All.Ti_Current == 0)
+  {
+#ifdef DEAD_GAS
+    kill_gas();
+#endif
     gravity_tree();		/* For the first timestep, we redo it
 				 * to allow usage of relative opening
 				 * criterion for consistent accuracy.
 				 */
+  }
   tend = second();
   All.CPU_Gravity += timediff(tstart, tend);
 
@@ -100,6 +110,7 @@ void compute_accelerations(int mode)
       if(ThisTask==0)
         printf("Pre update total energy = %g.\n",bigtot);
 
+      //What is the total energy, pre spread
       for(i=0;i<N_gas;i++)
       {
         if(P[i].Ti_endstep == All.Ti_Current)
@@ -126,6 +137,7 @@ void compute_accelerations(int mode)
 #endif
 
       tstart = second();
+
       density();		/* computes density, and pressure */
       tend = second();
       All.CPU_Hydro += timediff(tstart, tend);
@@ -143,7 +155,17 @@ void compute_accelerations(int mode)
 	}
 
       tstart = second();
+#ifdef DEAD_GAS
+      kill_gas();
+#endif
       hydro_force();		/* adds hydrodynamical accelerations and computes viscous entropy injection  */
+      //int i;
+      //for(i=0;i<N_gas;i++)
+      //  SphP[i].HydroAccel[0] = SphP[i].HydroAccel[1] =SphP[i].HydroAccel[2]=0;
+
+#ifdef DEAD_GAS
+      ressurect();
+#endif
       tend = second();
       All.CPU_Hydro += timediff(tstart, tend);
 
