@@ -38,8 +38,7 @@ void begrun(void)
   read_parameter_file(ParameterFile);	/* ... read in parameters for this run */
 
 #ifdef INJECT_GAS
-  //This is given by Mdot*TimeMax/m.  Add 10% wiggle room for safety
-  All.MaxInject = (int) (1.1*((All.Injection_dMdt * All.TimeMax)/All.Injection_m));
+  All.MaxInject = (int) (1.1*((All.Injection_dNdt * All.TimeMax)));
 #endif
 
   allocate_commbuffers();	/* ... allocate buffer-memory for particle 
@@ -646,22 +645,21 @@ void read_parameter_file(char *fname)
       addr[nt] = &All.Injection_r;
       id[nt++] = DOUBLE;
 
-      strcpy(tag[nt], "MassInjectionRate");
-      addr[nt] = &All.Injection_dMdt;
+      strcpy(tag[nt], "PcleInjectionRate");
+      addr[nt] = &All.Injection_dNdt;
       id[nt++] = DOUBLE;
 
-      strcpy(tag[nt], "ParticleMass");
-      addr[nt] = &All.Injection_m;
+      strcpy(tag[nt], "Efficiency_f");
+      addr[nt] = &All.Efficiency_f;
       id[nt++] = DOUBLE;
 
-      strcpy(tag[nt], "DriftVelocity");
-      addr[nt] = &All.Injection_drdt;
+      strcpy(tag[nt], "Efficiency_g");
+      addr[nt] = &All.Efficiency_g;
       id[nt++] = DOUBLE;
       
-      strcpy(tag[nt], "Temperature");
-      addr[nt] = &All.Injection_T;
-      id[nt++] = DOUBLE;
-
+      //strcpy(tag[nt], "Temperature");
+      //addr[nt] = &All.Injection_T;
+      //id[nt++] = DOUBLE;
 
 #endif
 

@@ -532,14 +532,13 @@ extern struct global_data_all_processes
   int Injected;
   double Injection_j;
   double Injection_r;
-  double Injection_dMdt;
-  double Injection_m;
-  double Injection_drdt;
-  double Injection_T;
+  double Injection_dNdt;
   double Binary_M;
   double Binary_q;
   double Binary_a;
   double Binary_j;
+  double Efficiency_f;
+  double Efficiency_g;
 #endif
 }
  All;                                          /*!< a container variable for global variables that are equal on all processors */

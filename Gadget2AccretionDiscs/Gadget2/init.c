@@ -162,7 +162,6 @@ void init(void)
   All.LastInjectionTime = All.TimeBegin;
   All.MaxID = All.TotNumPart;
   All.Injected = 0;
-  //How many will I inject over the lifetime?
   //Determine Binary mass, a and j
   binaryMasses[0]=binaryMasses[1]=-1;
   for(i=N_gas;i<NumPart;i++)

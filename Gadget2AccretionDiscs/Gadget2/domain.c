@@ -185,20 +185,8 @@ void inject_gas(void)
   //Should we even be here?
   if(dt==0 || !Flag_FullStep)
     return;
-  //Given some (spherical) radius r, the only bound orbits should
-  //have theta >= arcsin(j Sqrt(2*(a/r))) where j is the specific
-  //angular momentum of the particles in units of the binary specific
-  //angular momentum and a is the binary separation
-  //Injection radius given in number of binary separations
-  //printf("[%d] Injection R=%g,Binary a=%g,q=%g.\n",ThisTask,All.Injection_r,All.Binary_a,All.Binary_q);
-  min_r = All.Injection_r * All.Binary_a / (1.0 + All.Binary_q);
-  max_r = min_r + dt*All.Injection_drdt;
-  //The smaller radius gives the stronger constraint...
-  theta_min = asin(All.Injection_j*sqrt(All.Binary_a/(.2*min_r)));
-  theta_max = M_PI - theta_min;
-  zonr_range = cos(theta_min);
   //How many will I need to add?  Add roughly evenly across all processors
-  n_inject = (int) (dt * All.Injection_dMdt / All.Injection_m);
+  n_inject = (int) (dt * All.Injection_dNdt);
   //How many does that make on this processor?
   n_inject_local = (n_inject/NTask);
   if(ThisTask<(n_inject%NTask))
@@ -212,8 +200,21 @@ void inject_gas(void)
       printf("Trying to inject more particles than space allows.\n");
     return;
   }
+  //Given some (spherical) radius r, the only bound orbits should
+  //have theta >= arcsin(j Sqrt(2*(a/r))) where j is the specific
+  //angular momentum of the particles in units of the binary specific
+  //angular momentum and a is the binary separation
+  //Injection radius given in number of binary separations
+  //printf("[%d] Injection R=%g,Binary a=%g,q=%g.\n",ThisTask,All.Injection_r,All.Binary_a,All.Binary_q);
+  min_r = All.Injection_r * All.Binary_a;
+  max_r = min_r;
+  //The smaller radius gives the stronger constraint...
+  theta_min = asin(sqrt(All.Injection_j/sqrt(All.Efficiency_f*All.Injection_r)));
+  theta_max = M_PI - theta_min;
+  zonr_range = cos(theta_min);
   if(ThisTask==0)
     printf("[%d] Injecting %d particles with theta in [%g,%g] and r in [%g,%g].\n",ThisTask,n_inject,theta_min,theta_max,min_r,max_r); 
+
   //Before moving any particles around, record timesteps
   //Assumption is every processor has at least one SPH particle and we're
   //using constant timesteps
@@ -231,7 +232,7 @@ void inject_gas(void)
   jpart = All.Injection_j*All.Binary_j;
   //The approximate volume over which particles are distributed
   vol = 4 * M_PI * max_r*max_r*max_r * cos(theta_min) * (max_r-min_r)/max_r;
-  rho = (n_inject*All.Injection_m) / vol;
+  rho = (n_inject*P[0].Mass) / vol;
   hsml = 1.2 * pow(vol/n_inject,1.0/3.0);
   //printf("[%d] Guessing hsml = %g and rho = %g vol=%g\n",ThisTask,hsml,rho,vol);
   for(j=0;j<n_inject_local;j++)
@@ -246,12 +247,13 @@ void inject_gas(void)
     //And the corresponding velocity is (minus sign for direction of orbit)...
     vphi = -jpart / (cyl_r*cyl_r);
     //Because it should go in (durrrrrrrrr)
-    vr = -1*All.Injection_drdt;
+    vr = -All.Efficiency_g * sqrt((2*All.G*All.Binary_M/min_r)-(jpart*jpart/(cyl_r*cyl_r)));
     //Translate them into cartesian coordinates
     P[i].Pos[0]=r*sin(theta)*cos(phi);
     P[i].Pos[1]=r*sin(theta)*sin(phi);
     P[i].Pos[2]=r*cos(theta);
-    P[i].Mass = All.Injection_m;
+    //Assume constant particle mass
+    P[i].Mass = P[0].Mass;
     P[i].Vel[0] = vr * sin(theta) * cos(phi) - P[i].Pos[1] * vphi ;
     P[i].Vel[1] = vr * sin(theta) * sin(phi) + P[i].Pos[0] * vphi ;
     P[i].Vel[2]=  vr * cos(theta);
@@ -277,7 +279,7 @@ void inject_gas(void)
     SphP[i].Hsml = SphP[0].Hsml ;
     //This assumes an isothermal equation of state
     //SphP[i].Entropy = (BOLTZMANN / PROTONMASS) * All.Injection_T * (All.UnitMass_in_g / All.UnitEnergy_in_cgs) ;
-    SphP[i].Entropy = entr;
+    SphP[i].Entropy = SphP[0].Entropy;
     SphP[i].DtEntropy = 0;
     for(k=0;k<3;k++)
     {
