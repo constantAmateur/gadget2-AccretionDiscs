@@ -697,7 +697,11 @@ void sink_grav(void)
         }
         dx = P[i].Pos[0]-sinks[j].Pos[0];
         dy = P[i].Pos[1]-sinks[j].Pos[1];
+#ifdef TWODIMS
+        dz = 0;
+#else
         dz = P[i].Pos[2]-sinks[j].Pos[2];
+#endif
         r = sqrt(dx*dx+dy*dy+dz*dz);
         if(r >= h)
         {

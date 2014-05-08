@@ -84,6 +84,8 @@ void move_particles(int time0, int time1)
 #else
       for(j = 0; j < 3; j++)
 	P[i].Pos[j] += P[i].Vel[j] * dt_drift;
+      //if(P[i].Pos[2]!=0)
+      //  printf("Non-zero z detected, with Vel=%g pos=%g\n",P[i].Vel[2],P[i].Pos[2]);
 #endif
       if(P[i].Type==1)
       {

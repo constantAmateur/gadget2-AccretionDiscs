@@ -211,9 +211,13 @@ void inject_gas(void)
   //The smaller radius gives the stronger constraint...
   theta_min = asin(sqrt(All.Injection_j/sqrt(All.Efficiency_f*All.Injection_r)));
   theta_max = M_PI - theta_min;
+#ifdef TWODIMS
+  theta_min = M_PI/2.0;
+  theta_max = M_PI/2.0;
+#endif
   zonr_range = cos(theta_min);
   if(ThisTask==0)
-    printf("[%d] Injecting %d particles with theta in [%g,%g] and r in [%g,%g].\n",ThisTask,n_inject,theta_min,theta_max,min_r,max_r); 
+    printf("[%d] Injecting %d particles with theta in [%g,%g] and r in [%g,%g] and mass %g.\n",ThisTask,n_inject,theta_min,theta_max,min_r,max_r,P[0].Mass); 
 
   //Before moving any particles around, record timesteps
   //Assumption is every processor has at least one SPH particle and we're
@@ -257,6 +261,10 @@ void inject_gas(void)
     P[i].Vel[0] = vr * sin(theta) * cos(phi) - P[i].Pos[1] * vphi ;
     P[i].Vel[1] = vr * sin(theta) * sin(phi) + P[i].Pos[0] * vphi ;
     P[i].Vel[2]=  vr * cos(theta);
+#ifdef TWODIMS
+    P[i].Pos[2]=0;
+    P[i].Vel[2]=0;
+#endif
     //Inherit some other properties
     P[i].GravAccel[0]=0;
     P[i].GravAccel[1]=0;

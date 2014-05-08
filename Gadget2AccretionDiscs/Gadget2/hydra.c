@@ -535,7 +535,13 @@ void hydro_evaluate(int target, int mode)
 
 	  dx = pos[0] - P[j].Pos[0];
 	  dy = pos[1] - P[j].Pos[1];
+#ifdef TWODIMS
+     dz = 0;
+#else
 	  dz = pos[2] - P[j].Pos[2];
+#endif
+     //if(dz!=0)
+     //  printf("dz not zero, it's %g\n",dz);
 
 #if defined MMAV || defined CDAV
      alpha_visc_j = SphP[j].Alpha;
@@ -820,6 +826,9 @@ void hydro_evaluate(int target, int mode)
     }
   while(startnode >= 0);
 
+  if(acc[2]!=0)
+    printf("Hydro accel for target %d is %g\n",target,acc[2]);
+
   /* Now collect the result at the right place */
   if(mode == 0)
     {
@@ -827,7 +836,7 @@ void hydro_evaluate(int target, int mode)
 	     SphP[target].HydroAccel[k] = acc[k];
       SphP[target].DtEntropy = dtEntropy;
       SphP[target].MaxSignalVel = maxSignalVel;
-#ifdef COND
+#ifdef OUTPUTCOND
       SphP[target].Cond = cond;
 #endif
     }
@@ -837,7 +846,7 @@ void hydro_evaluate(int target, int mode)
 	HydroDataResult[target].Acc[k] = acc[k];
       HydroDataResult[target].DtEntropy = dtEntropy;
       HydroDataResult[target].MaxSignalVel = maxSignalVel;
-#ifdef COND
+#ifdef OUTPUTCOND
       HydroDataResult[targt].Cond = cond;
 #endif
     }

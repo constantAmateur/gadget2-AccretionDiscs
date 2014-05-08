@@ -322,6 +322,8 @@ void advance_and_find_timesteps(void)
      if(P[i].Type==1 && P[i].Mass>1)
        printf("Big star has position (%g,%g,%g), vel (%g,%g,%g) and accel (%g,%g,%g) and R=%g.\n",P[i].Pos[0],P[i].Pos[1],P[i].Pos[2],P[i].Vel[0],P[i].Vel[1],P[i].Vel[2],P[i].GravAccel[0],P[i].GravAccel[1],P[i].GravAccel[2],sqrt(P[i].Pos[0]*P[i].Pos[0]+P[i].Pos[1]*P[i].Pos[1]+P[i].Pos[2]+P[i].Pos[2]));
 
+     if(P[i].GravAccel[2]!=0)
+       printf("Particle %d has non zero z grav accel of %g\n",i,P[i].GravAccel[2]);
 	  for(j = 0; j < 3; j++)
 	    {
 	      dv[j] = P[i].GravAccel[j] * dt_gravkick;
@@ -345,6 +347,8 @@ void advance_and_find_timesteps(void)
 	      SphP[i].DtAlpha = f_fac*dmax(-SphP[i].DivVel, 0) * (All.ArtBulkViscConst - SphP[i].Alpha) + ((All.VariableViscAlphaMin - SphP[i].Alpha)*soundspeed*2*All.VariableViscDecayLength)/SphP[i].Hsml;
 #endif
 #ifndef NONINTERACTING_GAS
+         if(SphP[i].HydroAccel[2]!=0)
+           printf("Hydro accel in z for particle %d is %g\n",i,SphP[i].HydroAccel[2]);
 	      for(j = 0; j < 3; j++)
 		{
 		  dv[j] += SphP[i].HydroAccel[j] * dt_hydrokick;
@@ -414,6 +418,11 @@ void advance_and_find_timesteps(void)
 		}
 	    }
 	}
+      //if(P[i].Pos[2]!=0 || P[i].Vel[2]!=0 || (P[i].Type==0 && SphP[i].VelPred[2]!=0))
+      //{
+      //  printf("Non zero z detected, pos=%g,vel=%g\n",P[i].Pos[2],P[i].Vel[2]);
+      //  endrun(888);
+      //}
     }
 
 
