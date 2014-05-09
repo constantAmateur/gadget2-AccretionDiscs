@@ -499,6 +499,14 @@ void density(void)
 		      else
 			SphP[i].Right = SphP[i].Hsml;
 		    }
+        //Force us into bisection
+        if(iter > BISECTIONITER )
+        {
+          //Set upper bound to half longest axis of simulation volume
+          if(SphP[i].Right==0)
+            SphP[i].Right = DomainLen*0.5;
+          //We force the code to consider 0 as a valid lower bound past iteration cutoff
+        }
 
 		  if(iter >= MAXITER - 10)
 		    {
@@ -511,7 +519,8 @@ void density(void)
 		    }
 
         //Try this weird geometric mean like thing if we've got two bounds
-		  if(SphP[i].Right > 0 && SphP[i].Left > 0)
+        //We will consider zero a valid lower bound if past the bisection threshold
+		  if(iter > BISECTIONITER || (SphP[i].Right > 0 && SphP[i].Left > 0))
 		    SphP[i].Hsml = pow(0.5 * (pow(SphP[i].Left, 3) + pow(SphP[i].Right, 3)), 1.0 / 3);
 		  else
 		    {

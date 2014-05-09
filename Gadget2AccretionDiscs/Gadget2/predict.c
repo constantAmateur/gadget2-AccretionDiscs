@@ -349,18 +349,33 @@ void identify_doomed_particles(void)
   
   
 #ifdef CUTOFF_RADIUS  
-  //Delete's particle that are beyond a certain radius
-  for(pindex = -1, j = N_gas; j < NumPart; j++) 
-    if(P[j].Mass > All.MassSeg) pindex = j;
-  for(i = 0; i < N_gas; i++){
-    for(seperation = 0, j = 0; j < 3; j++) seperation += P[i].Pos[j] * P[i].Pos[j];
-    if(sqrt(seperation) > EffectiveCutoff){
-      SphP[i].AccretionTarget = -1; /* don't want to add mass during 'accretion' */
+  //Delete particles that are too far from the center of mass of the system
+  sinkrad=All.CutoffRadius*All.CutoffRadius;
+  for(i=0;i<N_gas;i++)
+  {
+    seperation = (P[i].Pos[0]-SysState.CenterOfMass[0]) * (P[i].Pos[0]-SysState.CenterOfMass[0]) +
+                 (P[i].Pos[1]-SysState.CenterOfMass[1]) * (P[i].Pos[1]-SysState.CenterOfMass[1]) +
+                 (P[i].Pos[2]-SysState.CenterOfMass[2]) * (P[i].Pos[2]-SysState.CenterOfMass[2]);
+    if(seperation > sinkrad)
+    {
+      SphP[i].AccretionTarget = -1;
       AccreteList[AccNum] = i;
       AccNum++;
       if(verbose) printf("Particle ID %d (%d) scheduled for ignoring. acctarg %d \n",P[i].ID,i,SphP[i].AccretionTarget); 
     }
   }
+  //Delete's particle that are beyond a certain radius
+  //for(pindex = -1, j = N_gas; j < NumPart; j++) 
+  //  if(P[j].Mass > All.MassSeg) pindex = j;
+  //for(i = 0; i < N_gas; i++){
+  //  for(seperation = 0, j = 0; j < 3; j++) seperation += P[i].Pos[j] * P[i].Pos[j];
+  //  if(sqrt(seperation) > EffectiveCutoff){
+  //    SphP[i].AccretionTarget = -1; /* don't want to add mass during 'accretion' */
+  //    AccreteList[AccNum] = i;
+  //    AccNum++;
+  //    if(verbose) printf("Particle ID %d (%d) scheduled for ignoring. acctarg %d \n",P[i].ID,i,SphP[i].AccretionTarget); 
+  //  }
+  //}
 #endif
   
   /*  printf("rank %d Accnum: %d\n",ThisTask,AccNum); 

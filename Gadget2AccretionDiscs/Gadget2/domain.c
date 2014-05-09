@@ -206,8 +206,10 @@ void inject_gas(void)
   //angular momentum and a is the binary separation
   //Injection radius given in number of binary separations
   //printf("[%d] Injection R=%g,Binary a=%g,q=%g.\n",ThisTask,All.Injection_r,All.Binary_a,All.Binary_q);
-  min_r = All.Injection_r * All.Binary_a;
-  max_r = min_r;
+  max_r = All.Injection_r * All.Binary_a;
+  min_r = max_r - .01*max_r;
+  //min_r = All.Injection_r * All.Binary_a;
+  //max_r = min_r;
   //The smaller radius gives the stronger constraint...
   theta_min = asin(sqrt(All.Injection_j/sqrt(All.Efficiency_f*All.Injection_r)));
   theta_max = M_PI - theta_min;
@@ -283,8 +285,10 @@ void inject_gas(void)
     P[i].Ti_begstep = P[i-1].Ti_begstep;
     P[i].Potential = 0;
     //Add SPH properties
-    SphP[i].Density = SphP[i-1].Density;
-    SphP[i].Hsml = SphP[0].Hsml ;
+    //SphP[i].Density = SphP[i-1].Density;
+    SphP[i].Density = rho;
+    //SphP[i].Hsml = SphP[0].Hsml ;
+    SphP[i].Hsml = hsml;
     //This assumes an isothermal equation of state
     //SphP[i].Entropy = (BOLTZMANN / PROTONMASS) * All.Injection_T * (All.UnitMass_in_g / All.UnitEnergy_in_cgs) ;
     SphP[i].Entropy = SphP[0].Entropy;

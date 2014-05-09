@@ -96,6 +96,8 @@ typedef  long long  peanokey;    /*!< defines the variable type used for Peano-H
 
 #define MAXITER             300    /*!< maxmimum number of steps for SPH neighbour iteration */
 
+#define BISECTIONITER       10     /*!< maximum number of iterations before we force the density routine to use bisection to ensure convergence is reached.  */
+
 
 #ifdef DOUBLEPRECISION             /*!< If defined, the variable type FLOAT is set to "double", otherwise to FLOAT */
 #define FLOAT double
@@ -308,6 +310,9 @@ extern struct global_data_all_processes
   /* accretion and wind parameters */
   double AccretionRadius;    /*!< the radius at which sph particles are accreted onto sinks */
   int AccreteFlag;           /* Determines whether a domain decomposition should cause accretion to be processed */
+#ifdef CUTOFF_RADIUS
+  double CutoffRadius;
+#endif
 #ifdef CUTOFF_BOX
   double maxR2;
   double maxZ;
