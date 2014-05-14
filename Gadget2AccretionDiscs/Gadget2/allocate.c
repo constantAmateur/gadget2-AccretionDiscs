@@ -107,10 +107,10 @@ void allocate_memory(void)
   size_t bytes;
   double bytes_tot = 0;
 
-  printf("[%d] The maximum number of injected particles is %d and %d,%d.\n",ThisTask,All.MaxInject,All.MaxPart,All.MaxPartSph);
   if(All.MaxPart > 0)
     {
 #ifdef INJECT_GAS
+  printf("[%d] The maximum number of injected particles is %d and %d,%d.\n",ThisTask,All.MaxInject,All.MaxPart,All.MaxPartSph);
       if(!(P = malloc(bytes = (All.MaxPart+All.MaxInject) * sizeof(struct particle_data))))
 #else
       if(!(P = malloc(bytes = All.MaxPart * sizeof(struct particle_data))))
