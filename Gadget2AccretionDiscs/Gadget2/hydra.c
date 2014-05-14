@@ -847,7 +847,7 @@ void hydro_evaluate(int target, int mode)
       HydroDataResult[target].DtEntropy = dtEntropy;
       HydroDataResult[target].MaxSignalVel = maxSignalVel;
 #ifdef OUTPUTCOND
-      HydroDataResult[targt].Cond = cond;
+      HydroDataResult[target].Cond = cond;
 #endif
     }
 }
