@@ -262,7 +262,7 @@ void fill_write_buffer(enum iofields blocknr, int *startindex, int pc, int type)
           {
             //Make the primary negative so we can tell which is which
             if(P[pindex].Mass>=All.M1)
-              *fp++ = (-P[pindex].Mass-All.M1);
+              *fp++ = (-P[pindex].Mass+All.M1);
             else
               *fp++ = (P[pindex].Mass-All.M2);
           }
