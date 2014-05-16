@@ -697,6 +697,7 @@ void destroy_doomed_particles(void)
       for(j = N_gas;j < NumPart; j++){
         if(P[j].ID == target){
           //printf("jay = %d\n",j);
+          printf("Adding mass %g\n",dmasstot);
           
           dposxtot += P[j].Pos[0] * P[j].Mass;
           dposytot += P[j].Pos[1] * P[j].Mass;	

@@ -554,6 +554,10 @@ extern struct global_data_all_processes
   double Efficiency_f;
   double Efficiency_g;
 #endif
+#ifdef ACCRETED_MASS_ONLY
+  double M1;
+  double M2;
+#endif
 }
  All;                                          /*!< a container variable for global variables that are equal on all processors */
 

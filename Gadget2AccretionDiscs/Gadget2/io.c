@@ -257,7 +257,21 @@ void fill_write_buffer(enum iofields blocknr, int *startindex, int pc, int type)
       for(n = 0; n < pc; pindex++)
         if(P[pindex].Type == type)
         {
+#ifdef ACCRETED_MASS_ONLY
+          if(P[pindex].Type==1)
+          {
+            if(P[pindex].Mass>=All.M1)
+              *fp++ = (P[pindex].Mass-All.M1);
+            else
+              *fp++ = (P[pindex].Mass-All.M2);
+          }
+          else
+          {
+            *fp++ = P[pindex].Mass;
+          }
+#else
           *fp++ = P[pindex].Mass;
+#endif
           n++;
         }
       break;
