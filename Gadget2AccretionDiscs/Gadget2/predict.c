@@ -698,12 +698,14 @@ void destroy_doomed_particles(void)
         if(P[j].ID == target){
           //printf("jay = %d\n",j);
           printf("Adding mass %g\n",dmasstot);
-          
+#ifdef ACCRETED_MASS_ONLY
+          P[j].NumAccreted += dmasstot/P[0].Mass;
+#endif
           dposxtot += P[j].Pos[0] * P[j].Mass;
           dposytot += P[j].Pos[1] * P[j].Mass;	
           dposztot += P[j].Pos[2] * P[j].Mass;
           dmasstot += P[j].Mass;
-          
+         
           //Move position to centre of mass
           P[j].Pos[0] = dposxtot / dmasstot;
           P[j].Pos[1] = dposytot / dmasstot;	  	  

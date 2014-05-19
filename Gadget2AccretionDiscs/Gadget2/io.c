@@ -260,11 +260,7 @@ void fill_write_buffer(enum iofields blocknr, int *startindex, int pc, int type)
 #ifdef ACCRETED_MASS_ONLY
           if(P[pindex].Type==1)
           {
-            //Make the primary negative so we can tell which is which
-            if(P[pindex].Mass>=All.M1)
-              *fp++ = (-P[pindex].Mass+All.M1);
-            else
-              *fp++ = (P[pindex].Mass-All.M2);
+            *fp++ = P[pindex].NumAccreted;
           }
           else
           {

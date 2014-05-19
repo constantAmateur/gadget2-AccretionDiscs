@@ -69,41 +69,45 @@ void init(void)
     }
 
 #ifdef ACCRETED_MASS_ONLY
-  double m[2]={0};
-  double ms[2*NTask];
   for(i=N_gas;i<NumPart;i++)
-  {
-    if(P[i].Mass>m[1])
-    {
-      m[0]=m[1];
-      m[1]=P[i].Mass;
-    }
-    else
-    {
-      if(P[i].Mass>m[0])
-        m[0]=P[i].Mass;
-    }
-  }
-  printf("Set m1=%g m2=%g.\n",m[1],m[0]);
-  MPI_Allgather(&m,2,MPI_DOUBLE,ms,2,MPI_DOUBLE,MPI_COMM_WORLD);
-  m[0]=m[1]=0;
-  for(i=0;i<2*NTask;i++)
-  {
-    if(ms[i]>m[1])
-    {
-      m[0]=m[1];
-      m[1]=ms[i];
-    }
-    else
-    {
-      if(ms[i]>m[0])
-        m[0]=ms[i];
-    }
-  }
-  printf("Final Set m1=%g m2=%g.\n",m[1],m[0]);
-  All.M1=m[1];
-  All.M2=m[0];
+    P[i].NumAccreted=0.0;
 #endif
+//#ifdef ACCRETED_MASS_ONLY
+//  double m[2]={0};
+//  double ms[2*NTask];
+//  for(i=N_gas;i<NumPart;i++)
+//  {
+//    if(P[i].Mass>m[1])
+//    {
+//      m[0]=m[1];
+//      m[1]=P[i].Mass;
+//    }
+//    else
+//    {
+//      if(P[i].Mass>m[0])
+//        m[0]=P[i].Mass;
+//    }
+//  }
+//  printf("Set m1=%g m2=%g.\n",m[1],m[0]);
+//  MPI_Allgather(&m,2,MPI_DOUBLE,ms,2,MPI_DOUBLE,MPI_COMM_WORLD);
+//  m[0]=m[1]=0;
+//  for(i=0;i<2*NTask;i++)
+//  {
+//    if(ms[i]>m[1])
+//    {
+//      m[0]=m[1];
+//      m[1]=ms[i];
+//    }
+//    else
+//    {
+//      if(ms[i]>m[0])
+//        m[0]=ms[i];
+//    }
+//  }
+//  printf("Final Set m1=%g m2=%g.\n",m[1],m[0]);
+//  All.M1=m[1];
+//  All.M2=m[0];
+//#endif
 
   All.Time = All.TimeBegin;
   All.Ti_Current = 0;

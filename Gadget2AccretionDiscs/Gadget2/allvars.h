@@ -554,10 +554,10 @@ extern struct global_data_all_processes
   double Efficiency_f;
   double Efficiency_g;
 #endif
-#ifdef ACCRETED_MASS_ONLY
-  double M1;
-  double M2;
-#endif
+//#ifdef ACCRETED_MASS_ONLY
+//  double M1;
+//  double M2;
+//#endif
 }
  All;                                          /*!< a container variable for global variables that are equal on all processors */
 
@@ -569,6 +569,9 @@ extern struct particle_data
 {
   FLOAT Pos[3];			/*!< particle position at its current time */
   FLOAT Mass;			/*!< particle mass */
+#ifdef ACCRETED_MASS_ONLY
+  FLOAT NumAccreted;
+#endif
   FLOAT Vel[3];			/*!< particle velocity at its current time */
   FLOAT GravAccel[3];		/*!< particle acceleration due to gravity */
 #ifdef PMGRID
