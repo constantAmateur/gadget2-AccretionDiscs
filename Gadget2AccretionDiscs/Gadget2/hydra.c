@@ -374,6 +374,11 @@ void hydro_force(void)
     if(P[i].Ti_endstep == All.Ti_Current)
       {
  
+        //See where dissipation is happening even when using ISOTHERM EQS
+#if defined OUTPUTCHANGEOFENTROPY && defined ISOTHERM_EQS
+        SphP[i].RawDtEntropy = SphP[i].DtEntropy;
+#endif
+
 	SphP[i].DtEntropy *= GAMMA_MINUS1 / (hubble_a2 * pow(SphP[i].Density, GAMMA_MINUS1));
 #ifdef OUTPUTCOND
    SphP[i].Cond *= GAMMA_MINUS1 / (hubble_a2 * pow(SphP[i].Density,GAMMA_MINUS1));

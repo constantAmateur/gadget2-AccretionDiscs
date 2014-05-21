@@ -629,6 +629,9 @@ extern struct sph_particle_data
   FLOAT Rot[3];		        /*!< local velocity curl */
   FLOAT DhsmlDensityFactor;     /*!< correction factor needed in the equation of motion of the conservative entropy formulation of SPH */
   FLOAT MaxSignalVel;           /*!< maximum "signal velocity" occuring for this particle */
+#if defined OUTPUTCHANGEOFENTROPY && defined ISOTHERM_EQS
+  FLOAT RawDtEntropy;
+#endif
 #ifdef BETA_COOLING
 #ifdef OUTPUTRADIATEDENERGY
   FLOAT DtRadiatedEnergy;   //If cooling is on and we want to know how much energy has been radiated away

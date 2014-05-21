@@ -360,7 +360,11 @@ void fill_write_buffer(enum iofields blocknr, int *startindex, int pc, int type)
       for(n = 0; n < pc; pindex++)
         if(P[pindex].Type == type)
         {
+#ifdef ISOTHERM_EQS
+          *fp++ = SphP[pindex].RawDtEntropy;
+#else
           *fp++ = SphP[pindex].DtEntropy;
+#endif
           n++;
         }
 #endif
