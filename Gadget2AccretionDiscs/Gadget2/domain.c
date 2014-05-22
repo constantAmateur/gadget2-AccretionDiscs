@@ -179,14 +179,18 @@ void inject_gas(void)
   double zonr_range;
   int n_inject,offset,i,j,n_inject_local,k;
   int tend,tstart;
+  //How many should we have inject by now?
+  n_inject = (int) ((All.Ti_Current-All.TimeBegin)*All.Timebase_interval*All.Injection_dNdt);
+  //Subtract off those we already have
+  n_inject -= All.Injected;
   //How long has it been since we last injected some particles?
-  dt = (All.Ti_Current-All.LastInjectionTime)*All.Timebase_interval;
+  //dt = (All.Ti_Current-All.LastInjectionTime)*All.Timebase_interval;
   //printf("INJECTION! dt = %g current = %d\n",dt,All.Ti_Current);
   //Should we even be here?
-  if(dt==0 || !Flag_FullStep)
+  if(!Flag_FullStep)
     return;
   //How many will I need to add?  Add roughly evenly across all processors
-  n_inject = (int) (dt * All.Injection_dNdt);
+  //n_inject = (int) (dt * All.Injection_dNdt);
   //How many does that make on this processor?
   n_inject_local = (n_inject/NTask);
   if(ThisTask<(n_inject%NTask))
@@ -219,7 +223,7 @@ void inject_gas(void)
 #endif
   zonr_range = cos(theta_min);
   if(ThisTask==0)
-    printf("[%d] Injecting %d particles with theta in [%g,%g] and r in [%g,%g] and mass %g.\n",ThisTask,n_inject,theta_min,theta_max,min_r,max_r,P[0].Mass); 
+    printf("Should have injected %d by now, but only injected %d.  Adding the difference in of %d particles with theta in [%g,%g] and r in [%g,%g] and mass %g now.\n",(int) ((All.Ti_Current-All.TimeBegin)*All.Timebase_interval*All.Injection_dNdt),All.Injected,n_inject,theta_min,theta_max,min_r,max_r,P[0].Mass); 
 
   //Before moving any particles around, record timesteps
   //Assumption is every processor has at least one SPH particle and we're
