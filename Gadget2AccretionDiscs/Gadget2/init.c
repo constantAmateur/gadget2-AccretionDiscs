@@ -230,11 +230,22 @@ void init(void)
       j++;
     }
   }
-  //Calculate the mass,a and j and store them
-  All.Binary_M = binaryMasses[0]+binaryMasses[1];
-  All.Binary_a = sqrt((binaryPositions[0]-binaryPositions[3])*(binaryPositions[0]-binaryPositions[3]) + (binaryPositions[1]-binaryPositions[4])*(binaryPositions[1]-binaryPositions[4]) + (binaryPositions[2]-binaryPositions[5])*(binaryPositions[2]-binaryPositions[5]));
-  All.Binary_j = sqrt(All.G * All.Binary_M * All.Binary_a);
-  All.Binary_q = binaryMasses[0] > binaryMasses[1] ? binaryMasses[1]/binaryMasses[0] : binaryMasses[0]/binaryMasses[1];
+  //If we only found one star, make up binary properties
+  if(j==1)
+  {
+    All.Binary_M = binaryMasses[0];
+    All.Binary_a = 1.0;
+    All.Binary_j = sqrt(All.G * All.Binary_M * All.Binary_a);
+    All.Binary_q = 0.2;
+  }
+  else
+  {
+    //Calculate the mass,a and j and store them
+    All.Binary_M = binaryMasses[0]+binaryMasses[1];
+    All.Binary_a = sqrt((binaryPositions[0]-binaryPositions[3])*(binaryPositions[0]-binaryPositions[3]) + (binaryPositions[1]-binaryPositions[4])*(binaryPositions[1]-binaryPositions[4]) + (binaryPositions[2]-binaryPositions[5])*(binaryPositions[2]-binaryPositions[5]));
+    All.Binary_j = sqrt(All.G * All.Binary_M * All.Binary_a);
+    All.Binary_q = binaryMasses[0] > binaryMasses[1] ? binaryMasses[1]/binaryMasses[0] : binaryMasses[0]/binaryMasses[1];
+  }
   if(ThisTask==0)
     printf("Binary has M=%g,a=%g,j=%g,q=%g\n",All.Binary_M,All.Binary_a,All.Binary_j,All.Binary_q);
   free(list_starMass);

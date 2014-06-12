@@ -350,13 +350,29 @@ void density(void)
 
 #ifdef CDAV
       SphP[i].R /= SphP[i].Density;
+#ifdef TWODIMS
+      fac = (SphP[i].T[0]*SphP[i].T[3]-SphP[i].T[1]*SphP[i].T[1]);
+#else
       //Inverse of determinate of T
       fac = (SphP[i].T[0]*(SphP[i].T[3]*SphP[i].T[5]-SphP[i].T[4]*SphP[i].T[4]) +
         SphP[i].T[1]*(SphP[i].T[2]*SphP[i].T[4]-SphP[i].T[1]*SphP[i].T[5]) +
         SphP[i].T[2]*(SphP[i].T[1]*SphP[i].T[4]-SphP[i].T[2]*SphP[i].T[3]));
+#endif
       if(fac!=0)
       {
         fac=1.0/fac;
+#ifdef TWODIMS
+        Tinv[0]=fac*SphP[i].T[3];
+        Tinv[1]=-fac*SphP[i].T[1];
+        Tinv[3]=fac*SphP[i].T[0];
+        Tinv[2]=Tinv[4]=Tinv[5]=0;
+
+        V[0]=SphP[i].D[0]*Tinv[0]+SphP[i].D[1]*Tinv[1];
+        V[3]=SphP[i].D[0]*Tinv[1]+SphP[i].D[1]*Tinv[3];
+        V[1]=SphP[i].D[3]*Tinv[0]+SphP[i].D[4]*Tinv[1];
+        V[4]=SphP[i].D[3]*Tinv[1]+SphP[i].D[4]*Tinv[3];
+        V[2]=V[5]=V[6]=V[7]=V[8]=0;
+#else
         //The inverse of the matrix T
         Tinv[0]=fac*(SphP[i].T[3]*SphP[i].T[5]-SphP[i].T[4]*SphP[i].T[4]);
         Tinv[1]=fac*(SphP[i].T[2]*SphP[i].T[4]-SphP[i].T[1]*SphP[i].T[5]);
@@ -376,6 +392,7 @@ void density(void)
         V[2]=SphP[i].D[6]*Tinv[0]+SphP[i].D[7]*Tinv[1]+SphP[i].D[8]*Tinv[2];
         V[5]=SphP[i].D[6]*Tinv[1]+SphP[i].D[7]*Tinv[3]+SphP[i].D[8]*Tinv[4];
         V[8]=SphP[i].D[6]*Tinv[2]+SphP[i].D[7]*Tinv[4]+SphP[i].D[8]*Tinv[5];
+#endif
         //DivVel is now trivially estimated
         divv = V[0]+V[4]+V[8];
         //DivAccel = tr(E.T^-1)-tr(V^2)

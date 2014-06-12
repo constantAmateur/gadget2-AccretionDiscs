@@ -664,7 +664,7 @@ void hydro_evaluate(int target, int mode)
 #endif
 #if defined CDAV || defined MMAV
             //printf("[%d] Alpha i/j = %g/%g.\n",ThisTask,alpha_visc,alpha_visc_j);
-            visc = 0.25 * (alpha_visc + alpha_visc_j) * (soundspeed_i + soundspeed_j-2.0*All.ArtViscPropConst*mu_ij) * (-mu_ij) / rho_ij;
+            visc = 0.25 * (alpha_visc + alpha_visc_j) * (soundspeed_i + soundspeed_j-3.0*mu_ij) * (-mu_ij) / rho_ij;
 #else
 		      visc = 0.25 * All.ArtBulkViscConst * (soundspeed_i + soundspeed_j-3*mu_ij) * (-mu_ij) / rho_ij * (f1 + f2);
 #endif
