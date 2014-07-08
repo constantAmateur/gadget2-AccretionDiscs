@@ -563,6 +563,9 @@ int get_timestep(int p,		/*!< particle index */
       if(P[p].Type == 0)
 	dt = dt_accel = sqrt(2 * All.ErrTolIntAccuracy * atime * SphP[p].Hsml / 2.8 / ac);
 #endif
+#ifdef TSTEP_LIMIT_BY_ACCRETION_RADIUS
+      dt = dt_accel = sqrt(2*All.ErrTolIntAccuracy * All.AccretionRadius*atime/ac);
+#endif
       break;
     default:
       endrun(888);
