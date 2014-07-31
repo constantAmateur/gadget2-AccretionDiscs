@@ -698,6 +698,8 @@ void destroy_doomed_particles(void)
         if(P[j].ID == target){
           //printf("jay = %d\n",j);
           printf("Adding mass %g\n",dmasstot);
+          //Add the count
+          P[j].NAccreted++;
 #ifdef ACCRETED_MASS_ONLY
           P[j].NumAccreted += dmasstot/P[0].Mass;
 #endif

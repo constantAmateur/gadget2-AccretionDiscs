@@ -272,7 +272,7 @@ void fill_write_buffer(enum iofields blocknr, int *startindex, int pc, int type)
           n++;
         }
       break;
-      
+
     case IO_U:			/* internal energy */
       for(n = 0; n < pc; pindex++)
         if(P[pindex].Type == type)
@@ -462,7 +462,16 @@ void fill_write_buffer(enum iofields blocknr, int *startindex, int pc, int type)
         }
 #endif
       break;
-
+    case IO_ACCRETED:		
+#ifdef SINK_PARTICLES
+      for(n = 0; n < pc; pindex++)
+        if(P[pindex].Type == type)
+        {
+          *ip++ = P[pindex].NAccreted;
+          n++;
+        }
+#endif
+      break;
   }
   
   *startindex = pindex;
@@ -495,6 +504,10 @@ int get_bytes_per_blockelement(enum iofields blocknr)
 #else
       bytes_per_blockelement = sizeof(int);
 #endif
+      break;
+
+    case IO_ACCRETED:
+      bytes_per_blockelement = sizeof(int);
       break;
       
     case IO_MASS:
@@ -575,6 +588,7 @@ int get_values_per_blockelement(enum iofields blocknr)
     case IO_SCALE_HEIGHT:
     case IO_TSTP:
     case IO_COND:
+    case IO_ACCRETED:
       values = 1;
       break;
   }
@@ -644,6 +658,7 @@ int get_particles_in_block(enum iofields blocknr, int *typelist)
     case IO_ALPHA:
     case IO_RAD_ENERGY:
     case IO_DTENTR:
+    case IO_ACCRETED:
     case IO_COND:
       for(i = 1; i < 6; i++)
         typelist[i] = 0;
@@ -763,6 +778,9 @@ void fill_Tab_IO_Labels(void)
     case IO_VORTICITY:
       strncpy(Tab_IO_Labels[IO_VORTICITY], "VORT", 4);
       break;
+    case IO_ACCRETED:
+      strncpy(Tab_IO_Labels[IO_ACCRETED], "NACC",4);
+      break;
     case IO_DTENTR:
       strncpy(Tab_IO_Labels[IO_DTENTR], "ENDT", 4);
       break;
@@ -828,6 +846,9 @@ void get_dataset_name(enum iofields blocknr, char *buf)
       break;
     case IO_VORTICITY:
       strcpy(buf, "Vorticity");
+      break;
+    case IO_ACCRETED:
+      strcpy(buf, "NumAccreted");
       break;
     case IO_DTENTR:
       strcpy(buf, "RateOfChangeOfEntropy");

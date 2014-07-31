@@ -604,6 +604,9 @@ extern struct particle_data
 #ifdef CDAV
   FLOAT GravAccelOld[3];  //Gravitational acceleration is calculated before the hydro loop, so we need to save the old value of the acceleration somewhere for use in calculating div.a
 #endif
+#ifdef SINK_PARTICLES
+  int NAccreted;   //Number of particles accreted by this particle
+#endif
 }
  *P,              /*!< holds particle data on local processor */
  *DomainPartBuf;  /*!< buffer for particle data used in domain decomposition */
@@ -762,7 +765,7 @@ extern struct io_header
  header;                               /*!< holds header for snapshot files */
 
 
-#define IO_NBLOCKS 18   /*!< total number of defined information blocks for snapshot files.
+#define IO_NBLOCKS 19   /*!< total number of defined information blocks for snapshot files.
                              Must be equal to the number of entries in "enum iofields" */
 
 enum iofields           /*!< this enumeration lists the defined output blocks in snapshot files. Not all of them need to be present. */
@@ -785,6 +788,7 @@ enum iofields           /*!< this enumeration lists the defined output blocks in
   IO_SCALE_HEIGHT,
   IO_GRAD_VEL,
   IO_COND,
+  IO_ACCRETED,
 };
 
 
