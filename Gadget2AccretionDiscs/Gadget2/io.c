@@ -635,6 +635,7 @@ int get_particles_in_block(enum iofields blocknr, int *typelist)
     case IO_ACCEL:
     case IO_TSTP:
     case IO_ID:
+    case IO_ACCRETED:
     case IO_POT:
       return nall;
       break;
@@ -658,7 +659,6 @@ int get_particles_in_block(enum iofields blocknr, int *typelist)
     case IO_ALPHA:
     case IO_RAD_ENERGY:
     case IO_DTENTR:
-    case IO_ACCRETED:
     case IO_COND:
       for(i = 1; i < 6; i++)
         typelist[i] = 0;

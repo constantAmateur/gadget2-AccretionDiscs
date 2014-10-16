@@ -287,6 +287,7 @@ void init(void)
 #endif
 #ifdef SINK_PARTICLES
       SphP[i].AccretionTarget = 0; 
+      P[i].NAccreted = 0;
 #endif
 #if defined MMAV
 //     SphP[i].Alpha=All.VariableViscAlphaMin;

@@ -409,6 +409,7 @@ void destroy_doomed_particles(void)
   double *local_sink_velx, *local_sink_vely, *local_sink_velz;
   double *local_sink_mass;
   int *local_sink_ID;
+  int dcount,dcounttot;
   double dposx, dposy, dposz, dvelx, dvely, dvelz, dmass;
   double dposxtot, dposytot, dposztot, dvelxtot, dvelytot, dvelztot, dmasstot;      
   double Ei, Ef;
@@ -499,6 +500,7 @@ void destroy_doomed_particles(void)
     if(list_sink_mass[s] > 0){
       MPI_Barrier(MPI_COMM_WORLD);
       dvelx = 0; dvely = 0; dvelz = 0; dposx = 0; dposy = 0; dposz = 0; dmass = 0;      
+      dcount =0;
       target = list_sink_ID[s];
 #ifdef TRACK_ACCRETION_LOSSES
       //Need the initial stars position, mass and velocity
@@ -677,11 +679,13 @@ void destroy_doomed_particles(void)
           dposy += P[i].Mass*P[i].Pos[1];	    
           dposz += P[i].Mass*P[i].Pos[2];   
           dmass += P[i].Mass;  
+          dcount++;
         }
       } /* now we have all particles on the local processor that add to sink s */  
       
       /* accumulate the changes from all processors */
       dvelxtot = 0; dvelytot = 0; dvelztot = 0; dposxtot = 0; dposytot = 0; dposztot = 0; dmasstot = 0; 
+      dcounttot = 0;
       MPI_Barrier(MPI_COMM_WORLD); 
       
       MPI_Allreduce(&dvelx, &dvelxtot, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD); 
@@ -691,6 +695,7 @@ void destroy_doomed_particles(void)
       MPI_Allreduce(&dposy, &dposytot, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);  
       MPI_Allreduce(&dposz, &dposztot, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);     
       MPI_Allreduce(&dmass, &dmasstot, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);        
+      MPI_Allreduce(&dcount, &dcounttot, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);        
       MPI_Barrier(MPI_COMM_WORLD);     
       
       /* check to see if the sink being considered is on the local processor.  if so, add the changes to it. */
@@ -699,7 +704,8 @@ void destroy_doomed_particles(void)
           //printf("jay = %d\n",j);
           printf("Adding mass %g\n",dmasstot);
           //Add the count
-          P[j].NAccreted++;
+          P[j].NAccreted += dcounttot;
+          printf("Number accreted to star with mass %g is %d.\n",P[j].Mass,P[j].NAccreted);
 #ifdef ACCRETED_MASS_ONLY
           P[j].NumAccreted += dmasstot/P[0].Mass;
 #endif
