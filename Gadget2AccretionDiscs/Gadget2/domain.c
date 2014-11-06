@@ -383,6 +383,27 @@ void domain_Decomposition(void)
       inject_gas();
 #endif
 
+#if defined(H_SMOOTHING) && defined(TWODIMS)
+      //Calculate the average H/R at every sync point...
+      double myH = 0.0;
+      int i;
+      for(i=0; i < N_gas; i++)
+      {
+        myH += sqrt((GAMMA*SphP[i].Entropy*pow(SphP[i].Density,GAMMA_MINUS1) *
+              sqrt((P[i].Pos[0]-SysState.CenterOfMass[0])*(P[i].Pos[0]-SysState.CenterOfMass[0])+(P[i].Pos[1]-SysState.CenterOfMass[1])*(P[i].Pos[1]-SysState.CenterOfMass[1]))) /
+              (All.G*SysState.MassComp[1]));
+      }
+      MPI_Allreduce(&myH,&AvgH,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+      AvgH = AvgH / All.TotN_gas;
+      //Just set to zero until things are settled...
+      if((AvgH<0.0 || AvgH>1.0) || (AvgH!=AvgH))
+        AvgH=0.1;
+      if(ThisTask==0)
+        printf("Average aspect ratio is: %g\n",AvgH);
+#endif
+
+
+
       MPI_Allgather(&NumPart, 1, MPI_INT, list_NumPart, 1, MPI_INT, MPI_COMM_WORLD);
       MPI_Allgather(&N_gas, 1, MPI_INT, list_N_gas, 1, MPI_INT, MPI_COMM_WORLD);
       

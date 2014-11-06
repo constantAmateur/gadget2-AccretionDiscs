@@ -156,6 +156,10 @@ extern int AccNum;	        /*!< Number of particles to be accreted */
 extern int *AccreteList;        /*!< Buffer to hold indices of particles to be accreted */
 #endif
 
+#if defined(H_SMOOTHING) && defined(TWODIMS)
+extern double AvgH;
+#endif
+
 extern int TreeReconstructFlag; /*!< Signals that a new tree needs to be constructed */
 
 extern int Flag_FullStep;       /*!< This flag signals that the current step involves all particles */

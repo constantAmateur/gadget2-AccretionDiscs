@@ -1281,7 +1281,10 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
      if(P[no].Type==0)
      {
        //Smooth by whichever is greater.  Should always be H, but want to catch the bad cases
-       H=All.H_frac*sqrt((GAMMA*SphP[no].Entropy*pow(SphP[no].Density,GAMMA_MINUS1)*pow((P[no].Pos[0]-SysState.CenterOfMass[0])*(P[no].Pos[0]-SysState.CenterOfMass[0])+(P[no].Pos[1]-SysState.CenterOfMass[1])*(P[no].Pos[1]-SysState.CenterOfMass[1]),1.5))/(All.G*SysState.MassComp[1]));
+       //H=All.H_frac*sqrt((GAMMA*SphP[no].Entropy*pow(SphP[no].Density,GAMMA_MINUS1)*pow((P[no].Pos[0]-SysState.CenterOfMass[0])*(P[no].Pos[0]-SysState.CenterOfMass[0])+(P[no].Pos[1]-SysState.CenterOfMass[1])*(P[no].Pos[1]-SysState.CenterOfMass[1]),1.5))/(All.G*SysState.MassComp[1]));
+       //AvgH is average H/R, so mulitply by R to get right smoothing...
+       //printf("Average aspect ratio at calc time is (for %d): %g\n",ThisTask,AvgH);
+       H = All.H_frac * AvgH * sqrt((P[no].Pos[0]-SysState.CenterOfMass[0])*(P[no].Pos[0]-SysState.CenterOfMass[0])+(P[no].Pos[1]-SysState.CenterOfMass[1])*(P[no].Pos[1]-SysState.CenterOfMass[1]));
        if(H>h)
          h=H;
        //if((SphP[no].Entropy>0 && SphP[no].Density>0))

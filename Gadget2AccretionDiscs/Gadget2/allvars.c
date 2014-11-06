@@ -31,6 +31,9 @@ char *Exportflag;        /*!< Buffer used for flagging whether a particle needs 
 
 int  *Ngblist;           /*!< Buffer to hold indices of neighbours retrieved by the neighbour search routines */
 
+#if defined(H_SMOOTHING) && defined(TWODIMS)
+double AvgH;
+#endif
 #ifdef SINK_PARTICLES
 int AccNum;	             /*!< Number of particles to be accreted on the LOCAL processor */
 int *AccreteList;        /*!< Buffer to hold indices of particles to be accreted */
