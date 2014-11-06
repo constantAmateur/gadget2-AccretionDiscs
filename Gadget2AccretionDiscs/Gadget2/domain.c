@@ -383,7 +383,7 @@ void domain_Decomposition(void)
       inject_gas();
 #endif
 
-#if defined(H_SMOOTHING) && defined(TWODIMS)
+#if defined(H_SMOOTHING) && defined(TWODIMS) && defined(FARGO_STYLE_SMOOTHING)
       //Calculate the average H/R at every sync point...
       double myH = 0.0;
       int i;

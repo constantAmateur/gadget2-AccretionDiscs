@@ -31,7 +31,7 @@ char *Exportflag;        /*!< Buffer used for flagging whether a particle needs 
 
 int  *Ngblist;           /*!< Buffer to hold indices of neighbours retrieved by the neighbour search routines */
 
-#if defined(H_SMOOTHING) && defined(TWODIMS)
+#if defined(H_SMOOTHING) && defined(TWODIMS) && defined(FARGO_STYLE_SMOOTHING)
 double AvgH;
 #endif
 #ifdef SINK_PARTICLES
