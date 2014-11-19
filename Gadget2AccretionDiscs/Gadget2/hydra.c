@@ -831,8 +831,6 @@ void hydro_evaluate(int target, int mode)
     }
   while(startnode >= 0);
 
-  if(acc[2]!=0)
-    printf("Hydro accel for target %d is %g\n",target,acc[2]);
 
   /* Now collect the result at the right place */
   if(mode == 0)
