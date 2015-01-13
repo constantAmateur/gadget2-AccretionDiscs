@@ -1203,6 +1203,16 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 #endif
     }
 
+  //Calculate the H to use for softening on this particle...
+  //Disable H smoothing if not using FARGO style
+#ifdef H_SMOOTHING
+#ifdef FARGO_STYLE_SMOOTHING
+    //AvgH is average H/R, so mulitply by R to get right smoothing...
+    H = All.H_frac * AvgH * sqrt((pos_x-SysState.CenterOfMass[0])*(pos_x-SysState.CenterOfMass[0])+(pos_y-SysState.CenterOfMass[1])*(pos_y-SysState.CenterOfMass[1]));
+#else
+    H=0;
+#endif
+#endif
 
 
 #ifndef UNEQUALSOFTENINGS
@@ -1277,38 +1287,6 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 	    h = All.ForceSoftening[P[no].Type];
 #endif
 #endif
-#ifdef H_SMOOTHING
-     if(P[no].Type==0)
-     {
-       //Smooth by whichever is greater.  Should always be H, but want to catch the bad cases
-#ifdef FARGO_STYLE_SMOOTHING
-       //AvgH is average H/R, so mulitply by R to get right smoothing...
-       H = All.H_frac * AvgH * sqrt((P[no].Pos[0]-SysState.CenterOfMass[0])*(P[no].Pos[0]-SysState.CenterOfMass[0])+(P[no].Pos[1]-SysState.CenterOfMass[1])*(P[no].Pos[1]-SysState.CenterOfMass[1]));
-#else
-       H=All.H_frac*sqrt((GAMMA*SphP[no].Entropy*pow(SphP[no].Density,GAMMA_MINUS1)*pow((P[no].Pos[0]-SysState.CenterOfMass[0])*(P[no].Pos[0]-SysState.CenterOfMass[0])+(P[no].Pos[1]-SysState.CenterOfMass[1])*(P[no].Pos[1]-SysState.CenterOfMass[1]),1.5))/(All.G*SysState.MassComp[1]));
-#endif
-       //printf("Average aspect ratio at calc time is (for %d): %g\n",ThisTask,AvgH);
-       if(H>h)
-         h=H;
-       //if((SphP[no].Entropy>0 && SphP[no].Density>0))
-       //{
-       //  ////Smooth by this many times the smoothing length for close particles
-       //  //printf("Entropy %g\n",SphP[no].Entropy);
-       //  //printf("Density %g\n",SphP[no].Density);
-       //  ////printf("IntEnergy %g\n",GAMMA*SphP[no].Entropy*pow(SphP[no].Density,GAMMA_MINUS1));
-       //  //printf("COM %g,%g\n",SysState.CenterOfMass[0],SysState.CenterOfMass[1]);
-       //}
-       //else
-       //{
-       //  h=0;
-       //}
-     }
-     else
-     {
-       //Don't smooth the star
-       h=0;
-     }
-#endif
 	  no = Nextnode[no];
 	}
       else			/* we have an  internal node. Need to check opening criterion */
@@ -1325,6 +1303,14 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 		}
 	    }
 
+#ifdef EXACT_STAR_GRAV
+     /* Always open up star all the way... */
+     if(mass >= 1.0 || ptype==1 )
+     {
+       no = nop->u.d.nextnode;
+       continue;
+     }
+#endif
 
 	  if(All.ErrTolTheta)	/* check Barnes-Hut opening criterion */
 	    {
@@ -1337,14 +1323,6 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 	    }
 	  else			/* check relative opening criterion */
 	    {
-#ifdef EXACT_STAR_GRAV
-         /* Always open up star all the way... */
-         if(mass >= 1.0 || ptype==1 )
-         {
-           no = nop->u.d.nextnode;
-           continue;
-         }
-#endif
 	      if(mass * nop->len * nop->len > r2 * r2 * aold)
 		{
 		  /* open cell */
@@ -1432,17 +1410,6 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
      }
 #endif
 
-     //This seems to be broken (I don't really understand how it works) so leave it out for now.  I *think* the code should already do what it was intended to do anyway, but without it being included it *might* lead to a separate bug where the nodes are not opened...
-//#ifdef PRICE_GRAV_SOFT
-//     //This should ensure that if there's any chance of any particle in the cell being within the interaction radius of our particle (and hence needing to be smoothed) we will open up the box
-//     if(h < nop->maxsoft)
-//       h=nop->maxsoft;
-//     if(r2 < h*h)
-//     {
-//       no = nop->u.d.nextnode;
-//       continue;
-//     }
-//#else
      //We're already in a branch of the code where we know we're in a box.  So what is the purpose of this first condition?  I guess if h is already the maximum softening length, we will already have opened up the box if we need to?
 	  if(h < nop->maxsoft)
 	    {
@@ -1456,23 +1423,7 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 //#endif
 #endif
 #endif
-           no = nop->u.d.nextnode;
-           continue;
- 
-	  no = nop->u.d.sibling;	/* ok, node can be used */
-
-	  if(mode == 1)
-	    {
-	      if(((nop->u.d.bitflags) & 1))	/* Bit 0 signals that this node belongs to top-level tree */
-		continue;
-	    }
-
-     //Check we're not within H
 #ifdef H_SMOOTHING
-#ifdef FARGO_STYLE_SMOOTHING
-       //AvgH is average H/R, so mulitply by R to get right smoothing...
-       H = All.H_frac * AvgH * 0.5*(sqrt((pos_x-SysState.CenterOfMass[0])*(pos_x-SysState.CenterOfMass[0])+(pos_y-SysState.CenterOfMass[1])*(pos_y-SysState.CenterOfMass[1]))+sqrt((nop->center[0]-SysState.CenterOfMass[0])*(nop->center[0]-SysState.CenterOfMass[0])+(nop->center[1]-SysState.CenterOfMass[1])*(nop->center[1]-SysState.CenterOfMass[1])));
-#endif
      //If we're within softening range, open it up.  Range is a square
      //of size 4H around sink and len*1.2 around source
 	   if(fabs(nop->center[0] - pos_x) < 2*H+0.60 * nop->len)
@@ -1485,6 +1436,15 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 		}
    //h=0;
 #endif
+	  no = nop->u.d.sibling;	/* ok, node can be used */
+
+	  if(mode == 1)
+	    {
+	      if(((nop->u.d.bitflags) & 1))	/* Bit 0 signals that this node belongs to top-level tree */
+		continue;
+	    }
+
+
 	}
 
       r = sqrt(r2);
@@ -1495,6 +1455,8 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 
      //Use the centre of mass and the internal energy to calculate H, and smooth by it
 #ifdef H_SMOOTHING
+     if(H>h)
+       h=H;
      //Assume that we're in the limit where R>>H if we haven't opened the tree
      fac = mass/pow(r2+h*h,1.5);
      //printf("Smoothing by %g\n",h);
