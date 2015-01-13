@@ -1237,6 +1237,7 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 #else
      H_j = 0;
 #endif
+#endif
 
 	  mass = P[no].Mass;
 	}
@@ -1259,6 +1260,7 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
      H_j = All.H_frac * AvgH * sqrt((nop->u.d.s[0]-SysState.CenterOfMass[0])*(nop->u.d.s[0]-SysState.CenterOfMass[0])+(nop->u.d.s[1]-SysState.CenterOfMass[1])*(nop->u.d.s[1]-SysState.CenterOfMass[1]));
 #else
      H_j = 0;
+#endif
 #endif
 
 	  mass = nop->u.d.mass;
