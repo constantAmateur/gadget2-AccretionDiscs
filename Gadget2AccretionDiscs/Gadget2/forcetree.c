@@ -1456,7 +1456,9 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 //#endif
 #endif
 #endif
-
+           no = nop->u.d.nextnode;
+           continue;
+ 
 	  no = nop->u.d.sibling;	/* ok, node can be used */
 
 	  if(mode == 1)
@@ -1464,9 +1466,23 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 	      if(((nop->u.d.bitflags) & 1))	/* Bit 0 signals that this node belongs to top-level tree */
 		continue;
 	    }
+
+     //Check we're not within H
 #ifdef H_SMOOTHING
-   //If we're far enough away to not open the node, then assume R>>H and so H=0 should
-   //give the same answer.  But smooth by the kernel smoothing anyway, but use the H smoothing form
+#ifdef FARGO_STYLE_SMOOTHING
+       //AvgH is average H/R, so mulitply by R to get right smoothing...
+       H = All.H_frac * AvgH * 0.5*(sqrt((pos_x-SysState.CenterOfMass[0])*(pos_x-SysState.CenterOfMass[0])+(pos_y-SysState.CenterOfMass[1])*(pos_y-SysState.CenterOfMass[1]))+sqrt((nop->center[0]-SysState.CenterOfMass[0])*(nop->center[0]-SysState.CenterOfMass[0])+(nop->center[1]-SysState.CenterOfMass[1])*(nop->center[1]-SysState.CenterOfMass[1])));
+#endif
+     //If we're within softening range, open it up.  Range is a square
+     //of size 4H around sink and len*1.2 around source
+	   if(fabs(nop->center[0] - pos_x) < 2*H+0.60 * nop->len)
+		{
+		  if(fabs(nop->center[1] - pos_y) < 2*H+0.60 * nop->len)
+		    {
+			  no = nop->u.d.nextnode;
+			  continue;
+		    }
+		}
    //h=0;
 #endif
 	}
