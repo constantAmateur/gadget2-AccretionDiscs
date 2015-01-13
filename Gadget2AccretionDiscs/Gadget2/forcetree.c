@@ -1369,9 +1369,9 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
          }
 #else
 	      /* check in addition whether we lie inside the cell */
-	      if(fabs(nop->center[0] - pos_x) < 2*H+ 0.60 * nop->len)
+	      if(fabs(nop->center[0] - pos_x) <  0.60 * nop->len)
 		{
-		  if(fabs(nop->center[1] - pos_y) <  2*H+0.60 * nop->len)
+		  if(fabs(nop->center[1] - pos_y) <  0.60 * nop->len)
 		    {
 			  no = nop->u.d.nextnode;
 			  continue;
@@ -1471,7 +1471,7 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 #ifdef H_SMOOTHING
      if(H>h)
        h=H;
-     if(H_j<h)
+     if(H_j>h)
        h=H_j;
      //Assume that we're in the limit where R>>H if we haven't opened the tree
      fac = mass/pow(r2+h*h,1.5);
