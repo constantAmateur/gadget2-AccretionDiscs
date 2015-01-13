@@ -1132,7 +1132,7 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
   double acc_x, acc_y, acc_z, pos_x, pos_y, pos_z, aold;
   double intEnergy;
 #ifdef H_SMOOTHING
-  double H;
+  double H,H_j;
 #endif
 #if defined(UNEQUALSOFTENINGS) && !defined(ADAPTIVE_GRAVSOFT_FORGAS)
   int maxsofttype;
@@ -1231,6 +1231,12 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 
 	  dx = P[no].Pos[0] - pos_x;
 	  dy = P[no].Pos[1] - pos_y;
+#ifdef H_SMOOTHING
+#ifdef FARGO_STYLE_SMOOTHING
+     H_j = All.H_frac * AvgH * sqrt((P[no].Pos[0]-SysState.CenterOfMass[0])*(P[no].Pos[0]-SysState.CenterOfMass[0])+(P[no].Pos[1]-SysState.CenterOfMass[1])*(P[no].Pos[1]-SysState.CenterOfMass[1]));
+#else
+     H_j = 0;
+#endif
 
 	  mass = P[no].Mass;
 	}
@@ -1248,6 +1254,12 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 	  nop = &Nodes[no];
 	  dx = nop->u.d.s[0] - pos_x;
 	  dy = nop->u.d.s[1] - pos_y;
+#ifdef H_SMOOTHING
+#ifdef FARGO_STYLE_SMOOTHING
+     H_j = All.H_frac * AvgH * sqrt((nop->u.d.s[0]-SysState.CenterOfMass[0])*(nop->u.d.s[0]-SysState.CenterOfMass[0])+(nop->u.d.s[1]-SysState.CenterOfMass[1])*(nop->u.d.s[1]-SysState.CenterOfMass[1]));
+#else
+     H_j = 0;
+#endif
 
 	  mass = nop->u.d.mass;
 	}
@@ -1357,9 +1369,9 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
          }
 #else
 	      /* check in addition whether we lie inside the cell */
-	      if(fabs(nop->center[0] - pos_x) < 0.60 * nop->len)
+	      if(fabs(nop->center[0] - pos_x) < 2*H+ 0.60 * nop->len)
 		{
-		  if(fabs(nop->center[1] - pos_y) < 0.60 * nop->len)
+		  if(fabs(nop->center[1] - pos_y) <  2*H+0.60 * nop->len)
 		    {
 			  no = nop->u.d.nextnode;
 			  continue;
@@ -1424,18 +1436,20 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 #endif
 #endif
 #ifdef H_SMOOTHING
-     //If we're within softening range, open it up.  Range is a square
-     //of size 4H around sink and len*1.2 around source
-	   if(fabs(nop->center[0] - pos_x) < 2*H+0.60 * nop->len)
-		{
-		  if(fabs(nop->center[1] - pos_y) < 2*H+0.60 * nop->len)
-		    {
-			  no = nop->u.d.nextnode;
-			  continue;
-		    }
-		}
-   //h=0;
+     //Check if h could(should) be bigger because of H and open if needed
+     if(H < H_j)
+       H=H_j;
+     if(h<H)
+     {
+       h=H;
+       if(r2 < H*H)
+       {
+         no = nop->u.d.nextnode;
+         continue;
+       }
+     }
 #endif
+
 	  no = nop->u.d.sibling;	/* ok, node can be used */
 
 	  if(mode == 1)
@@ -1457,6 +1471,8 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 #ifdef H_SMOOTHING
      if(H>h)
        h=H;
+     if(H_j<h)
+       h=H_j;
      //Assume that we're in the limit where R>>H if we haven't opened the tree
      fac = mass/pow(r2+h*h,1.5);
      //printf("Smoothing by %g\n",h);
