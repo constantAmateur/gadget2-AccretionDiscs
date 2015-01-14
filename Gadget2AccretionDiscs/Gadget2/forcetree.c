@@ -1168,13 +1168,6 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
       if(ptype == 0)
       {
 	     soft = SphP[target].Hsml;
-#if PRICE_GRAV_SOFT
-        h_i = soft;
-      }
-      else
-      {
-	    h_i = All.ForceSoftening[ptype];
-#endif
       }
 #endif
     }
@@ -1192,13 +1185,6 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
       if(ptype == 0)
       {
 	     soft = GravDataGet[target].Soft;
-#if PRICE_GRAV_SOFT
-        h_i = soft;
-      }
-      else
-      {
-        h_i = All.ForceSoftening[ptype];
-#endif
       }
 #endif
     }
@@ -1281,17 +1267,11 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 	    h = All.ForceSoftening[ptype];
 	  if(P[no].Type == 0)
 	    {
-#ifdef PRICE_GRAV_SOFT
-         h_j=SphP[no].Hsml;
-#endif
 	      if(h < SphP[no].Hsml)
 		h = SphP[no].Hsml;
 	    }
 	  else
 	    {
-#ifdef PRICE_GRAV_SOFT
-         h_j=All.ForceSoftening[P[no].Type];
-#endif
 	      if(h < All.ForceSoftening[P[no].Type])
 		h = All.ForceSoftening[P[no].Type];
 	    }
@@ -1413,16 +1393,6 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 	    h = soft;
 	  else
 	    h = All.ForceSoftening[ptype];
-     //If the "j" particle isn't a particle but a big blob, set the smoothing length to the maximum of the smoothing lengths in this blob...
-#ifdef PRICE_GRAV_SOFT
-     h_j = nop->maxsoft;
-     //Shouldn't ever happen, but it does.  Weird.
-     if(h_j==0)
-     {
-       //printf("weirdness in force routine\n");
-       h_j=h;
-     }
-#endif
 
      //We're already in a branch of the code where we know we're in a box.  So what is the purpose of this first condition?  I guess if h is already the maximum softening length, we will already have opened up the box if we need to?
 	  if(h < nop->maxsoft)
@@ -1438,17 +1408,21 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 #endif
 #endif
 #ifdef H_SMOOTHING
+     //Set h to the bigger H from either particle (or node)
      //Check if h could(should) be bigger because of H and open if needed
      if(H < H_j)
        H=H_j;
      if(h<H)
      {
        h=H;
-       //if(r2 < H*H)
-       //{
-       //  no = nop->u.d.nextnode;
-       //  continue;
-       //}
+#ifdef H_OPEN_CRITERIA
+       //Open it up, if we're within the range
+       if(r2 < H*H)
+       {
+         no = nop->u.d.nextnode;
+         continue;
+       }
+#endif
      }
 #endif
 
@@ -1464,10 +1438,7 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 	}
 
       r = sqrt(r2);
-     //Make sure we're using the particle smoothing and not "h" which is some maximum of h over neighbours
-#ifdef PRICE_GRAV_SOFT
-     h=h_i;
-#endif
+
 
      //Use the centre of mass and the internal energy to calculate H, and smooth by it
 #ifdef H_SMOOTHING
@@ -1507,42 +1478,6 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 	//		        27.4285714285714* u * u -  7.619047619047619* u * u * u - 0.04761904761904761 / (u * u * u));
    }
      //The Price correction terms need a symmetric gravitational force...
-#ifdef PRICE_GRAV_SOFT
-     fac *= 0.5;
-     //This shouldn't ever happen...
-     if(h_j==0)
-     {
-       h_j=h_i;
-       printf("This should never happen! In the force calc.\n");
-       exit(0);
-     }
-     if(r >= h_j)
-       fac += mass / (r2*r*2.0);
-     else
-     {
-#ifdef UNEQUALSOFTENINGS
-	  h_inv = 1.0 / h_j;
-	  h3_inv = h_inv * h_inv;
-#endif
-
-	  u = r * h_inv;
-	  if(u < 0.5)
-	    fac += 0.5*mass * h3_inv * (10.666666666667 + u * u * (32.0 * u - 38.4));
-	  else
-	    fac +=
-	      0.5*mass * h3_inv * (21.333333333333 - 48.0 * u +
-			       38.4 * u * u - 10.666666666667 * u * u * u - 0.066666666667 / (u * u * u));
-
-	  //if(u < 0.5)
-	  //  fac = 0.5*mass * h3_inv * (7.619047619047619 + u * u * (22.85714285714285 * u - 27.4285714285714));
-	  //else
-     //{
-	  //  fac +=
-     //0.5*mass * h3_inv * (15.238095238095 - 34.285714285714 * u +
-	  // 	        27.4285714285714* u * u -  7.619047619047619* u * u * u - 0.04761904761904761 / (u * u * u));
-     //}
-     }
-#endif
       if(r==0)
          fac = 0;
 
