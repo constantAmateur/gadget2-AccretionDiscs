@@ -1444,11 +1444,11 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
      if(h<H)
      {
        h=H;
-       if(r2 < H*H)
-       {
-         no = nop->u.d.nextnode;
-         continue;
-       }
+       //if(r2 < H*H)
+       //{
+       //  no = nop->u.d.nextnode;
+       //  continue;
+       //}
      }
 #endif
 
@@ -1476,9 +1476,9 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
      if(H_j>h)
        h=H_j;
      //Assume that we're in the limit where R>>H if we haven't opened the tree
-     fac = mass/pow(r2+h*h,1.5);
+     //fac = mass/pow(r2+h*h,1.5);
      //printf("Smoothing by %g\n",h);
-#else
+#endif
       if(r >= h)
 	fac = mass / (r2*r);
       else
@@ -1489,10 +1489,16 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 #endif
 
 	  u = r * h_inv;
-     if(u < 0.5)
-       fac = mass* h3_inv * (11.428571428571429-34.285714285714285*u*u+27.428571428571427*u*u*u);
-     else
-       fac = mass* h3_inv * (22.857142857142858-45.714285714285715*u+34.285714285714285*u*u+9.142857142857142*u*u*u-0.06666666666666667/(u*u));
+	  if(u < 0.5)
+	    fac = mass * h3_inv * (10.666666666667 + u * u * (32.0 * u - 38.4));
+	  else
+	    fac =
+	      mass * h3_inv * (21.333333333333 - 48.0 * u +
+			       38.4 * u * u - 10.666666666667 * u * u * u - 0.066666666667 / (u * u * u));
+     //if(u < 0.5)
+     //  fac = mass* h3_inv * (11.428571428571429-34.285714285714285*u*u+27.428571428571427*u*u*u);
+     //else
+     //  fac = mass* h3_inv * (22.857142857142858-45.714285714285715*u+34.285714285714285*u*u+9.142857142857142*u*u*u-0.06666666666666667/(u*u));
 	//  if(u < 0.5)
 	//    fac = mass * h3_inv * (7.619047619047619 + u * u * (22.85714285714285 * u - 27.4285714285714));
 	//  else
@@ -1521,15 +1527,21 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 
 	  u = r * h_inv;
 	  if(u < 0.5)
-	    fac = 0.5*mass * h3_inv * (7.619047619047619 + u * u * (22.85714285714285 * u - 27.4285714285714));
+	    fac += 0.5*mass * h3_inv * (10.666666666667 + u * u * (32.0 * u - 38.4));
 	  else
-     {
 	    fac +=
-    0.5*mass * h3_inv * (15.238095238095 - 34.285714285714 * u +
-			        27.4285714285714* u * u -  7.619047619047619* u * u * u - 0.04761904761904761 / (u * u * u));
+	      0.5*mass * h3_inv * (21.333333333333 - 48.0 * u +
+			       38.4 * u * u - 10.666666666667 * u * u * u - 0.066666666667 / (u * u * u));
+
+	  //if(u < 0.5)
+	  //  fac = 0.5*mass * h3_inv * (7.619047619047619 + u * u * (22.85714285714285 * u - 27.4285714285714));
+	  //else
+     //{
+	  //  fac +=
+     //0.5*mass * h3_inv * (15.238095238095 - 34.285714285714 * u +
+	  // 	        27.4285714285714* u * u -  7.619047619047619* u * u * u - 0.04761904761904761 / (u * u * u));
+     //}
      }
-     }
-#endif
 #endif
       if(r==0)
          fac = 0;
