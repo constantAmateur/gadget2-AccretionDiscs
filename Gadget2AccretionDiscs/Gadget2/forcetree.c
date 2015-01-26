@@ -1408,22 +1408,22 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 #endif
 #endif
 #ifdef H_SMOOTHING
+#ifdef H_OPEN_CRITERIA
      //Set h to the bigger H from either particle (or node)
      //Check if h could(should) be bigger because of H and open if needed
      if(H < H_j)
        H=H_j;
+     //Only need to check if H is bigger than h
      if(h<H)
      {
-       h=H;
-#ifdef H_OPEN_CRITERIA
        //Open it up, if we're within the range
        if(r2 < H*H)
        {
          no = nop->u.d.nextnode;
          continue;
        }
-#endif
      }
+#endif
 #endif
 
 	  no = nop->u.d.sibling;	/* ok, node can be used */
@@ -1437,26 +1437,24 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 
 	}
 
-      r = sqrt(r2);
 
 
-     //Use the centre of mass and the internal energy to calculate H, and smooth by it
 #ifdef H_SMOOTHING
-     if(H>h)
-       h=H;
-     if(H_j>h)
-       h=H_j;
+     if(H_j>H)
+       H=H_j;
+     //Just do a simple plumber sphere, it's all that FARGO does...
      //Assume that we're in the limit where R>>H if we haven't opened the tree
-     //fac = mass/pow(r2+h*h,1.5);
+     fac = mass/pow(r2+H*H,1.5);
      //printf("Smoothing by %g\n",h);
-#endif
+#else
+   r = sqrt(r2);
       if(r >= h)
 	fac = mass / (r2*r);
       else
 	{
 #ifdef UNEQUALSOFTENINGS
 	  h_inv = 1.0 / h;
-	  h3_inv = h_inv * h_inv;
+	  h3_inv = h_inv * h_inv * h_inv;
 #endif
 
 	  u = r * h_inv;
@@ -1477,6 +1475,7 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 	//      mass * h3_inv * (15.238095238095 - 34.285714285714 * u +
 	//		        27.4285714285714* u * u -  7.619047619047619* u * u * u - 0.04761904761904761 / (u * u * u));
    }
+#endif
      //The Price correction terms need a symmetric gravitational force...
       if(r==0)
          fac = 0;
