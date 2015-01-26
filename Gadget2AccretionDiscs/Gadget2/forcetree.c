@@ -1442,6 +1442,10 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
 #ifdef H_SMOOTHING
      if(H_j>H)
        H=H_j;
+     if(h>2*H)
+       H=h/2.0;
+     if(mass >= 1.0 || ptype==1 )
+       H=0;
      //Just do a simple plumber sphere, it's all that FARGO does...
      //Assume that we're in the limit where R>>H if we haven't opened the tree
      fac = mass/pow(r2+H*H,1.5);
@@ -1477,7 +1481,7 @@ int force_treeevaluate(int target, int mode, double *ewaldcountsum)
    }
 #endif
      //The Price correction terms need a symmetric gravitational force...
-      if(r==0)
+      if(r2==0)
          fac = 0;
 
       //printf("Mass of %g and factor of %g.\n",mass,fac);

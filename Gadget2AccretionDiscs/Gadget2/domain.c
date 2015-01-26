@@ -397,7 +397,7 @@ void domain_Decomposition(void)
       AvgH = AvgH / All.TotN_gas;
       //Just set to zero until things are settled...
       if((AvgH<0.0 || AvgH>1.0) || (AvgH!=AvgH))
-        AvgH=0.1;
+        AvgH=0.0;
       if(ThisTask==0)
         printf("Average aspect ratio is: %g\n",AvgH);
 #endif
