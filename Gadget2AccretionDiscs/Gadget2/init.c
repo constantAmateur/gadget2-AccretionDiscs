@@ -26,8 +26,17 @@ void init(void)
   double starMass,*list_starMass;
 #endif
 #ifdef INJECT_GAS
+#ifndef LONGIDS
+  unsigned int binaryID[2];
+  unsigned int *list_starID;
+#else
+  unsigned long long binaryID[2];
+  unsigned long long *list_starID;
+#endif
   double binaryMasses[2];
   double binaryPositions[6];
+  double binaryVel[6];
+  double *list_starVel;
   double *list_starPos,*list_starMass;
 #endif
 
@@ -208,16 +217,32 @@ void init(void)
   for(i=N_gas;i<NumPart;i++)
   {
     binaryMasses[i-N_gas]=P[i].Mass;
+    binaryID[i-N_gas]=P[i].ID;
     binaryPositions[(i-N_gas)*3+0] = P[i].Pos[0];
     binaryPositions[(i-N_gas)*3+1] = P[i].Pos[1];
     binaryPositions[(i-N_gas)*3+2] = P[i].Pos[2];
+    binaryVel[(i-N_gas)*3+0] = P[i].Vel[0];
+    binaryVel[(i-N_gas)*3+1] = P[i].Vel[1];
+    binaryVel[(i-N_gas)*3+2] = P[i].Vel[2];
   }
   //Gather them all together
   list_starMass = malloc(NTask * 2 *sizeof(double));
   list_starPos = malloc(NTask * 6 *sizeof(double));
+  list_starVel = malloc(NTask * 6 *sizeof(double));
+#ifndef LONGIDS
+  list_starID = malloc(NTask*2*sizeof(unsigned int));
+#else
+  list_starID = malloc(NTask*2*sizeof(unsigned long long));
+#endif
   MPI_Barrier(MPI_COMM_WORLD);
+#ifndef LONGIDS
+  MPI_Allgather(&binaryID,2,MPI_UNSIGNED,list_starID,2,MPI_UNSIGNED,MPI_COMM_WORLD);
+#else
+  MPI_Allgather(&binaryID,2,MPI_UNSIGNED_LONG_LONG,list_starID,2,MPI_UNSIGNED_LONG_LONG,MPI_COMM_WORLD);
+#endif
   MPI_Allgather(&binaryMasses,2,MPI_DOUBLE,list_starMass,2,MPI_DOUBLE,MPI_COMM_WORLD);
   MPI_Allgather(&binaryPositions,6,MPI_DOUBLE,list_starPos,6,MPI_DOUBLE,MPI_COMM_WORLD);
+  MPI_Allgather(&binaryVel,6,MPI_DOUBLE,list_starVel,6,MPI_DOUBLE,MPI_COMM_WORLD);
   j=0;
   for(i=0;i<2*NTask;i++)
   {
@@ -227,6 +252,10 @@ void init(void)
       binaryPositions[j*3+0] = list_starPos[i*3+0];
       binaryPositions[j*3+1] = list_starPos[i*3+1];
       binaryPositions[j*3+2] = list_starPos[i*3+2];
+      binaryVel[j*3+0] = list_starVel[i*3+0];
+      binaryVel[j*3+1] = list_starVel[i*3+1];
+      binaryVel[j*3+2] = list_starVel[i*3+2];
+      binaryID[j]=list_starID[i];
       j++;
     }
   }
@@ -246,8 +275,25 @@ void init(void)
     All.Binary_j = sqrt(All.G * All.Binary_M * All.Binary_a);
     All.Binary_q = binaryMasses[0] > binaryMasses[1] ? binaryMasses[1]/binaryMasses[0] : binaryMasses[0]/binaryMasses[1];
   }
+  //Store the ID of the primary/secondary
+  All.Primary_ID = binaryMasses[0] > binaryMasses[1] ? binaryID[0] : binaryID[1];
+  All.Secondary_ID = binaryMasses[0] > binaryMasses[1] ? binaryID[1] : binaryID[0];
+  All.Binary_omega = sqrt(All.G*All.Binary_M / All.Binary_a / All.Binary_a / All.Binary_a);
+  //Set direction of binary rotation
+  if( binaryPositions[0]*binaryVel[1]-binaryPositions[1]*binaryVel[0] < 0)
+    All.Binary_omega *= -1.0;
+#ifdef ANALYTIC_BINARY
+  //This assumes a circular binary.
+  All.Secondary_R = All.Binary_a/(1+All.Binary_q);
+  All.Primary_R = All.Secondary_R*All.Binary_q;
+  All.Secondary_phi = binaryMasses[0] > binaryMasses[1] ? atan2(binaryPositions[4],binaryPositions[3]) : atan2(binaryPositions[1],binaryPositions[0]) ;
+  All.Secondary_phi = fmod(All.Secondary_phi+2*M_PI,2*M_PI);
+  All.Primary_phi = fmod(All.Secondary_phi +M_PI,2*M_PI); 
+  printf("Primary is starting at R=%g,phi=%g,ID=%d.\n",All.Primary_R,All.Primary_phi,All.Primary_ID);
+  printf("Secondary is starting at R=%g,phi=%g,ID=%d.\n",All.Secondary_R,All.Secondary_phi,All.Secondary_ID);
+#endif
   if(ThisTask==0)
-    printf("Binary has M=%g,a=%g,j=%g,q=%g\n",All.Binary_M,All.Binary_a,All.Binary_j,All.Binary_q);
+    printf("Binary has M=%g,a=%g,j=%g,q=%g,omega=%g\n",All.Binary_M,All.Binary_a,All.Binary_j,All.Binary_q,All.Binary_omega);
   free(list_starMass);
   free(list_starPos);
 #endif

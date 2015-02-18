@@ -87,6 +87,24 @@ void move_particles(int time0, int time1)
       //if(P[i].Pos[2]!=0)
       //  printf("Non-zero z detected, with Vel=%g pos=%g\n",P[i].Vel[2],P[i].Pos[2]);
 #endif
+#ifdef ANALYTIC_BINARY
+      //Force binary to follow an analytic orbit
+      if(P[i].Type==1 && P[i].ID==All.Primary_ID)
+      {
+        P[i].Pos[0] = All.Primary_R*cos(All.Primary_phi+All.Binary_omega*time1*All.Timebase_interval);
+        P[i].Pos[1] = All.Primary_R*sin(All.Primary_phi+All.Binary_omega*time1*All.Timebase_interval);
+        P[i].Vel[0] = -1.0*P[i].Pos[1]*All.Binary_omega;
+        P[i].Vel[1] = P[i].Pos[0]*All.Binary_omega;
+      }
+      if(P[i].Type==1 && P[i].ID==All.Secondary_ID)
+      {
+        P[i].Pos[0] = All.Secondary_R*cos(All.Secondary_phi+All.Binary_omega*time1*All.Timebase_interval);
+        P[i].Pos[1] = All.Secondary_R*sin(All.Secondary_phi+All.Binary_omega*time1*All.Timebase_interval);
+        P[i].Vel[0] = -1.0*P[i].Pos[1]*All.Binary_omega;
+        P[i].Vel[1] = P[i].Pos[0]*All.Binary_omega;
+
+      }
+#endif
       if(P[i].Type==1)
       {
         printf("Drifting particle %d with vel %g,%g,%g.\n",i,P[i].Vel[0],P[i].Vel[1],P[i].Vel[2]);

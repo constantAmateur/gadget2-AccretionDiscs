@@ -557,6 +557,20 @@ extern struct global_data_all_processes
   double Binary_j;
   double Efficiency_f;
   double Efficiency_g;
+  double Binary_omega;
+#ifndef LONGIDS
+  unsigned int Primary_ID;
+  unsigned int Secondary_ID;
+#else
+  unsigned long long Primary_ID;
+  unsigned long long Secondary_ID;
+#endif
+#ifdef ANALYTIC_BINARY
+  double Primary_R;
+  double Secondary_R;
+  double Primary_phi;
+  double Secondary_phi;
+#endif
 #endif
 //#ifdef ACCRETED_MASS_ONLY
 //  double M1;
